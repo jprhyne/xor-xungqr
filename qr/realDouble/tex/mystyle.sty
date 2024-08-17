@@ -1,0 +1,136 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                       Package imports                         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage[margin=1.in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathdots,enumerate,thmtools,mathtools}
+\usepackage{graphicx,xcolor,caption,subcaption}
+\usepackage{hyperref,algorithm,algorithmic}
+\usepackage[english]{babel}
+\usepackage[colorinlistoftodos]{todonotes}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                     Theorem definitions                       %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+
+\theoremstyle{definition}
+\newtheorem{conj}{Conjecture}
+
+\theoremstyle{remark}
+\newtheorem*{note}{Note}
+\newtheorem{remark}{Remark}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%             Symbols and other shortcuts I use                 %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\renewcommand{\vec}[1]{\mathbf{#1}}
+\newcommand{\x}{\vec{x}}
+\newcommand{\y}{\vec{y}}
+\newcommand{\R}{\mathbb{R}} 
+\newcommand{\C}{\mathbb{C}}
+\DeclareMathOperator{\E}{\mathbb{E}}   % expected value 
+\DeclareMathOperator{\fl}{\mathrm{fl}}  % floating point number
+\newcommand{\mb}[1]{\mathbb{#1}}
+\newcommand{\mc}[1]{\mathcal{#1}}
+
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}
+\makeatletter
+\let\oldabs\abs
+\def\abs{\@ifstar{\oldabs}{\oldabs*}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   Taken from Professor Saibaba's "classnotes.sty" to make	%
+%         compiling homework much more streamlined		%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%Spaces
+\newcommand{\rn}{\mathbb{R}^{n}}
+\newcommand{\rnn}{\mathbb{R}^{n\times n}}
+\newcommand{\rmn}{\mathbb{R}^{m\times n}}
+\newcommand{\cn}{\mathbb{C}^{n}}
+\newcommand{\cnn}{\mathbb{C}^{n\times n}}
+\newcommand{\cmn}{\mathbb{C}^{m\times n}}
+
+
+%Various possibilities for inner products and norms
+\newcommand{\inner}[2]{\langle #1\mid #2\rangle}
+\newcommand{\norm}[2]{\left\|#1\right\|_{#2}}
+\newcommand{\normf}[1]{\left\|#1\right\|_{F}}
+\newcommand{\normtwo}[1]{\left\|#1\right\|_{2}}
+\newcommand{\normp}[1]{\left\|#1\right\|_{p}}
+
+\renewcommand{\vec}[1]{\boldsymbol{#1}}
+\newcommand{\mat}[1]{\boldsymbol{#1}}
+\newcommand{\B}[1]{\boldsymbol{#1}}
+\newcommand{\vect}[1]{\widetilde{\boldsymbol{#1}}}
+\newcommand{\matt}[1]{\widetilde{\boldsymbol{#1}}}
+
+%Column and row equivalence
+\newcommand{\roweq}{\stackrel{\text{row}}{\sim}}
+\newcommand{\coleq}{\stackrel{\text{col}}{\sim}}
+
+%Vector spaces
+\newcommand{\rank}{\text{rank}\,}
+\renewcommand{\dim}{\text{dim}\,}
+\newcommand{\Span}[1]{\text{Span}\,\{#1\}}
+\newcommand{\basis}[1]{\left\{ #1\right\}}
+
+%Matrix environments
+\newcommand{\bmat}[1]{\begin{bmatrix}#1\end{bmatrix}}
+\newcommand{\pmat}[1]{\begin{pmatrix}#1\end{pmatrix}}
+\newenvironment{amatrix}[1]{%
+  \left(\begin{array}{@{}*{#1}{c}|c@{}}
+}{%
+  \end{array}\right)
+}
+
+
+%Trace and determinant
+\newcommand{\diag}{\mathsf{diag}\,}
+\newcommand{\range}{\mathsf{range}\,}
+\newcommand{\trace}{\mathsf{trace}\,}
+
+
+\newcommand{\factenv}[1]{\begin{fact}#1\end{fact}}
+
+
+%Multiplicities
+\newcommand{\geo}{\text{geo mult}\,}
+\newcommand{\alg}{\text{alg mult}\,}
+
+%Real and imaginary
+\newcommand{\real}{\text{Re}}
+\newcommand{\imag}{\text{Im}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   Purple solution background if exam class. Only shows up if  %
+%   answers option is included. Otherwise, solution is a new    %
+%                   theorem environment                         %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\@ifclassloaded{exam}{
+\usepackage{color}
+\usepackage{graphicx}
+
+\definecolor{SolutionColor}{rgb}{0.1,0.3,1}
+
+\unframedsolutions
+\shadedsolutions
+\definecolor{SolutionColor}{rgb}{0.9,0.9,1}
+\renewcommand{\solutiontitle}{\textbf{Solution: }}
+}{
+\newtheoremstyle{sol}
+{3pt}
+{3pt}
+{}
+{}
+{\bfseries}
+{:}
+{.5em}
+{}
+\theoremstyle{sol}
+\newtheorem*{solution}{Solution}
+}

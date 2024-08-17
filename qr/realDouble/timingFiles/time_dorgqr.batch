@@ -1,0 +1,11 @@
+#!/bin/env bash
+# time_dorgqr.batch
+# batch job for running time_dorgqr.sh on the alderaan cluster
+# Johnathan Rhyne
+#SBATCH --job-name=time_dorgqr.sh
+#SBATCH --partition=math-alderaan
+#SBATCH --time=24:00:00
+#SBATCH --ntasks=12
+
+dateString=$(date "+%d.%B.%Y")
+./time_dorgqr.sh > "dorgqrTiming.$dateString.txt"

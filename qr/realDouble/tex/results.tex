@@ -1,0 +1,68 @@
+\documentclass{article}
+
+\usepackage{mystyle}
+\usepackage{algorithm}
+
+\begin{document}
+\tableofcontents
+\section{What does Reference DORGQR do?}
+The algorithm for the current Reference DORGQR is as follows. We will assume
+for simplicity's sake that $n$ is a perfect multiple of $k$ and that we start
+blocking exactly at $k$. This is not exactly how DORQR is currently written, 
+but it will allow us to talk about the algorithm and ignore some technical 
+difficulties in the implimentations
+\begin{algorithm}
+    \caption{Reference DORGQR}
+    \begin{algorithmic}
+        \REQUIRE $A\in\R^{m\times n}$ output of DEQRF. IE the $i^\text{th}$ column of $A$ is the vector defining the $i^\text{th}$ elementary reflector ($H_i$ for the starting matrix for $i=1,\dots,k$, and $m\geq n$
+        \ENSURE $A = Q\in\R^{m\times n}$ such that $Q = H_1H_2\cdots H_k$
+        \IF{blocking}
+        \STATE determine blocking parameter $nb$
+        \ELSE 
+        \STATE $Q \gets$ DORG2R($A$)
+        \RETURN $Q$
+        \ENDIF
+        \STATE Break $A$ down according to Figure \ref{fig:C1C2} where $C_1\in\R^{k\times n-k}$ and $C_2\in\R^{m-k\times n-k}$ are the last $k$ columns of $A$.
+        \STATE $C_1 \gets \textbf{0}$
+        \STATE $C_2 \gets$ DORG2R($C_2$)
+        \FOR{$i=k-nb,k-2nb,\cdots 1$}
+        \STATE Construct $T$ such that $H = I -VTV^\top$ where $H=H_iH_{i+1}\cdots H_{i+nb-1}$ 
+        \STATE Apply
+        \ENDFOR
+    \end{algorithmic}
+\end{algorithm}
+\begin{figure}
+    $$
+    \begin{bmatrix}
+        A_{11} & C_1 \\
+        A_{21} & C_2
+    \end{bmatrix}
+    $$
+    \caption{Decomposition of $A$ used in DORGQR}\label{fig:C1C2}
+\end{figure}
+\section{What did we aim to do?/Deliverables}
+We aim to increase the performance of the reference DORGQR in both time and memory used
+\section{Why do we care?}
+\section{Hardware Used}
+We ran the following tests using a Lenovo Thinkpad E430 running Arch Linux with the following system specifications
+\begin{itemize}
+    \item Kernel: 6.5.8-arch1-1
+    \item CPU: Intel i3-3120M (4 cores, 8 threads) @ 2.500GHz
+\end{itemize}
+\section{Version 1}\label{sec:v1}
+The file that contains just the changes mentioned here is: \verb|my_dorgqr_v1.f|
+\subsection{Changes}
+For the first version, we aimed to take advantage of the fact that in our first step, we have an identity matrix 
+in the slot of $C_2$, and $0$ inside the slot of $C_1$ on every iteration.
+\subsection{Numerical Performance}
+We compare this version against two baselines. 
+\begin{itemize}
+    \item Reference DORGQR
+    \item MKL DORGQR
+\end{itemize}
+\section{Version 2}
+The file that contains the changes mentioned here and the ones described in Section \ref{sec:v1} is: \verb|my_dorgqr_v2.f|
+\subsection{Changes}
+\subsection{Numerical Performance}
+\section{Summary}
+\end{document}

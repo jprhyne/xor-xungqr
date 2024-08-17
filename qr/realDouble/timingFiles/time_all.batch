@@ -1,0 +1,11 @@
+#!/bin/env bash
+# time_all.batch
+# batch job for running time_all.sh on the alderaan cluster
+# Johnathan Rhyne
+#SBATCH --job-name=time_all.sh
+#SBATCH --partition=math-alderaan
+#SBATCH --time=24:00:00
+#SBATCH --ntasks=12
+
+dateString=$(date "+%d.%B.%Y")
+./time_all.sh > "allStepsTiming.$dateString.txt"

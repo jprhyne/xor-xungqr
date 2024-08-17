@@ -1,0 +1,138 @@
+\documentclass[review]{siamart220329}
+
+% 1. Preamble and packages
+\usepackage{lipsum}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{epstopdf}
+\usepackage{algorithmic}
+\ifpdf%
+  \DeclareGraphicsExtensions{.eps,.pdf,.png,.jpg}
+\else
+  \DeclareGraphicsExtensions{.eps}
+\fi
+\usepackage{amsopn}
+\DeclareMathOperator{\diag}{diag}
+\usepackage{booktabs}
+
+% 2. Paper title
+\newcommand{\TheTitle}{%
+  Improved DORGQR and Recursive DORG2R against optimized BLAS routines
+}
+
+% 2.5. Short title for running heads (if needed)
+\newcommand{\TheShortTitle}{%
+  \TheTitle
+}
+
+% 3. Student Name
+\newcommand{\TheName}{%
+  Johnathan Rhyne
+}
+
+% 4. Student Address
+\newcommand{\TheAddress}{%
+  University of Colorado Denver,
+  (\email{johnathan.rhyne@ucdenver.edu}).
+}
+
+% 5. Acknowledge funding or other resources
+\newcommand{\TheFunding}{%
+  This work was funded by IJK\@.
+}
+
+% 6. Collaborators, such as advisor or research collaborators
+\newcommand{\TheCollaborators}{%
+  Julien Langou Advisor
+}
+
+% ---------------------------------------------
+% ---------------------------------------------
+\author{\TheName\thanks{\TheAddress}}
+\title{{\TheTitle}\thanks{\TheFunding}}
+\headers{\TheShortTitle}{\TheName}
+\ifpdf%
+\hypersetup{%
+  pdftitle={\TheTitle},
+  pdfauthor={\TheName}
+}
+\fi
+
+% My commands
+\newcommand{\dorgqr}{\texttt{dorgqr}\ }
+\newcommand{\dorg}{\texttt{dorg2r}\ }
+\newcommand{\dorgkr}{\texttt{dorgkr}\ }
+\newcommand{\dlarft}{\texttt{dlarft}\ }
+
+\begin{document}
+
+\maketitle
+
+\begin{center}
+In collaboration with:
+  {\TheCollaborators}
+\end{center}
+\vspace{1cm}
+% ---------------------------------------------
+% ---------------------------------------------
+
+\begin{abstract}
+    The LAPACK routine dorg2r is used to attain the full Q matrix in the QR decomposition, and is needed even when the blocked 
+    version is used. Using a recursive scheme, we improve the performance of the dorg2r in the case of having number of 
+    reflectors equal to the number of columns of Q. In addition, our scheme produces a way to compute The first $k$ columns of 
+    Q only, which can be useful when coupled with a more efficient scheme to produce the remaining columns needed. We also 
+    propose a new version of dorgqr where we also see performance increases for modestly sized inputs against both reference 
+    LAPACK and tested optimized BLAS routines.
+\end{abstract}
+
+\begin{keywords}
+  % 7. Keywords that describe the paper
+    lapack
+    blas
+    recursive
+    qr
+    nullspace
+\end{keywords}
+
+\section{Introduction}\label{sec:intro}
+The lapack routines \dorgqr and \dorg are two methods of computing the $Q$ matrix associated with the $QR$ 
+decomposition of a matrix, denoted $A$, from the householder reflectors. The existing functionality in LAPACK does not 
+properly take advantage of the fact that our first step in computing the columns between the desired number of columns of $Q$, 
+denoted $n$, and the number of reflectors used in the decomposition of $A$, denoted $k$, involves a matrix multiplication
+where one of the elements is the identity matrix. We exploit this fact.
+
+\section{Main Contribution}\label{sec:main}
+Our main contribution is an implementation of an improved \dorgqr. We do this by taking advantage of the first step in the \dorgqr
+algorithm being a matrix multiplication by an identity matrix and blocking for the entire matrix instead of calling \dorg to 
+do these first columns.
+
+\section{Numerical Results}\label{sec:num}
+Our numerical experiments test on the following hardware:
+\begin{verbatim}
+Insert processor information for laptop and the HPC. 
+\end{verbatim}
+We test 3 different versions of \dorgqr. 
+\begin{enumerate}
+    \item[] Version 1: Updated \dorgqr
+    \item[] Version 2: Adding our new recursive \dorgkr as a helper routine
+    \item[] Version 3: Adding our new recusrive \dlarft as a helper routine
+\end{enumerate}
+For Version 2, we also test \dorgkr against \dorg for performance that mimic the instances it is called from within dorgqr, so
+that we can demonstrate the gain directly. This means that we do not time the call to \dlarft as this call is done regardless
+inside \dorgqr. 
+
+For Version 3, we perform the same timing as for Version 1, but also include timing just the calls to dlarft.
+
+Our testing paradigm is as follows: 
+
+We test only accuracy with the fortran tester routines. We have these Fortran testers to be able to see how accurate we are
+under these conditions. However, we have a tester that lives only in \verb|C| that calls the fortran subroutines to measure
+both accuracy and timing. We treat these as the main source for this write-up as it is the closest related to how most users
+will interact with the LAPACK library. 
+
+\section{Conclusions}\label{sec:conc}
+
+\bibliographystyle{siamplain}
+\bibliography{references}
+
+\end{document}
