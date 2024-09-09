@@ -14,7 +14,7 @@ c                 assumed to contain only 0's above the diagonal.
 c              On output: the upper and diagonal part of V will contain the
 c                 product.
 c  LDV (in)    - leading dimension of V
-c     Cost: (2m^3 + 3m^2 -5m)/6
+c     Cost: (2m^3 + 3m^2 -2m)/6
       RECURSIVE SUBROUTINE MY_DST3RK(M, V, LDV)
          ! Scalar arguments
          INTEGER           M, LDV

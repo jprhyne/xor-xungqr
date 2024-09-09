@@ -34,11 +34,9 @@
          ! Compute V = V_2**T * V_2 + V
          CALL DSYRK('Upper', 'Transpose', N, M-N, ONE, V(N+1,1), LDV,
      $               ONE, V, LDV)
-         ! Scales the diagonal by 1/2
          DO I = 1, N
             V(I,I) = TAU(I)
          END DO
-         !CALL DSCAL(N, HALF, V(1,1), LDV + 1)
          ! Replaces V with T^{-1}
          CALL DTRTRI('Upper', 'Non unit', N, V, LDV, INFO)
       END SUBROUTINE

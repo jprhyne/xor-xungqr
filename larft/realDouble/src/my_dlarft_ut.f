@@ -1,6 +1,6 @@
 *     Cost:
-*     m > n: (2m^3 + 3m^2 + 6mn^2 + 6mn - 5m + 2n^3 -12n^2 + 10n)/6
-*     m = n: (10n^3 - 3n^2 + 5n)/6 
+*     m > n: (6mn^2 + 6mn - 2n^3 - 3n^2 + 2n)/6
+*     m = n: (4n^3 - 3n^2 + 2n)/6 
       RECURSIVE SUBROUTINE MY_DLARFT_UT(M, N, V, LDV, TAU)
          ! Arguments
          ! Scalars

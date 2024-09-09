@@ -48,20 +48,10 @@
 
          DEALLOCATE(WORK)
          ! Compute the triangular factor T
-         !CALL MY_DLARFT_REC(M, N, Q, M, TAU, Q, M)
-         CALL MY_DLARFT_UT(M, N, Q, M, TAU, Q, M)
+         CALL MY_DLARFT_REC(M, N, Q, M, TAU, Q, M)
 
-         ! Copy T into where R was inside Q
-         !CALL DLACPY('Upper', N, N, T, N, Q, M)
-
-         ! Now call MY_DORG2R
+         ! Now call MY_DORGKR
          CALL MY_DORGKR(M, N, Q, M)
-         !ALLOCATE(WORK(M*N*M))
-         !CALL DORGQR(M, N, N, Qs, M, TAU, WORK, M*N*M, INFO)
-         !DEALLOCATE(WORK)
-         !ALLOCATE(WORK(N))
-         !CALL DORG2R(M,N,N, Qs, M, TAU, WORK, INFO)
-         !DEALLOCATE(WORK)
          
          ALLOCATE(WORKMAT(N,N))
          CALL DLASET('A', N,N, ZERO, ZERO, WORKMAT, N)
@@ -90,6 +80,50 @@
          NORM_REPRES = NORM_REPRES / NORMA
 
          DEALLOCATE(WORKMAT)
+
+         WRITE(*,*) "Recursive DLARFT"
+
+         WRITE(*,*) "representation norm: ", NORM_REPRES
+         WRITE(*,*) "orthogonal norm:     ", NORM_ORTH
+
+         ! Copy Qs back into Q
+         CALL DLACPY('ALL', M, N, Qs, M, Q, M)
+
+         ! Compute the triangular factor T
+         CALL MY_DLARFT_UT(M, N, Q, M, TAU, Q, M)
+
+         ! Now call MY_DORGKR
+         CALL MY_DORGKR(M, N, Q, M)
+         
+         ALLOCATE(WORKMAT(N,N))
+         CALL DLASET('A', N,N, ZERO, ZERO, WORKMAT, N)
+         CALL DSYRK('Upper', 'Transpose', N, M, ONE, Q, M, ZERO,
+     $         WORKMAT, N)
+
+         DO I = 1, N
+            WORKMAT(I,I) = WORKMAT(I,I) - 1
+         END DO
+
+         NORM_ORTH = DLANGE('Frobenius', N, N, WORKMAT, N, WORK)
+
+         DEALLOCATE(WORKMAT)
+         ALLOCATE(WORKMAT(M,N))
+         CALL DLACPY('All', M, N, Q, M, WORKMAT, M)
+         CALL DTRMM('Right', 'Upper', 'No-transpose', 'non-unit',
+     $      M, N, ONE, A, M, WORKMAT, M)
+
+         DO I = 1, M
+            DO J = 1, N
+               WORKMAT(I,J) = WORKMAT(I,J) - As(I,J)
+            END DO
+         END DO
+         NORM_REPRES = DLANGE('Frobenius', M, N, WORKMAT,
+     $      M, WORK)
+         NORM_REPRES = NORM_REPRES / NORMA
+
+         DEALLOCATE(WORKMAT)
+
+         WRITE(*,*) "UT DLARFT"
 
          WRITE(*,*) "representation norm: ", NORM_REPRES
          WRITE(*,*) "orthogonal norm:     ", NORM_ORTH

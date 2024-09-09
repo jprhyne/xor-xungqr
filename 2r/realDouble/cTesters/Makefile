@@ -2,14 +2,18 @@ include ../make.inc
 # Groups
 
 srcObjs := $(patsubst %.f,%.o,$(wildcard ../src/*.f))
+larftObjs := $(patsubst %.f,%.o,$(wildcard ../../larft/realDouble/src/*.f))
 
-all: objectFiles overallTest_optBlas.exe overallTest.exe test_dtrmmoop.exe test_dtrmmoop_optBlas.exe timeGemm.exe timeDlarft.exe
+all: objectFiles larftObjects overallTest_optBlas.exe overallTest.exe test_dtrmmoop.exe test_dtrmmoop_optBlas.exe timeGemm.exe timeDlarft.exe
 
 clean:
 	rm *.o *.exe
 
 objectFiles:
 	$(MAKE) -C ../src all
+
+objectFiles:
+	$(MAKE) -C ../../larft/realDouble/src all
 
 overallTest_optBlas.exe: overallTest_opt.o $(srcObjs) ../referenceFiles/dorg2r.o
 	$(FC) -D USE_AOCL $(CFLAGS) $^ $(OPTBLAS) -o $@

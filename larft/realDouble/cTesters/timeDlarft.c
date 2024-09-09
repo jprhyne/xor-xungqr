@@ -12,8 +12,8 @@ double computeRecPerf(double time, double m, double n)
 }
 double computeUTPerf(double time, double m, double n) 
 {
-    //  (2m^3 + 3m^2 + 6mn^2 + 6mn - 5m + 2n^3 -12n^2 + 10n)/6 
-    double ut = 2.0*m*m*m + 3.0*m*m + 6.0*m*n*n + 6.0*m*n - 5.0*m + 2.0*n*n*n - 12.0*n*n + 10.0*n;
+    //  (6mn^2 + 6mn - 2n^3 - 3n^2 + 2n)/6
+    double ut = 6.0*m*n*n + 6.0*m*n - 2.0*n*n*n - 3.0*n*n + 2.0*n;
     ut /= 6.0;
     return ut / (time*1.0e+9);
 }
