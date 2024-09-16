@@ -5,6 +5,7 @@
          ! Local variables
          DOUBLE PRECISION  NORMA, NORM_ORTH, NORM_REPRES
          INTEGER           LWORK, I, J, INFO
+         CHARACTER         STOREV, DIRECT
          ! Local arrays
          DOUBLE PRECISION, ALLOCATABLE :: A(:,:), Q(:,:), As(:,:), 
      $            Qs(:,:), WORKMAT(:,:), WORK(:), T(:,:)
@@ -48,7 +49,9 @@
 
          DEALLOCATE(WORK)
          ! Compute the triangular factor T
-         CALL MY_DLARFT_REC(M, N, Q, M, TAU, Q, M)
+         STOREV = 'C'
+         DIRECT = 'F'
+         CALL MY_DLARFT_REC(DIRECT, STOREV, M, N, Q, M, TAU, Q, M)
 
          ! Now call MY_DORGKR
          CALL MY_DORGKR(M, N, Q, M)

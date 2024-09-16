@@ -17,7 +17,6 @@ int main(int argc, char *argv[]) {
     // integer variables
     int info, lda, ldt, m, n, k, lwork, nb, i, j;
     // double variables
-
     m = 30;
     n = 20;
 
