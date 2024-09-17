@@ -111,7 +111,6 @@ c----------------------------------------------------------------------
          DO I = 1, N
             DO J = 1, N
                T(I,J) = ZERO
-               Ts(I,J)= ZERO
             END DO
          END DO
          ! Call my dlarft implementation
@@ -127,10 +126,10 @@ c----------------------------------------------------------------------
             END DO
          END DO
          IF(NORM_REPRES.NE.ZERO) THEN
-            WRITE(*,*) "The upper triangular part of T was touched"
+            WRITE(*,*) "The lower triangular part of T was touched"
             RETURN
          END IF
-         ! Getting to this stage means that T is lower triangular. 
+         ! Getting to this stage means that T is upper triangular. 
          ! So, we copy T into the upper part of Q
          CALL DLACPY('Upper', N, N, T, N, Q, M)
          ! Next, we check how accurate T was!
@@ -173,9 +172,156 @@ c----------------------------------------------------------------------
          CALL DLACPY('ALL', M, N, Qs, M, Q, M)
 
 c----------------------------------------------------------------------
+         ! Above but DIRECT = 'B' and STOREV = 'C'
+         DIRECT = 'B'
+         STOREV = 'C'
+         ! Set T to be all 0s
+         DO I = 1, N
+            DO J = 1, N
+               T(I,J) = ZERO
+            END DO
+         END DO
+         ! Call my dlarft implementation
+         CALL MY_DLARFT_REC(DIRECT, STOREV, M, N, Q, M, TAU, T, N)
+         ! Ensure that T is lower triangular
+         NORM_REPRES = 0
+         DO I = 1, N-1
+            DO J = I+1, N
+               NORM_REPRES = NORM_REPRES + T(I,J) * T(I,J)
+               IF(T(I,J).NE.ZERO) THEN
+                  WRITE(*,*) "I = ", I, "J = ", J
+               END IF
+            END DO
+         END DO
+         IF(NORM_REPRES.NE.ZERO) THEN
+            WRITE(*,*) "The upper triangular part of T was touched"
+            RETURN
+         END IF
+         ! Getting to this stage means that T is lower triangular. 
+         ! So, we copy T^\top into the upper part of Q
+         DO I = 1, N
+            DO J = 1, I
+               Q(J,I) = T(I,J)
+            END DO
+         END DO
+         ! Next, we check how accurate T was!
+         CALL MY_DORGKR(M, N, Q, M)
+         
+         ALLOCATE(WORKMAT(N,N))
+         CALL DLASET('A', N,N, ZERO, ZERO, WORKMAT, N)
+         CALL DSYRK('Upper', 'Transpose', N, M, ONE, Q, M, ZERO,
+     $         WORKMAT, N)
+
+         DO I = 1, N
+            WORKMAT(I,I) = WORKMAT(I,I) - 1
+         END DO
+
+         NORM_ORTH = DLANGE('Frobenius', N, N, WORKMAT, N, WORK)
+
+         DEALLOCATE(WORKMAT)
+         ALLOCATE(WORKMAT(M,N))
+         CALL DLACPY('All', M, N, Q, M, WORKMAT, M)
+         CALL DTRMM('Right', 'Upper', 'No-transpose', 'non-unit',
+     $      M, N, ONE, A, M, WORKMAT, M)
+
+         DO I = 1, M
+            DO J = 1, N
+               WORKMAT(I,J) = WORKMAT(I,J) - As(I,J)
+            END DO
+         END DO
+         NORM_REPRES = DLANGE('Frobenius', M, N, WORKMAT,
+     $      M, WORK)
+         NORM_REPRES = NORM_REPRES / NORMA
+
+         DEALLOCATE(WORKMAT)
+
+         WRITE(*,*) "Recursive DLARFT. Backwards, Col"
+
+         WRITE(*,*) "representation norm: ", NORM_REPRES
+         WRITE(*,*) "orthogonal norm:     ", NORM_ORTH
+
          ! Copy Qs back into Q
          CALL DLACPY('ALL', M, N, Qs, M, Q, M)
 
+c----------------------------------------------------------------------
+         ! Above but STOREV = 'R'
+         DIRECT = 'B'
+         STOREV = 'R'
+         ! Set T to be all 0s
+         DO I = 1, N
+            DO J = 1, N
+               T(I,J) = ZERO
+            END DO
+         END DO
+         ! Copy Qs into Qt
+         DO I = 1, N
+            DO J = 1, M
+               Qt(I,J) = Qs(J,I)
+            END DO
+         END DO
+         ! Call my dlarft implementation
+         CALL MY_DLARFT_REC(DIRECT, STOREV, M, N, Qt, N, TAU, T, N)
+         ! Ensure that T is lower triangular
+         NORM_REPRES = 0
+         DO I = 1, N-1
+            DO J = I+1, N
+               NORM_REPRES = NORM_REPRES + T(I,J) * T(I,J)
+               IF(T(I,J).NE.ZERO) THEN
+                  WRITE(*,*) "I = ", I, "J = ", J
+               END IF
+            END DO
+         END DO
+         IF(NORM_REPRES.NE.ZERO) THEN
+            WRITE(*,*) "The upper triangular part of T was touched"
+            RETURN
+         END IF
+         ! Getting to this stage means that T is lower triangular. 
+         ! So, we copy T^\top into the upper part of Q
+         DO I = 1, N
+            DO J = 1, I
+               Q(J,I) = T(I,J)
+            END DO
+         END DO
+         ! Next, we check how accurate T was!
+         CALL MY_DORGKR(M, N, Q, M)
+         
+         ALLOCATE(WORKMAT(N,N))
+         CALL DLASET('A', N,N, ZERO, ZERO, WORKMAT, N)
+         CALL DSYRK('Upper', 'Transpose', N, M, ONE, Q, M, ZERO,
+     $         WORKMAT, N)
+
+         DO I = 1, N
+            WORKMAT(I,I) = WORKMAT(I,I) - 1
+         END DO
+
+         NORM_ORTH = DLANGE('Frobenius', N, N, WORKMAT, N, WORK)
+
+         DEALLOCATE(WORKMAT)
+         ALLOCATE(WORKMAT(M,N))
+         CALL DLACPY('All', M, N, Q, M, WORKMAT, M)
+         CALL DTRMM('Right', 'Upper', 'No-transpose', 'non-unit',
+     $      M, N, ONE, A, M, WORKMAT, M)
+
+         DO I = 1, M
+            DO J = 1, N
+               WORKMAT(I,J) = WORKMAT(I,J) - As(I,J)
+            END DO
+         END DO
+         NORM_REPRES = DLANGE('Frobenius', M, N, WORKMAT,
+     $      M, WORK)
+         NORM_REPRES = NORM_REPRES / NORMA
+
+         DEALLOCATE(WORKMAT)
+
+         WRITE(*,*) "Recursive DLARFT. Backwards, Row"
+
+         WRITE(*,*) "representation norm: ", NORM_REPRES
+         WRITE(*,*) "orthogonal norm:     ", NORM_ORTH
+
+         ! Copy Qs back into Q
+         CALL DLACPY('ALL', M, N, Qs, M, Q, M)
+
+c----------------------------------------------------------------------
          ! Compute the triangular factor T
          CALL MY_DLARFT_UT(M, N, Q, M, TAU, Q, M)
 
