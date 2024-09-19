@@ -22,7 +22,7 @@
          ! Parameters
          DOUBLE PRECISION ONE, ZERO
          INTEGER           NEG_ONE
-         PARAMETER(ONE=1.0D+0, ZERO=0, NEG_ONE=-1)
+         PARAMETER(ONE=1.0D+0, ZERO=0.0D+0, NEG_ONE=-1)
 
          ALLOCATE(A(M,N))
          ALLOCATE(At(N,M))
@@ -96,6 +96,7 @@ c----------------------------------------------------------------------
 
          WRITE(*,*) "representation norm: ", NORM_REPRES
          WRITE(*,*) "orthogonal norm:     ", NORM_ORTH
+         RETURN
 c----------------------------------------------------------------------
          ! Above but STOREV = 'R'
          DIRECT = 'F'
