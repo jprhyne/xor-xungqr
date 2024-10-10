@@ -11,8 +11,9 @@ clean:
 
 objectFiles: 
 	$(MAKE) -C ../src all
+	$(MAKE) -C ../referenceFiles all
 
-driver_dlarft.exe: driver_dlarft.o test_dlarft.o $(srcObjs) $(depObjs)
+driver_dlarft.exe: driver_dlarft.o test_dlarft.o ../referenceFiles/dlarft.o $(srcObjs) $(depObjs)
 	$(FC) $(CFLAGS) $^ $(OPTBLAS) -o $@
 
 driver_dlarft.o: driver_dlarft.c
