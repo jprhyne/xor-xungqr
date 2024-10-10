@@ -3,7 +3,7 @@
          INTEGER  M, N
 
          ! Local variables
-         DOUBLE PRECISION  NORMA, NORM_ORTH, NORM_REPRES, TMP
+         DOUBLE PRECISION  NORMT, NORM_FORWARD, TMP, EPS
          INTEGER           LWORK, I, J, INFO
          CHARACTER         STOREV, DIRECT
          ! Local arrays
@@ -22,7 +22,7 @@
          ! Parameters
          DOUBLE PRECISION ONE, ZERO
          INTEGER           NEG_ONE
-         PARAMETER(ONE=1.0D+0, ZERO=0, NEG_ONE=-1)
+         PARAMETER(ONE=1.0D+0, ZERO=0.0D+0, NEG_ONE=-1)
 
          ALLOCATE(A(M,N))
          ALLOCATE(At(N,M))
@@ -32,17 +32,17 @@
          ALLOCATE(Qs(M,N))
          ALLOCATE(Qt(N,M))
          ALLOCATE(Qts(N,M))
-         ALLOCATE(WORK(1))
          ALLOCATE(TAU(N))
          ALLOCATE(T(N,N))
          ALLOCATE(Ts(N,N))
+         EPS = EPSILON(ONE)
          ! Generate a random A
          CALL RANDOM_NUMBER(A)
 
          CALL DLACPY('All', M, N, A, M, As, M)
-         NORMA = DLANGE('Frobenius', M, N, A, M, WORK)
 c----------------------------------------------------------------------
          ! A = QR
+         ALLOCATE(WORK(1))
          CALL DGEQRF(M, N, A, M, TAU, WORK, NEG_ONE, INFO)
          LWORK = WORK(1)
          DEALLOCATE(WORK)
@@ -55,49 +55,79 @@ c----------------------------------------------------------------------
          CALL DLACPY('All', M, N, A, M, Qs, M)
 
          DEALLOCATE(WORK)
+         ! Set T and Ts to be 0
+         DO I = 1, N
+            DO J = 1, N
+               T(I,J)  = ZERO
+               Ts(I,J) = ZERO
+            END DO
+         END DO
          ! Compute the triangular factor T
          DIRECT = 'F'
          STOREV = 'C'
-         CALL MY_DLARFT_REC(DIRECT, STOREV, M, N, Q, M, TAU, Q, M)
-
-         ! Test the results
-         ! Now call MY_DORGKR
-         CALL MY_DORGKR(M, N, Q, M)
-         
-         ALLOCATE(WORKMAT(N,N))
-         CALL DLASET('A', N,N, ZERO, ZERO, WORKMAT, N)
-         CALL DSYRK('Upper', 'Transpose', N, M, ONE, Q, M, ZERO,
-     $         WORKMAT, N)
-
-         DO I = 1, N
-            WORKMAT(I,I) = WORKMAT(I,I) - 1
-         END DO
-
-         NORM_ORTH = DLANGE('Frobenius', N, N, WORKMAT, N, WORK)
-
-         DEALLOCATE(WORKMAT)
-         ALLOCATE(WORKMAT(M,N))
-         CALL DLACPY('All', M, N, Q, M, WORKMAT, M)
-         CALL DTRMM('Right', 'Upper', 'No-transpose', 'non-unit',
-     $      M, N, ONE, A, M, WORKMAT, M)
-
-         DO I = 1, M
-            DO J = 1, N
-               WORKMAT(I,J) = WORKMAT(I,J) - As(I,J)
+         CALL MY_DLARFT_REC(DIRECT, STOREV, M, N, Q, M, TAU, T, N)
+         ! Ensure that T is upper triangular
+         NORM_FORWARD = 0.0D+0
+         DO I = 2, N
+            DO J = 1, I-1
+               NORM_FORWARD = NORM_FORWARD + T(I,J) * T(I,J)
+               IF(T(I,J).NE.ZERO) THEN
+                  WRITE(*,*) "I = ", I, "J = ", J
+               END IF
             END DO
          END DO
-         NORM_REPRES = DLANGE('Frobenius', M, N, WORKMAT,
-     $      M, WORK)
-         NORM_REPRES = NORM_REPRES / NORMA
+         IF(NORM_FORWARD.NE.ZERO) THEN
+            WRITE(*,*) "The lower triangular part of T was touched"
+            GOTO 10
+         END IF
+         ! Make sure that Q was not touched
+         NORM_FORWARD = 0.0D+0
+         DO I = 1, M
+            DO J = 1, N
+               TMP = Q(I,J) - Qs(I,J)
+               NORM_FORWARD = NORM_FORWARD + TMP*TMP
+               IF(TMP.NE.ZERO) THEN
+                  WRITE(*,*) "I = ", I, "J = ", J
+               END IF
+            END DO
+         END DO
+         IF(NORM_FORWARD.NE.ZERO) THEN
+            WRITE(*,*) "A was changed"
+            GOTO 10
+         END IF
 
-         DEALLOCATE(WORKMAT)
+         ! We compare the result to the existing dlarft reference implementation
+         CALL DLARFT_REF(DIRECT, STOREV, M, N, Q, M, TAU, Ts, N)
+         ! Test the results
+         NORM_FORWARD = 0.0D+0
+         NORMT = DLANGE('Frobenius', N, N, Ts, N, WORK)
+
+         DO I = 1, N
+            DO J = 1, N
+               TMP = Ts(I,J) - T(I,J)
+               TMP = TMP * TMP
+               NORM_FORWARD = NORM_FORWARD + TMP
+               IF(TMP.GT.EPS*NORMT) THEN
+                  WRITE(*,*) "I: ", I, "J: ", J, "Val: ", TMP
+               END IF
+            END DO
+         END DO
+
+         NORM_FORWARD = SQRT(NORM_FORWARD)
 
          WRITE(*,*) "Recursive DLARFT. Forward, Column"
 
-         WRITE(*,*) "representation norm: ", NORM_REPRES
-         WRITE(*,*) "orthogonal norm:     ", NORM_ORTH
+         WRITE(*,*) "Forward Error with Reference DLARFT: ", 
+     $               NORM_FORWARD/NORMT
 c----------------------------------------------------------------------
          ! Above but STOREV = 'R'
+         ! Set T and Ts to be 0
+         DO I = 1, N
+            DO J = 1, N
+               T(I,J)  = ZERO
+               Ts(I,J) = ZERO
+            END DO
+         END DO
          DIRECT = 'F'
          STOREV = 'R'
          ! A = LQ
@@ -118,96 +148,60 @@ c----------------------------------------------------------------------
          ! Now, we have the reflectors for Q. Store this in Ats in order
          ! to store L and ensure we don't modify the reflectors on exit
          CALL DLACPY('All', N, M, At, N, Ats, N)
-         ! Set T to be all 0s
-         DO I = 1, N
-            DO J = 1, N
-               T(I,J) = ZERO
-            END DO
-         END DO
          ! Call my dlarft implementation
          CALL MY_DLARFT_REC(DIRECT, STOREV, M, N, At, N, TAU, T, N)
          ! Ensure that T is upper triangular
-         NORM_REPRES = 0
+         NORM_FORWARD = 0
          DO I = 2, N
             DO J = 1, I-1
-               NORM_REPRES = NORM_REPRES + T(I,J) * T(I,J)
+               NORM_FORWARD = NORM_FORWARD + T(I,J) * T(I,J)
                IF(T(I,J).NE.ZERO) THEN
                   WRITE(*,*) "I = ", I, "J = ", J
                END IF
             END DO
          END DO
-         IF(NORM_REPRES.NE.ZERO) THEN
+         IF(NORM_FORWARD.NE.ZERO) THEN
             WRITE(*,*) "The lower triangular part of T was touched"
-            RETURN
+            GOTO 10
          END IF
          ! Make sure that At was not touched
-         NORM_REPRES = 0.0D+0
+         NORM_FORWARD = 0.0D+0
          DO J = 1, M
             DO I = 1, N
                TMP = Ats(I,J) - At(I,J)
-               NORM_REPRES = NORM_REPRES + TMP*TMP
+               NORM_FORWARD = NORM_FORWARD + TMP*TMP
                IF(TMP.NE.ZERO) THEN
                   WRITE(*,*) "I = ", I, "J = ", J
                END IF
             END DO
          END DO
-         IF(NORM_REPRES.NE.ZERO) THEN
+         IF(NORM_FORWARD.NE.ZERO) THEN
             WRITE(*,*) "A was changed"
-            RETURN
+            GOTO 10
          END IF
          ! Getting to this stage means that T is upper triangular. 
-         ! We must now construct Q in order to check if we have a correct T
-         ! Right now, I only have an implementation for my_dorgkr for when
-         ! we want to compute the Q from the QR factorization. So, we will 
-         ! Copy over the transpose of the reflectors into Q
-         DO I = 1, N
-            DO J = I+1, M
-               Q(J,I) = At(I,J)
-            END DO
-         END DO
-         ! Copy in the T matrix to the upper triangular part of Q
-         DO I = 1, N
-            DO J = I, N
-               Q(I,J) = T(I,J)
-            END DO
-         END DO
-         ! Now we can call DORGKR
-         CALL MY_DORGKR(M, N, Q, M)
-         ! Next, we test that Q is orthogonal
-         ALLOCATE(WORKMAT(N,N))
-         CALL DLASET('A', N,N, ZERO, ZERO, WORKMAT, N)
-         CALL DSYRK('Upper', 'Transpose', N, M, ONE, Q, M, ZERO,
-     $         WORKMAT, N)
+         ! Now, we compare our result against dlarft_ref
+         CALL DLARFT_REF(DIRECT, STOREV, M, N, At, N, TAU, Ts, N)
+         ! Test the results
+         NORM_FORWARD = 0.0D+0
+         NORMT = DLANGE('Frobenius', N, N, Ts, N, WORK)
 
          DO I = 1, N
-            WORKMAT(I,I) = WORKMAT(I,I) - 1
-         END DO
-
-         NORM_ORTH = DLANGE('Frobenius', N, N, WORKMAT, N, WORK)
-
-         DEALLOCATE(WORKMAT)
-         ALLOCATE(WORKMAT(M,N))
-         ! Now, we test that A = Q(L^\top) = QR
-         CALL DLACPY('All', M, N, Q, M, WORKMAT, M)
-         CALL DTRMM('Right', 'Lower', 'Transpose', 'Non-unit',
-     $      M, N, ONE, At, N, WORKMAT, M)
-
-         DO I = 1, M
             DO J = 1, N
-               WORKMAT(I,J) = WORKMAT(I,J) - As(I,J)
+               TMP = Ts(I,J) - T(I,J)
+               TMP = TMP * TMP
+               NORM_FORWARD = NORM_FORWARD + TMP
+               IF(TMP.GT.EPS*NORMT) THEN
+                  WRITE(*,*) "I: ", I, "J: ", J, "Val: ", TMP
+               END IF
             END DO
          END DO
-         NORM_REPRES = DLANGE('Frobenius', M, N, WORKMAT,
-     $      M, WORK)
-         NORM_REPRES = NORM_REPRES / NORMA
 
-         DEALLOCATE(WORKMAT)
-
+         NORM_FORWARD = SQRT(NORM_FORWARD)
          WRITE(*,*) "Recursive DLARFT. Forward, Row"
 
-         WRITE(*,*) "representation norm: ", NORM_REPRES
-         WRITE(*,*) "orthogonal norm:     ", NORM_ORTH
-         RETURN
+         WRITE(*,*) "Forward Error with Reference DLARFT: ", 
+     $               NORM_FORWARD/NORMT
 c----------------------------------------------------------------------
          ! Above but DIRECT = 'B' and STOREV = 'C'
          ! A = QL
@@ -222,6 +216,9 @@ c----------------------------------------------------------------------
          DEALLOCATE(WORK)
          ALLOCATE(WORK(LWORK))
          CALL DGEQLF(M, N, A, M, TAU, WORK, LWORK, INFO)
+         DEALLOCATE(WORK)
+         ! Copy into Q
+         CALL DLACPY('All', M, N, A, M, Q, M)
          ! Set T to be all 0s
          DO I = 1, N
             DO J = 1, N
@@ -230,35 +227,58 @@ c----------------------------------------------------------------------
             END DO
          END DO
          ! Call my dlarft implementation
-         CALL MY_DLARFT_REC(DIRECT, STOREV, M, N, A, M, TAU, T, N)
-         ! Ensure that A was not touched
-         ! Since we don't have a nice helper (yet?) to compute the Q associated
-         ! with the QL that takes in a T matrix, we test the accuracy of T by
-         ! comparing it against the result that DLARFT_REF will give
-         !
-         ! Call reference dlarft
-         CALL DLARFT(DIRECT, STOREV, M, N, A, M, TAU, Ts, N)
-         
-         ! Compute the forward error
-         NORM_REPRES = 0.0D+0
+         CALL MY_DLARFT_REC(DIRECT, STOREV, M, N, Q, M, TAU, T, N)
+         ! Ensure that T is lower triangular
+         NORM_FORWARD = 0.0D+0
+         DO I = 1, N-1
+            DO J = I+1, N
+               NORM_FORWARD = NORM_FORWARD + T(I,J) * T(I,J)
+               IF(T(I,J).NE.ZERO) THEN
+                  WRITE(*,*) "I = ", I, "J = ", J
+               END IF
+            END DO
+         END DO
+         IF(NORM_FORWARD.NE.ZERO) THEN
+            WRITE(*,*) "The upper triangular part of T was touched"
+            GOTO 10
+         END IF
+         ! Make sure that Q was not touched
+         NORM_FORWARD = 0.0D+0
+         DO I = 1, M
+            DO J = 1, N
+               TMP = Q(I,J) - A(I,J)
+               NORM_FORWARD = NORM_FORWARD + TMP*TMP
+               IF(TMP.NE.ZERO) THEN
+                  WRITE(*,*) "I = ", I, "J = ", J
+               END IF
+            END DO
+         END DO
+         IF(NORM_FORWARD.NE.ZERO) THEN
+            WRITE(*,*) "A was changed"
+            GOTO 10
+         END IF
+         ! Now, we compare our result against dlarft_rec
+         CALL DLARFT_REF(DIRECT, STOREV, M, N, Q, M, TAU, Ts, N)
+         ! Test the results
+         NORM_FORWARD = 0.0D+0
+         NORMT = DLANGE('Frobenius', N, N, Ts, N, WORK)
+
          DO I = 1, N
             DO J = 1, N
                TMP = Ts(I,J) - T(I,J)
-               NORM_REPRES = NORM_REPRES + TMP*TMP
+               NORM_FORWARD = NORM_FORWARD + TMP * TMP
+               IF(TMP.GT.EPS*NORMT) THEN
+                  WRITE(*,*) "I: ", I, "J: ", J, "Val: ", TMP
+               END IF
             END DO
          END DO
-         ! Compute NormT
-         TMP = 0.0D+0
-         DO I = 1, N
-            DO J = 1, N
-               TMP = TMP + Ts(I,J)*Ts(I,J)
-            END DO
-         END DO
-         NORM_REPRES = SQRT(NORM_REPRES)/TMP
+
+         NORM_FORWARD = SQRT(NORM_FORWARD)
 
          WRITE(*,*) "Recursive DLARFT. Backwards, Col"
 
-         WRITE(*,*) "|T_{mine} - T_{ref}|_F/|T_{ref}|_F: ", NORM_REPRES
+         WRITE(*,*) "Forward Error with Reference DLARFT: ", 
+     $               NORM_FORWARD/NORMT
 c----------------------------------------------------------------------
          ! Above but STOREV = 'R'
          ! A = RQ
@@ -276,6 +296,8 @@ c----------------------------------------------------------------------
          DEALLOCATE(WORK)
          ALLOCATE(WORK(LWORK))
          CALL DGERQF(N, M, At, N, TAU, WORK, LWORK, INFO)
+         DEALLOCATE(WORK)
+         CALL DLACPY('All', N, M, At, N, Qt, N)
          ! Set T to be all 0s
          DO I = 1, N
             DO J = 1, N
@@ -284,35 +306,53 @@ c----------------------------------------------------------------------
             END DO
          END DO
          ! Call my dlarft implementation
-         CALL MY_DLARFT_REC(DIRECT, STOREV, M, N, A, M, TAU, T, N)
-         ! Ensure that A was not touched
-         ! Since we don't have a nice helper (yet?) to compute the Q associated
-         ! with the QL that takes in a T matrix, we test the accuracy of T by
-         ! comparing it against the result that DLARFT_REF will give
-         !
+         CALL MY_DLARFT_REC(DIRECT, STOREV, M, N, Qt, N, TAU, T, N)
+         ! Ensure that T is lower triangular
+         NORM_FORWARD = 0.0D+0
+         DO I = 1, N-1
+            DO J = I+1, N
+               NORM_FORWARD = NORM_FORWARD + T(I,J) * T(I,J)
+               IF(T(I,J).NE.ZERO) THEN
+                  WRITE(*,*) "I = ", I, "J = ", J
+               END IF
+            END DO
+         END DO
+         IF(NORM_FORWARD.NE.ZERO) THEN
+            WRITE(*,*) "The upper triangular part of T was touched"
+            GOTO 10
+         END IF
+         ! Ensure that Qt was not touched
+         DO J = 1, M
+            DO I = 1, N
+               TMP = Qt(I, J) - At(I, J)
+               TMP = TMP*TMP
+               IF(TMP.NE.0) THEN
+                  WRITE(*,*) "A was modified"
+                  GOTO 10
+               END IF
+            END DO
+         END DO
          ! Call reference dlarft
-         CALL DLARFT(DIRECT, STOREV, M, N, A, M, TAU, Ts, N)
+         CALL DLARFT_REF(DIRECT, STOREV, M, N, At, N, TAU, Ts, N)
          
+         NORMT = DLANGE('Frobenius', N, N, Ts, N, WORK)
          ! Compute the forward error
-         NORM_REPRES = 0.0D+0
+         NORM_FORWARD = 0.0D+0
          DO I = 1, N
             DO J = 1, N
                TMP = Ts(I,J) - T(I,J)
-               NORM_REPRES = NORM_REPRES + TMP*TMP
+               NORM_FORWARD = NORM_FORWARD + TMP*TMP
+               IF(TMP.GT.NORMT*EPS) THEN
+                  WRITE(*,*) "I = ", I, "J = ", J
+               END IF
             END DO
          END DO
-         ! Compute NormT
-         TMP = 0.0D+0
-         DO I = 1, N
-            DO J = 1, N
-               TMP = TMP + Ts(I,J)*Ts(I,J)
-            END DO
-         END DO
-         NORM_REPRES = SQRT(NORM_REPRES)/TMP
+         NORM_FORWARD = SQRT(NORM_FORWARD)/NORMT
 
          WRITE(*,*) "Recursive DLARFT. Backwards, Row"
 
-         WRITE(*,*) "|T_{mine} - T_{ref}|_F/|T_{ref}|_F: ", NORM_REPRES
+         WRITE(*,*) "|T_{mine} - T_{ref}|_F/|T_{ref}|_F: ", NORM_FORWARD
+         GOTO 10
 
 c----------------------------------------------------------------------
          ! Copy Qs back into Q
@@ -333,8 +373,6 @@ c----------------------------------------------------------------------
             WORKMAT(I,I) = WORKMAT(I,I) - 1
          END DO
 
-         NORM_ORTH = DLANGE('Frobenius', N, N, WORKMAT, N, WORK)
-
          DEALLOCATE(WORKMAT)
          ALLOCATE(WORKMAT(M,N))
          CALL DLACPY('All', M, N, Q, M, WORKMAT, M)
@@ -346,24 +384,20 @@ c----------------------------------------------------------------------
                WORKMAT(I,J) = WORKMAT(I,J) - As(I,J)
             END DO
          END DO
-         NORM_REPRES = DLANGE('Frobenius', M, N, WORKMAT,
-     $      M, WORK)
-         NORM_REPRES = NORM_REPRES / NORMA
 
          DEALLOCATE(WORKMAT)
 
-         WRITE(*,*) "UT DLARFT"
 
-         WRITE(*,*) "representation norm: ", NORM_REPRES
-         WRITE(*,*) "orthogonal norm:     ", NORM_ORTH
+         WRITE(*,*) "representation norm: ", NORM_FORWARD
 
-         DEALLOCATE(As)
-         DEALLOCATE(Q)
-         DEALLOCATE(A)
+   10    DEALLOCATE(A)
          DEALLOCATE(At)
          DEALLOCATE(Ats)
-         DEALLOCATE(At)
+         DEALLOCATE(As)
+         DEALLOCATE(Q)
          DEALLOCATE(Qs)
+         DEALLOCATE(Qt)
+         DEALLOCATE(Qts)
          DEALLOCATE(TAU)
          DEALLOCATE(T)
          DEALLOCATE(Ts)
