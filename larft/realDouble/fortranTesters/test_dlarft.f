@@ -4,7 +4,7 @@
 
          ! Local variables
          DOUBLE PRECISION  NORMT, NORM_FORWARD, TMP, EPS
-         INTEGER           LWORK, I, J, INFO
+         INTEGER           LWORK, I, J, K, INFO
          CHARACTER         STOREV, DIRECT
          ! Local arrays
          DOUBLE PRECISION, ALLOCATABLE :: A(:,:), Q(:,:), As(:,:), 
@@ -12,6 +12,9 @@
      $            Qts(:,:), Ts(:,:), At(:,:), Ats(:,:)
 
          DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: TAU
+
+         ! Intrinsic functions
+         INTRINSIC MIN
 
          ! External Subroutines
          EXTERNAL DLACPY, DGEQRF, DLARFT, DTVT, MY_DLARFT
@@ -24,6 +27,8 @@
          INTEGER           NEG_ONE
          PARAMETER(ONE=1.0D+0, ZERO=0.0D+0, NEG_ONE=-1)
 
+         K = MIN(M,N)
+
          ALLOCATE(A(M,N))
          ALLOCATE(At(N,M))
          ALLOCATE(Ats(N,M))
@@ -32,9 +37,9 @@
          ALLOCATE(Qs(M,N))
          ALLOCATE(Qt(N,M))
          ALLOCATE(Qts(N,M))
-         ALLOCATE(TAU(N))
-         ALLOCATE(T(N,N))
-         ALLOCATE(Ts(N,N))
+         ALLOCATE(TAU(K))
+         ALLOCATE(T(K,K))
+         ALLOCATE(Ts(K,K))
          EPS = EPSILON(ONE)
          ! Generate a random A
          CALL RANDOM_NUMBER(A)
@@ -56,8 +61,8 @@ c----------------------------------------------------------------------
 
          DEALLOCATE(WORK)
          ! Set T and Ts to be 0
-         DO I = 1, N
-            DO J = 1, N
+         DO I = 1, K
+            DO J = 1, K
                T(I,J)  = ZERO
                Ts(I,J) = ZERO
             END DO
@@ -65,10 +70,10 @@ c----------------------------------------------------------------------
          ! Compute the triangular factor T
          DIRECT = 'F'
          STOREV = 'C'
-         CALL MY_DLARFT_REC(DIRECT, STOREV, M, N, Q, M, TAU, T, N)
+         CALL MY_DLARFT_REC(DIRECT, STOREV, M, K, Q, M, TAU, T, K)
          ! Ensure that T is upper triangular
          NORM_FORWARD = 0.0D+0
-         DO I = 2, N
+         DO I = 2, K
             DO J = 1, I-1
                NORM_FORWARD = NORM_FORWARD + T(I,J) * T(I,J)
                IF(T(I,J).NE.ZERO) THEN
@@ -97,13 +102,13 @@ c----------------------------------------------------------------------
          END IF
 
          ! We compare the result to the existing dlarft reference implementation
-         CALL DLARFT_REF(DIRECT, STOREV, M, N, Q, M, TAU, Ts, N)
+         CALL DLARFT_REF(DIRECT, STOREV, M, K, Q, M, TAU, Ts, K)
          ! Test the results
          NORM_FORWARD = 0.0D+0
-         NORMT = DLANGE('Frobenius', N, N, Ts, N, WORK)
+         NORMT = DLANGE('Frobenius', K, K, Ts, K, WORK)
 
-         DO I = 1, N
-            DO J = 1, N
+         DO I = 1, K
+            DO J = 1, K
                TMP = Ts(I,J) - T(I,J)
                TMP = TMP * TMP
                NORM_FORWARD = NORM_FORWARD + TMP
@@ -114,16 +119,20 @@ c----------------------------------------------------------------------
          END DO
 
          NORM_FORWARD = SQRT(NORM_FORWARD)
+         ! If T is non-trivial, then we scale it by NORMT
+         IF (NORMT.GT.0) THEN
+            NORM_FORWARD = NORM_FORWARD/NORMT
+         END IF
 
          WRITE(*,*) "Recursive DLARFT. Forward, Column"
 
          WRITE(*,*) "Forward Error with Reference DLARFT: ", 
-     $               NORM_FORWARD/NORMT
+     $               NORM_FORWARD
 c----------------------------------------------------------------------
          ! Above but STOREV = 'R'
          ! Set T and Ts to be 0
-         DO I = 1, N
-            DO J = 1, N
+         DO I = 1, K
+            DO J = 1, K
                T(I,J)  = ZERO
                Ts(I,J) = ZERO
             END DO
@@ -149,10 +158,10 @@ c----------------------------------------------------------------------
          ! to store L and ensure we don't modify the reflectors on exit
          CALL DLACPY('All', N, M, At, N, Ats, N)
          ! Call my dlarft implementation
-         CALL MY_DLARFT_REC(DIRECT, STOREV, M, N, At, N, TAU, T, N)
+         CALL MY_DLARFT_REC(DIRECT, STOREV, M, K, At, N, TAU, T, K)
          ! Ensure that T is upper triangular
          NORM_FORWARD = 0
-         DO I = 2, N
+         DO I = 2, K
             DO J = 1, I-1
                NORM_FORWARD = NORM_FORWARD + T(I,J) * T(I,J)
                IF(T(I,J).NE.ZERO) THEN
@@ -181,13 +190,13 @@ c----------------------------------------------------------------------
          END IF
          ! Getting to this stage means that T is upper triangular. 
          ! Now, we compare our result against dlarft_ref
-         CALL DLARFT_REF(DIRECT, STOREV, M, N, At, N, TAU, Ts, N)
+         CALL DLARFT_REF(DIRECT, STOREV, M, K, At, N, TAU, Ts, K)
          ! Test the results
          NORM_FORWARD = 0.0D+0
-         NORMT = DLANGE('Frobenius', N, N, Ts, N, WORK)
+         NORMT = DLANGE('Frobenius', K, K, Ts, K, WORK)
 
-         DO I = 1, N
-            DO J = 1, N
+         DO I = 1, K
+            DO J = 1, K
                TMP = Ts(I,J) - T(I,J)
                TMP = TMP * TMP
                NORM_FORWARD = NORM_FORWARD + TMP
@@ -198,10 +207,14 @@ c----------------------------------------------------------------------
          END DO
 
          NORM_FORWARD = SQRT(NORM_FORWARD)
+         ! If T is non-trivial, then we scale it by NORMT
+         IF (NORMT.GT.0) THEN
+            NORM_FORWARD = NORM_FORWARD/NORMT
+         END IF
          WRITE(*,*) "Recursive DLARFT. Forward, Row"
 
          WRITE(*,*) "Forward Error with Reference DLARFT: ", 
-     $               NORM_FORWARD/NORMT
+     $               NORM_FORWARD
 c----------------------------------------------------------------------
          ! Above but DIRECT = 'B' and STOREV = 'C'
          ! A = QL
@@ -220,18 +233,18 @@ c----------------------------------------------------------------------
          ! Copy into Q
          CALL DLACPY('All', M, N, A, M, Q, M)
          ! Set T to be all 0s
-         DO I = 1, N
-            DO J = 1, N
+         DO I = 1, K
+            DO J = 1, K
                T(I,J) = ZERO
                Ts(I,J) = ZERO
             END DO
          END DO
          ! Call my dlarft implementation
-         CALL MY_DLARFT_REC(DIRECT, STOREV, M, N, Q, M, TAU, T, N)
+         CALL MY_DLARFT_REC(DIRECT, STOREV, M, K, Q, M, TAU, T, K)
          ! Ensure that T is lower triangular
          NORM_FORWARD = 0.0D+0
-         DO I = 1, N-1
-            DO J = I+1, N
+         DO I = 1, K-1
+            DO J = I+1, K
                NORM_FORWARD = NORM_FORWARD + T(I,J) * T(I,J)
                IF(T(I,J).NE.ZERO) THEN
                   WRITE(*,*) "I = ", I, "J = ", J
@@ -258,13 +271,13 @@ c----------------------------------------------------------------------
             GOTO 10
          END IF
          ! Now, we compare our result against dlarft_rec
-         CALL DLARFT_REF(DIRECT, STOREV, M, N, Q, M, TAU, Ts, N)
+         CALL DLARFT_REF(DIRECT, STOREV, M, K, Q, M, TAU, Ts, K)
          ! Test the results
          NORM_FORWARD = 0.0D+0
-         NORMT = DLANGE('Frobenius', N, N, Ts, N, WORK)
+         NORMT = DLANGE('Frobenius', K, K, Ts, K, WORK)
 
-         DO I = 1, N
-            DO J = 1, N
+         DO I = 1, K
+            DO J = 1, K
                TMP = Ts(I,J) - T(I,J)
                NORM_FORWARD = NORM_FORWARD + TMP * TMP
                IF(TMP.GT.EPS*NORMT) THEN
@@ -274,11 +287,15 @@ c----------------------------------------------------------------------
          END DO
 
          NORM_FORWARD = SQRT(NORM_FORWARD)
+         ! If T is non-trivial, then we scale it by NORMT
+         IF (NORMT.GT.0) THEN
+            NORM_FORWARD = NORM_FORWARD/NORMT
+         END IF
 
          WRITE(*,*) "Recursive DLARFT. Backwards, Col"
 
          WRITE(*,*) "Forward Error with Reference DLARFT: ", 
-     $               NORM_FORWARD/NORMT
+     $               NORM_FORWARD
 c----------------------------------------------------------------------
          ! Above but STOREV = 'R'
          ! A = RQ
@@ -299,18 +316,18 @@ c----------------------------------------------------------------------
          DEALLOCATE(WORK)
          CALL DLACPY('All', N, M, At, N, Qt, N)
          ! Set T to be all 0s
-         DO I = 1, N
-            DO J = 1, N
+         DO I = 1, K
+            DO J = 1, K
                T(I,J) = ZERO
                Ts(I,J)= ZERO
             END DO
          END DO
          ! Call my dlarft implementation
-         CALL MY_DLARFT_REC(DIRECT, STOREV, M, N, Qt, N, TAU, T, N)
+         CALL MY_DLARFT_REC(DIRECT, STOREV, M, K, Qt, N, TAU, T, K)
          ! Ensure that T is lower triangular
          NORM_FORWARD = 0.0D+0
-         DO I = 1, N-1
-            DO J = I+1, N
+         DO I = 1, K-1
+            DO J = I+1, K
                NORM_FORWARD = NORM_FORWARD + T(I,J) * T(I,J)
                IF(T(I,J).NE.ZERO) THEN
                   WRITE(*,*) "I = ", I, "J = ", J
@@ -333,25 +350,31 @@ c----------------------------------------------------------------------
             END DO
          END DO
          ! Call reference dlarft
-         CALL DLARFT_REF(DIRECT, STOREV, M, N, At, N, TAU, Ts, N)
+         CALL DLARFT_REF(DIRECT, STOREV, M, K, At, N, TAU, Ts, K)
          
-         NORMT = DLANGE('Frobenius', N, N, Ts, N, WORK)
+         NORMT = DLANGE('Frobenius', K, K, Ts, K, WORK)
          ! Compute the forward error
          NORM_FORWARD = 0.0D+0
-         DO I = 1, N
-            DO J = 1, N
+         DO I = 1, K
+            DO J = 1, K
                TMP = Ts(I,J) - T(I,J)
                NORM_FORWARD = NORM_FORWARD + TMP*TMP
                IF(TMP.GT.NORMT*EPS) THEN
+                  WRITE(*,*) "forward error above eps for T"
                   WRITE(*,*) "I = ", I, "J = ", J
                END IF
             END DO
          END DO
-         NORM_FORWARD = SQRT(NORM_FORWARD)/NORMT
+         NORM_FORWARD = SQRT(NORM_FORWARD)
+         ! If T is non-trivial, then we scale it by NORMT
+         IF (NORMT.GT.0) THEN
+            NORM_FORWARD = NORM_FORWARD/NORMT
+         END IF
 
          WRITE(*,*) "Recursive DLARFT. Backwards, Row"
 
-         WRITE(*,*) "|T_{mine} - T_{ref}|_F/|T_{ref}|_F: ", NORM_FORWARD
+         WRITE(*,*) "Forward Error with Reference DLARFT: ", 
+     $      NORM_FORWARD
          GOTO 10
 
 c----------------------------------------------------------------------

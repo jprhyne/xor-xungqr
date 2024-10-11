@@ -11,7 +11,7 @@ c           n = k: 1/2 * (n^3-n)
          DOUBLE PRECISION  V(LDV,*), T(LDT,*), TAU(N)
 
          ! Local variables
-         INTEGER           I,J,L,INFO
+         INTEGER           I,J,L,MINNK
          LOGICAL           QR,LQ,QL,DIRF,COLV
          ! Parameters
          DOUBLE PRECISION ONE, NEG_ONE, ZERO
@@ -63,16 +63,18 @@ c           n = k: 1/2 * (n^3-n)
          ! Based on the algorithm of Elmroth and Gustavson,
          ! IBM J. Res. Develop. Vol 44 No. 4 July 2000.
 
-         IF(K.EQ.0) THEN
+         IF(K.EQ.0.OR.N.EQ.0) THEN
             RETURN
          END IF
          ! Base case
-         IF(K.EQ.1) THEN
+         IF(K.EQ.1.OR.N.EQ.1) THEN
             T(1,1) = TAU(1)
             RETURN
          END IF
 
          ! Beginning of executable statements
+!        MINNK = MIN(N,K)
+!        L = MINNK / 2
          L = K / 2
          ! Determine what kind of Q we need to compute
          ! We assume that if the user doesn't provide 'F' for DIRECT,
@@ -86,8 +88,8 @@ c           n = k: 1/2 * (n^3-n)
          LQ = DIRF.AND.(.NOT.COLV)
          ! QL happens when we have backward direction in column storage
          QL = (.NOT.DIRF).AND.COLV
-         ! The last case is LQ. Due to how we strucutured this, if the
-         ! above 3 are false, then LQ must be true, so we never store 
+         ! The last case is RQ. Due to how we strucutured this, if the
+         ! above 3 are false, then RQ must be true, so we never store 
          ! this
          ! RQ happens when we have backward direction in row storage
          !RQ = (.NOT.DIRF).AND.(.NOT.COLV)
@@ -95,6 +97,7 @@ c           n = k: 1/2 * (n^3-n)
 
          ! Compute T3
          IF(QR) THEN
+            ! If we are wide, then our 
             ! Compute T_1
             CALL MY_DLARFT_REC(DIRECT, STOREV, N, L, V, LDV, TAU, T, 
      $            LDT)
@@ -104,8 +107,8 @@ c           n = k: 1/2 * (n^3-n)
             ! Compute T_3 
             ! T_3 = V_{2,1}^\top
             DO J = 1, L
-               DO I = L+1, K
-                  T(J,I) = V(I,J)
+               DO I = 1, K-L
+                  T(J,L+I) = V(L+I,J)
                END DO
             END DO
             ! T_3 = V_{2,1}^\top * V_{2,2}
@@ -227,7 +230,7 @@ c           n = k: 1/2 * (n^3-n)
             CALL DTRMM('Left', 'Lower', 'No tranpose', 'Non-unit',
      $         L, K-L, NEG_ONE, T(K-L+1,K-L+1), LDT, T(K-L+1,1), LDT)
 
-            ! T_3 = -T_2T_3
+            ! T_3 = T_3T_1
             CALL DTRMM('Right', 'Lower', 'No tranpose', 'Non-unit',
      $         L, K-L, ONE, T, LDT, T(K-L+1,1), LDT)
          END IF
