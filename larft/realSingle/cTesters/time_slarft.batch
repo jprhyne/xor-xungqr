@@ -1,0 +1,14 @@
+#!/bin/env bash
+# time_dlarft.batch
+# batch job for running time_dlarft.sh on the alderaan cluster
+# Johnathan Rhyne
+#SBATCH --job-name=time_dlarft.sh
+#SBATCH --partition=math-alderaan
+#SBATCH --time=24:00:00
+#SBATCH --ntasks=9
+
+# In order to store the original matrix below, we need 12Gb in the largest test case (m=500000, n = 3200). We need 8*(5mn + n^2) bytes of memory for
+# our testing. So we need (5mn+n^2)/(1000^3) tasks. This is a little over 8. So we allocate 9
+
+dateString=$(date "+%d.%B.%Y")
+./time_slarft.sh > "slarft_timing.$dateString.txt"

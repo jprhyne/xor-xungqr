@@ -3,7 +3,7 @@ c           n = k: 1/2 * (n^3-n)
       RECURSIVE SUBROUTINE MY_DLARFT_REC( DIRECT, STOREV, N, K, V, LDV,
      $                                    TAU, T, LDT)
          IMPLICIT NONE
-         ! Arguemnts
+         ! Arguments
          ! Scalars
          INTEGER           N, K, LDV, LDT
          CHARACTER         DIRECT, STOREV
@@ -22,47 +22,6 @@ c           n = k: 1/2 * (n^3-n)
          ! External subroutines
          EXTERNAL          DTRMM,DGEMM,DLACPY
 
-         ! Break V apart into 6 components
-         ! V = |---------------|
-         !     |V_{1,1} 0      |
-         !     |V_{2,1} V_{2,2}|
-         !     |V_{3,1} V_{3,2}|
-         !     |---------------|
-         ! V_{1,1}\in\R^{k,k} unit lower triangular
-         ! V_{2,1}\in\R^{n-k,k} rectangular
-         ! V_{3,1}\in\R^{m-n,k} rectangular
-         ! 
-         ! V_{2,2}\in\R^{n-k,n-k} unit upper triangular
-         ! V_{3,2}\in\R^{m-n,n-k} rectangular
-
-         ! We will construct the T matrix 
-         ! T = |---------------| =  |--------|
-         !     |T_{1,1} T_{1,2}|    |T_1  T_3|
-         !     |0       T_{2,2}|    |0    T_2|
-         !     |---------------|    |--------|
-
-         ! T is the triangular factor attained from block reflectors. 
-         ! To motivate the structure, consider the product
-         !
-         ! (I - V_1T_1V_1^\top)(I - V_2T_2V_2^\top)
-         ! = I - V_1T_1V_1^\top - V_2T_2V_2^\top + V_1T_1V_1^\topV_2T_2V_2^\top
-         !
-         ! Define T_3 = -T_1V_1^\topV_2T_2
-         !
-         ! Then, we can define the matrix V as 
-         ! V = |-------|
-         !     |V_1 V_2|
-         !     |-------|
-         !
-         ! So, our product is equivalent to the matrix product
-         ! I - VTV^\top
-         ! So, we compute T_1, then T_2, then use these values to get T_3
-         !
-         ! The general scheme used is inspired by the approach inside DGEQRT3
-         ! which was (at the time of writing this code):
-         ! Based on the algorithm of Elmroth and Gustavson,
-         ! IBM J. Res. Develop. Vol 44 No. 4 July 2000.
-
          IF(K.EQ.0.OR.N.EQ.0) THEN
             RETURN
          END IF
@@ -73,8 +32,6 @@ c           n = k: 1/2 * (n^3-n)
          END IF
 
          ! Beginning of executable statements
-!        MINNK = MIN(N,K)
-!        L = MINNK / 2
          L = K / 2
          ! Determine what kind of Q we need to compute
          ! We assume that if the user doesn't provide 'F' for DIRECT,
@@ -97,7 +54,54 @@ c           n = k: 1/2 * (n^3-n)
 
          ! Compute T3
          IF(QR) THEN
-            ! If we are wide, then our 
+*
+*        Break V apart into 6 components
+*
+*        V = |---------------|
+*            |V_{1,1} 0      |
+*            |V_{2,1} V_{2,2}|
+*            |V_{3,1} V_{3,2}|
+*            |---------------|
+*
+*        V_{1,1}\in\R^{l,l}      unit lower triangular
+*        V_{2,1}\in\R^{k-l,l}    rectangular
+*        V_{3,1}\in\R^{n-k,l}    rectangular
+*        
+*        V_{2,2}\in\R^{k-l,k-l}  unit lower triangular
+*        V_{3,2}\in\R^{n-k,k-l}  rectangular
+*
+*        We will construct the T matrix 
+*        T = |---------------| = |--------|
+*            |T_{1,1} T_{1,2}|   |T_1  T_3|
+*            |0       T_{2,2}|   |0    T_2|
+*            |---------------|   |--------|
+*
+*        T is the triangular factor attained from block reflectors. 
+*        To motivate the structure, assume we have already computed T_1
+*        and T_2. Then collect the associated reflectors in V_1 and V_2
+*
+*        T_1\in\R^{l, l}         upper triangular
+*        T_2\in\R^{k-l, k-l}     upper triangular
+*        T_3\in\R^{l, k-l}       rectangular
+*
+*        Where l = floor(k/2)
+*
+*        Then, consider the product:
+*        
+*        (I - V_1T_1V_1')(I - V_2T_2V_2')
+*        = I - V_1T_1V_1' - V_2T_2V_2' + V_1T_1V_1'V_2T_2V_2'
+*        
+*        Define T_3 = -T_1V_1'V_2T_2
+*        
+*        Then, we can define the matrix V as 
+*        V = |-------|
+*            |V_1 V_2|
+*            |-------|
+*        
+*        So, our product is equivalent to the matrix product
+*        I - VTV'
+*        This means, we can compute T_1 and T_2, then use this information
+*        to compute T_3
             ! Compute T_1
             CALL MY_DLARFT_REC(DIRECT, STOREV, N, L, V, LDV, TAU, T, 
      $            LDT)
@@ -134,6 +138,54 @@ c           n = k: 1/2 * (n^3-n)
      $            L, K - L, ONE, T(L+1,L+1), LDT, T(1, L+1), LDT)
 
          ELSE IF(LQ) THEN
+*
+*        Break V apart into 6 components
+*
+*        V = |----------------------|
+*            |V_{1,1} V_{1,2} V{1,3}|
+*            |0       V_{2,2} V{2,3}|
+*            |----------------------|
+*
+*        V_{1,1}\in\R^{l,l}      unit upper triangular
+*        V_{1,2}\in\R^{l,k-l}    rectangular
+*        V_{1,3}\in\R^{l,n-k}    rectangular
+*        
+*        V_{2,2}\in\R^{k-l,k-l}  unit upper triangular
+*        V_{2,3}\in\R^{k-l,n-k}  rectangular
+*
+*        Where l = floor(k/2)
+*
+*        We will construct the T matrix 
+*        T = |---------------| = |--------|
+*            |T_{1,1} T_{1,2}|   |T_1  T_3|
+*            |0       T_{2,2}|   |0    T_2|
+*            |---------------|   |--------|
+*
+*        T is the triangular factor attained from block reflectors. 
+*        To motivate the structure, assume we have already computed T_1
+*        and T_2. Then collect the associated reflectors in V_1 and V_2
+*
+*        T_1\in\R^{l, l}         upper triangular
+*        T_2\in\R^{k-l, k-l}     upper triangular
+*        T_3\in\R^{l, k-l}       rectangular
+*
+*        Then, consider the product:
+*        
+*        (I - V_1'T_1V_1)(I - V_2'T_2V_2)
+*        = I - V_1'T_1V_1 - V_2'T_2V_2 + V_1'T_1V_1V_2'T_2V_2
+*        
+*        Define T_3 = -T_1V_1V_2'T_2
+*        
+*        Then, we can define the matrix V as 
+*        V = |---|
+*            |V_1|
+*            |V_2|
+*            |---|
+*        
+*        So, our product is equivalent to the matrix product
+*        I - V'TV
+*        This means, we can compute T_1 and T_2, then use this information
+*        to compute T_3
             ! Compute T_1
             CALL MY_DLARFT_REC(DIRECT, STOREV, N, L, V, LDV, TAU, T,
      $         LDT)
@@ -165,6 +217,54 @@ c           n = k: 1/2 * (n^3-n)
             CALL DTRMM('Right', 'Upper', 'No transpose', 'Non-unit',
      $         L, K - L, ONE, T(L+1,L+1), LDT, T(1, L+1), LDT)
          ELSE IF(QL) THEN
+*
+*        Break V apart into 6 components
+*
+*        V = |---------------|
+*            |V_{1,1} V_{1,2}|
+*            |V_{2,1} V_{2,2}|
+*            |0       V_{3,2}|
+*            |---------------|
+*
+*        V_{1,1}\in\R^{n-k,k-l}  rectangular
+*        V_{2,1}\in\R^{k-l,k-l}  unit upper triangular
+*        
+*        V_{1,2}\in\R^{n-k,l}    rectangular
+*        V_{2,2}\in\R^{k-l,l}    rectangular
+*        V_{3,2}\in\R^{l,l}      unit upper triangular
+*
+*        We will construct the T matrix 
+*        T = |---------------| = |--------|
+*            |T_{1,1} 0      |   |T_1  0  |
+*            |T_{2,1} T_{2,2}|   |T_3  T_2|
+*            |---------------|   |--------|
+*
+*        T is the triangular factor attained from block reflectors. 
+*        To motivate the structure, assume we have already computed T_1
+*        and T_2. Then collect the associated reflectors in V_1 and V_2
+*
+*        T_1\in\R^{k-l, k-l}     non-unit lower triangular
+*        T_2\in\R^{l, l}         non-unit lower triangular
+*        T_3\in\R^{k-l, l}       rectangular
+*
+*        Where l = floor(k/2)
+*
+*        Then, consider the product:
+*        
+*        (I - V_2T_2V_2')(I - V_1T_1V_1')
+*        = I - V_2T_2V_2' - V_1T_1V_1' + V_2T_2V_2'V_1T_1V_1'
+*        
+*        Define T_3 = -T_2V_2'V_1T_1
+*        
+*        Then, we can define the matrix V as 
+*        V = |-------|
+*            |V_1 V_2|
+*            |-------|
+*        
+*        So, our product is equivalent to the matrix product
+*        I - VTV'
+*        This means, we can compute T_1 and T_2, then use this information
+*        to compute T_3
             ! Compute T_1
             CALL MY_DLARFT_REC(DIRECT, STOREV, N-L, K-L, V, LDV, TAU,
      $         T, LDT)
@@ -200,7 +300,56 @@ c           n = k: 1/2 * (n^3-n)
             CALL DTRMM('Right', 'Lower', 'No transpose', 'Non-unit',
      $         L, K-L, ONE, T, LDT, T(K-L+1,1), LDT)
          ELSE
-            ! Else means RQ
+*
+*        Else means RQ case
+*
+*        Break V apart into 6 components
+*
+*        V = |-----------------------|
+*            |V_{1,1} V_{1,2} 0      |
+*            |V_{2,1} V_{2,2} V_{2,3}|
+*            |-----------------------|
+*
+*        V_{1,1}\in\R^{k-l,n-k}  rectangular
+*        V_{1,2}\in\R^{k-l,k-l}  unit lower triangular
+*
+*        V_{2,1}\in\R^{l,n-k}    rectangular
+*        V_{2,2}\in\R^{l,k-l}    rectangular
+*        V_{2,3}\in\R^{l,l}      unit lower triangular
+*
+*        We will construct the T matrix 
+*        T = |---------------| = |--------|
+*            |T_{1,1} 0      |   |T_1  0  |
+*            |T_{2,1} T_{2,2}|   |T_3  T_2|
+*            |---------------|   |--------|
+*
+*        T is the triangular factor attained from block reflectors. 
+*        To motivate the structure, assume we have already computed T_1
+*        and T_2. Then collect the associated reflectors in V_1 and V_2
+*
+*        T_1\in\R^{k-l, k-l}     non-unit lower triangular
+*        T_2\in\R^{l, l}         non-unit lower triangular
+*        T_3\in\R^{k-l, l}       rectangular
+*
+*        Where l = floor(k/2)
+*
+*        Then, consider the product:
+*        
+*        (I - V_2'T_2V_2)(I - V_1'T_1V_1)
+*        = I - V_2'T_2V_2 - V_1'T_1V_1 + V_2'T_2V_2V_1'T_1V_1
+*        
+*        Define T_3 = -T_2V_2V_1'T_1
+*        
+*        Then, we can define the matrix V as 
+*        V = |---|
+*            |V_1|
+*            |V_2|
+*            |---|
+*        
+*        So, our product is equivalent to the matrix product
+*        I - V'TV
+*        This means, we can compute T_1 and T_2, then use this information
+*        to compute T_3
             ! Compute T_1
             CALL MY_DLARFT_REC(DIRECT, STOREV, N-L, K-L, V, LDV, TAU,
      $         T, LDT)
