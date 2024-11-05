@@ -27,7 +27,8 @@
          INTEGER           NEG_ONE
          PARAMETER(ONE=1.0D+0, ZERO=0.0D+0, NEG_ONE=-1)
 
-         K = MIN(M,N)
+         !K = MIN(M,N)
+         K = N
 
          ALLOCATE(A(M,N))
          ALLOCATE(At(N,M))
