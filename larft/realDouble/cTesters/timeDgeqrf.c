@@ -112,7 +112,6 @@ int main(int argc, char *argv[])
     double recFlop = computeDgeqrfPerf(recTime, m, n);
 
     // Print out times and flop counts
-    printf("m=%d, n=%d\n", m, n);
     printf("ref:%6.4e|%6.4e\n",refTime,refFlop);
     printf("rec:%6.4e|%6.4e\n",recTime,recFlop);
 }
