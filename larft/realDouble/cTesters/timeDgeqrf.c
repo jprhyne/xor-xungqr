@@ -59,17 +59,12 @@ int main(int argc, char *argv[])
     if (m < n) {
         m = n;
     }
+    // regular ints overflow, but fortran still needs integers
+    size_t mS = m;
+    size_t nS = n;
     // Construct our matrices and initialize them as the 0 matrix
-    Q = (double *) calloc(m*n,sizeof(double));
-    Qs = (double *) calloc(m*n,sizeof(double));
-    if (Q == NULL) {
-        printf("Failed to allocate memory for Q\n");
-        return 2;
-    }
-    if (Qs == NULL) {
-        printf("Failed to allocate memory for Qs\n");
-        return 3;
-    }
+    Q = (double *) malloc(mS*nS*sizeof(double));
+    Qs = (double *) malloc(mS*nS*sizeof(double));
 
     // Fill up Q and Qs with the same random values.
     double tmpVal;
@@ -82,22 +77,14 @@ int main(int argc, char *argv[])
     // Create the work array to do workspace queries
     work = (double *) malloc(sizeof(double));
     // allocate the tau vector
-    tau = (double *) malloc(n * sizeof(double));
-    if (tau == NULL) {
-        printf("Failed to allocate memory for tau\n");
-        return 4;
-    }
+    tau = (double *) malloc(nS * sizeof(double));
     // Determine how much workspace is needed for our operations
     dgeqrf_ref_(&m, &n, &nb, Q, &m, tau, work, &workQuery, &info );
     lwork = work[0];
+    size_t lworkS = lwork;
 
     // reallocate work to be of the right size
-    work = (double *) realloc(work, lwork * sizeof(double));
-    if (work == NULL) {
-        printf("Failed to allocate memory for work\n");
-        return 5;
-    }
-
+    work = (double *) realloc(work, lworkS * sizeof(double));
     // Now we start the timer
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);

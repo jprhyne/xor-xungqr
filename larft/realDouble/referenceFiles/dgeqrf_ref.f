@@ -33,7 +33,6 @@
 *
 *     Test the input arguments
 *
-      WRITE(*,*) "In reference version"
       K = MIN( M, N )
       INFO = 0
       LQUERY = ( LWORK.EQ.-1 )
