@@ -1,6 +1,6 @@
 minM=5000
-maxM=10000
-incM=2000
+maxM=50000
+incM=1000
 echo "Current case of 32 block size"
 for (( m=$minM; m<$maxM; m+=$incM ))
 do
@@ -13,9 +13,9 @@ do
 done
 echo "Trying new block sizes"
 # fix m and vary n
-m=$minM
+m=10000
 maxN=2048
-for (( n=1; n<=maxN ; n*=2 ))
+for (( n=2; n<=maxN ; n*=2 ))
 do
     echo "m=$m n=$m nb=$n"
     echo "Testing file ran 10 times"
