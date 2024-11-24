@@ -111,7 +111,21 @@ int main(int argc, char *argv[])
     // Compute the flop count
     double recFlop = computeDgeqrfPerf(recTime, m, n);
 
+    // Now we start the timer
+    gettimeofday(&tp, NULL);
+    elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    // Call dgeqrf with my dgeqrt3 slotted in
+    dgeqrf_qr3_(&m, &n, &nb, Qs, &m, tau, work, &lwork, &info);
+    // grab the execution time
+    gettimeofday(&tp, NULL);
+    elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    // Store this value 
+    double qr3Time = elapsed_refL;
+    // Compute the flop count
+    double qr3Flop = computeDgeqrfPerf(qr3Time, m, n);
+
     // Print out times and flop counts
     printf("ref:%6.4e|%6.4e\n",refTime,refFlop);
     printf("rec:%6.4e|%6.4e\n",recTime,recFlop);
+    printf("qr3:%6.4e|%6.4e\n",qr3Time,qr3Flop);
 }

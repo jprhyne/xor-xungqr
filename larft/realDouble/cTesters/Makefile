@@ -14,7 +14,7 @@ objectFiles:
 timeDlarft.exe: timeDlarft.o $(srcObjs) $(depObjs) ../referenceFiles/dlarft.o
 	$(FC) $(CFLAGS) $^ $(OPTBLAS) -o $@
 
-timeDgeqrf.exe: timeDgeqrf.o $(srcObjs) $(depObjs) ../referenceFiles/dgeqrf_rec.o ../referenceFiles/dgeqrf_ref.o ../referenceFiles/dlarft.o
+timeDgeqrf.exe: timeDgeqrf.o $(srcObjs) $(depObjs) ../referenceFiles/dgeqrf_rec.o ../referenceFiles/dgeqrf_ref.o ../referenceFiles/dlarft.o ../referenceFiles/dgeqrf_qr3.o
 	$(FC) $(CFLAGS) $^ $(OPTBLAS) -o $@
 
 timeDlarft.o: timeDlarft.c

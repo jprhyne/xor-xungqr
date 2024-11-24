@@ -1,4 +1,5 @@
-      SUBROUTINE DGEQRF_REF( M, N, NB, A, LDA, TAU, WORK, LWORK, INFO )
+      SUBROUTINE DGEQRF_QR3( M, N, NB, A, LDA, TAU, WORK, LWORK, INFO )
+      IMPLICIT NONE
 *
 *  -- LAPACK computational routine --
 *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -19,7 +20,7 @@
      $                   NBMIN, NX
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL           DGEQR2, DLARFB, DLARFT, XERBLA
+      EXTERNAL           DGEQRT3, DGEQR2, DLARFB, DLARFT_REF, XERBLA
 *     ..
 *     .. Intrinsic Functions ..
       INTRINSIC          MAX, MIN
@@ -34,7 +35,6 @@
 *
       K = MIN( M, N )
       INFO = 0
-      !NB = ILAENV( 1, 'DGEQRF', ' ', M, N, -1, -1 )
       LQUERY = ( LWORK.EQ.-1 )
       IF( M.LT.0 ) THEN
          INFO = -1
@@ -100,17 +100,16 @@
             IB = MIN( K-I+1, NB )
 *
 *           Compute the QR factorization of the current block
-*           A(i:m,i:i+ib-1)
+*           A(i:m,i:i+ib-1) and T
 *
-            CALL DGEQR2( M-I+1, IB, A( I, I ), LDA, TAU( I ), WORK,
-     $                   IINFO )
-            IF( I+IB.LE.N ) THEN
+            CALL DGEQRT3( M-I+1, IB, A( I, I), LDA, WORK, LDWORK,
+     $                     IINFO )
 *
-*              Form the triangular factor of the block reflector
-*              H = H(i) H(i+1) . . . H(i+ib-1)
+*           Store the values used for the TAU vector. These are on
+*           the diagonal of T (stored in WORK)
 *
-               CALL DLARFT( 'Forward', 'Columnwise', M-I+1, IB,
-     $                      A( I, I ), LDA, TAU( I ), WORK, LDWORK )
+            CALL DCOPY(IB, WORK, LDWORK+1, TAU(I), 1)
+            IF( I + IB.LE.N ) THEN
 *
 *              Apply H**T to A(i:m,i+ib:n) from the left
 *
