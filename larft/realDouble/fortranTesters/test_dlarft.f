@@ -17,7 +17,7 @@
          INTRINSIC MIN
 
          ! External Subroutines
-         EXTERNAL DLACPY, DGEQRF, DLARFT, DTVT, MY_DLARFT
+         EXTERNAL DLACPY, DGEQRF, DLARFT, DTVT, MY_DLARFT_REC
 
          ! External Functions
          DOUBLE PRECISION, EXTERNAL :: DLANGE
