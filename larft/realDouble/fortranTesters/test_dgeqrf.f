@@ -3,15 +3,15 @@
          INTEGER  M, N
 
          ! Local variables
-         DOUBLE PRECISION  NORM_FORWARD, TMP, EPS, NORM_A
-         INTEGER           LWORK, INFO
+         DOUBLE PRECISION  NORM_FORWARD, TMP, EPS, NORM_A, DN
+         INTEGER           I, LWORK, INFO
          CHARACTER         STOREV, DIRECT
          ! Local arrays
          DOUBLE PRECISION, ALLOCATABLE :: A(:,:), As(:,:),
      $            WORKMAT(:,:), WORK(:), TAU(:), R(:,:)
 
          ! Intrinsic subroutines
-         INTRINSIC MAX
+         INTRINSIC SQRT 
          ! External Subroutines
          EXTERNAL DLACPY, DGEQRF_QR3, DORGQR
 
@@ -22,6 +22,8 @@
          DOUBLE PRECISION ONE, ZERO, MONE
          INTEGER           NEG_ONE
          PARAMETER(ONE=1.0D+0, ZERO=0.0D+0, MONE=-1.0D+0, NEG_ONE=-1)
+
+         DN = N
          
          ALLOCATE(A(M,N))
          ALLOCATE(As(M,N))
@@ -70,10 +72,23 @@ c----------------------------------------------------------------------
          ! Divide by the norm of A
          NORM_FORWARD = NORM_FORWARD / NORM_A
 
+
+         WRITE(*,*) "Representation Error", NORM_FORWARD
+         ! WORKMAT = Q**T Q
+         CALL DGEMM('Transpose', 'No transpose', N, N, M, ONE, A, M,
+     $               A, M, ZERO, WORKMAT, M)
+         ! Compute WORKMAT = WORKMAT - I
+         DO I = 1, N
+            WORKMAT(I,I) = WORKMAT(I,I) - ONE
+         END DO
+         ! Compute the norm
+         NORM_FORWARD = DLANGE('Frobenius', N, N, WORKMAT, M, WORK)
+         ! Divide by the norm of I
+         NORM_FORWARD = NORM_FORWARD / SQRT(DN)
+         WRITE(*,*) "Orthogonal Error", NORM_FORWARD
+
+
          DEALLOCATE(WORK)
-
-         WRITE(*,*) "Forward Error", NORM_FORWARD
-
    10    DEALLOCATE(A)
          DEALLOCATE(As)
          DEALLOCATE(TAU)
