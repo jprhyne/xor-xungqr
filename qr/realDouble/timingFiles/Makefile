@@ -29,7 +29,7 @@ timeSVD.o: timeSVD.c
 	$(CC) -c $(CFLAGS) -DUSE_AMD=1 $^ -o $@
 
 timeDorgqr.o: timeDorgqr.c
-	$(CC) -c $(CFLAGS) $^ -o $@
+	$(CC) -c $(CFLAGS)  $^ -o $@
 
 timeDlarfb.o: timeDlarfb.c
 	$(CC) -c $(CFLAGS) $^ -o $@

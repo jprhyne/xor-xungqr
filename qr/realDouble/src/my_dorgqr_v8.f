@@ -309,8 +309,11 @@ c
 *
 *           Apply H to A(i:m,i+ib:n) from the left
 *
-            CALL MY_DLARFB(M-I+1, N-(I+IB)+1, IB, A(I,I), LDA,
-     $                        A(I,I+IB),LDA)
+!            CALL MY_DLARFB(M-I+1, N-(I+IB)+1, IB, A(I,I), LDA,
+!     $                        A(I,I+IB),LDA)
+            CALL DLARFB0C2('A', 'A', 'Forward', 'Column', M-I+1, 
+     $                     N-(I+IB)+1, IB, A(I,I), LDA, A(I,I+IB),
+     $                     LDA)
 !            CALL DLARFB('Left', 'No transpose', 'Forward', 'Col',
 !     $                     M-I+1, N-(I+IB)+1, IB, A(I,I), LDA,
 !     $                     A(I,I), LDA, A(I,I+IB), LDA, WORK, LDWORK)

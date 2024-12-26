@@ -124,7 +124,7 @@
 *> \ingroup doubleOTHERcomputational
 *
 *  =====================================================================
-      SUBROUTINE DORGQR( M, N, K, A, LDA, TAU, WORK, LWORK, INFO )
+      SUBROUTINE DORGQR_REF( M, N, K, A, LDA, TAU, WORK, LWORK, INFO )
 *
 *  -- LAPACK computational routine --
 *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
