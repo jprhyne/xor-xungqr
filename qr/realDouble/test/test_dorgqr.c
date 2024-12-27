@@ -9,9 +9,6 @@
  * Testing in the larft directory reasonably rules out #1 from being a source of error
  * Testing in this directory of dlarfb0c2 reasonably rules out #3
  * So, if we are not accurate, it is either #2 or #4
- *
- * Note: We also compute the time of each dorgqr call, but only report it if the user supplies 
- * the '-t' flag
  */
 #include <stdio.h>
 #include <stdbool.h>
@@ -21,14 +18,16 @@
 #include <sys/time.h>
 
 void usage() {
-    printf("./test_dorgqr.exe [-m numRows -n numCols -t -e -c]\n");
+    printf("./test_dorgqr.exe [-m numRows -n numCols -p -e -c -h]\n");
     printf(" -m numCols is the number of columns in  the generated matrix\n");
     printf(" -n numRows is the number of rows in  the generated matrix\n");
-    printf(" -t flag that prints out just the timing information\n");
-    printf(" -e flag that prints out just the error information\n");
+    printf(" -p flag that prints out the performance information\n");
+    printf(" -e flag that prints out the error information\n");
     printf(" -c flag that prints out all data in a machine readable format\n");
-
+    printf(" -v flag that prints out a header at the top for compact usage.\n\tNote: only respected if -c is given\n");
+    printf(" -h Print this usage information and exit\n");
 }
+
 double computeDorgqrPerf(double m, double n, double k, double execTime) {
     double perfVal = 0.0;
     // Taken from lawn 41
@@ -39,6 +38,85 @@ double computeDorgqrPerf(double m, double n, double k, double execTime) {
     // numOps = 4m^2k - 4mk^2 + 4/3/ k^3 + 2mk - k^2 - 4/3 k
     double numOps = 4*m*n*k - 2*(m+n)*k*k + 4./3.*k*k*k + 3*n*k - m*k - k*k - 4./3.*k;
     return numOps / (execTime * 1.0e+9);
+}
+/**
+ * This function prints the header of our output. This is mainly too keep the
+ * main function more streamlined and easier to follow
+ * printFlags: Array of length 3 that contains the following elements
+ *  printFlags[0] == true means we print out the performance value
+ *  printFlags[1] == true means we print out relative error
+ *  printFlags[2] == true iff we are printing out in a compact (machine readable) format
+ *  printFlags[3] == true iff we want to print out the header when we are in compact printing mode
+ *
+ * m: The number of rows in the matrix A
+ * n: The number of columns in the matrix A
+ */
+void printHeader(bool *printFlags, int m, int n) {
+    // Grab the flags
+    bool printPerf    = printFlags[0];
+    bool printErrors  = printFlags[1];
+    bool printCompact = printFlags[2];
+    bool verbosePrint = printFlags[3];
+    // Print out some diagnostics for the user
+    if (printCompact && verbosePrint) {
+        // Say what the printed output will look like
+        if (!printPerf && !printErrors) 
+            printf("Only sources will be printed");
+        else 
+            printf("source");
+        if (printPerf)
+            printf(":perf");
+        if (printErrors)
+            printf(":repErr:orthErr");
+        printf("\n");
+    }
+    if (!printCompact) {
+        printf("m=%d, n=%d, printErrors=%d, printPerformance=%d\n", m, n, printErrors, printPerf);
+    }
+}
+/**
+ * relErr: The relative error we are printing
+ * perfVal:The performance value to print
+ * printFlags: Array of length 3 that contains the following elements
+ *  printFlags[0] == true means we print out the performance value
+ *  printFlags[1] == true means we print out relative error
+ *  printFlags[2] == true iff we are printing out in a compact (machine readable) format
+ *  printFlags[3] Not used in this function
+ * source: string that displays the source of these values. Example
+ *  values include "reference", "optimized", etc.
+ */
+void printInfo(double perfVal, double repErr, double orthErr, bool *printFlags, char *source) {
+    // Grab the flags
+    bool printPerf    = printFlags[0];
+    bool printErrors  = printFlags[1];
+    bool printCompact = printFlags[2];
+    // Print our data in the order implied above
+    // Print out the beginning of the line if we are compact. Note that 
+    // if we are compact, we truncate the source string to be 3 characters long
+    if (printCompact) {
+        printf("%.3s",source);
+    }
+    // Times first
+    if (printPerf) {
+        if( printCompact ) {
+            printf(":%6.4e", perfVal);
+        } else {
+            // %s is scary!
+            printf("%s performance: %6.4e\n", source, perfVal);
+        }
+    }
+    // Errors next
+    if (printErrors) {
+        if( printCompact ) {
+            printf(":%6.4e:%6.4e", repErr, orthErr);
+        } else {
+            // %s is scary!
+            printf("%s representation error: %6.4e. Orthogonality Error: %6.4e\n", source, repErr, orthErr);
+        }
+    }
+    if(printCompact){
+        printf("\n");
+    }
 }
 
 double myNorm(size_t m, size_t n, double *A) {
@@ -60,9 +138,9 @@ int main(int argc, char *argv[]) {
     // double
     double norm_orth, norm_repres, elapsed, alpha, beta;
     // logical
-    bool printTimes, printErrors, printCompact;
+    bool printPerf, printErrors, printCompact, verboseHeader;
     // character
-    char fChar, nChar, rChar, uChar;
+    char fChar, nChar, rChar, tChar, uChar;
     // Arrays
     // double
     double *A, *As, *R, *tau, *work;
@@ -71,14 +149,16 @@ int main(int argc, char *argv[]) {
     struct timeval tp;
 
     // Set default values
-    printTimes = false;
+    printPerf = false;
     printErrors = false;
     printCompact = false;
+    verboseHeader = false;
     m = 30;
     n = 20;
     fChar = 'F';
     nChar = 'N';
     rChar = 'R';
+    tChar = 'T';
     uChar = 'U';
     // dummy value for use with functions that have character inputs
     int dummyVal = 0;
@@ -96,8 +176,8 @@ int main(int argc, char *argv[]) {
             i++;
         }
         // Check if the user wants to print out timing information or not
-        if( strcmp( argv[i], "-t" ) == 0) {
-            printTimes = true;
+        if( strcmp( argv[i], "-p" ) == 0) {
+            printPerf = true;
         }
 
         if( strcmp( argv[i], "-e" ) == 0) {
@@ -107,7 +187,18 @@ int main(int argc, char *argv[]) {
         if( strcmp( argv[i], "-c" ) == 0) {
             printCompact = true;
         }
+
+        if( strcmp( argv[i], "-v" ) == 0) {
+            verboseHeader = true;
+        }
+
+        if( strcmp( argv[i], "-h" ) == 0) {
+            usage();
+            return 0;
+        }
     }
+    // Store our printing flags in an array for ease of passing into functions
+    bool flagVec[4] = {printPerf, printErrors, printCompact, verboseHeader};
 
     // sets size_t variables to be the same value as their integer counterparts
     mS = (size_t) m;
@@ -198,45 +289,32 @@ int main(int argc, char *argv[]) {
     }
 
     // Compute the norm of work
-    double relativeErr = sqrt(tmpVal);
+    double represErr = sqrt(tmpVal);
     // Compute the relative error
-    relativeErr /= normA;
+    represErr /= normA;
+
+    // Set work to 0
+    for (i = 0; i < mS*nS; ++i) {
+        work[i] = 0.0;
+    }
+
+    // Compute the orthogonality error
+    beta = 0.0;
+    // Compute work = Q'Q - I
+    dsyrk_(&uChar, &tChar, &n, &m, &alpha, A, &m, &beta, work, &m);
+    for (i = 0; i < nS; ++i) 
+        work[i*mS + i] -= 1.0;
+    // Compute the norm of work
+    tmpVal = 0;
+    for (i = 0; i < mS * nS; ++i)
+        tmpVal += work[i] * work[i];
+
+    double orthErr = sqrt(tmpVal);
+    orthErr /= sqrt((double) n);
 
     // Print this information to the console along with some diagnostics
-    if (printCompact) {
-        // Say what the printed output will look like
-        if (!printTimes && !printErrors) 
-            printf("Only sources will be printed");
-        else 
-            printf("source");
-        if (printTimes)
-            printf(":perf");
-        if (printErrors)
-            printf(":error");
-        printf("\n");
-    }
-    if (printCompact) {
-        printf("ref");
-    } else {
-        printf("m=%d, n=%d, printTimings=%d, printErrors=%d\n", m, n, printTimes, printErrors);
-    }
-    if (printTimes) {
-        if( printCompact ) {
-            printf(":%6.4e", refPerf);
-        } else {
-            printf("reference performance: %6.4e\n", refPerf);
-        }
-    }
-    if (printErrors) {
-        if( printCompact ) {
-            printf(":%6.4e", relativeErr);
-        } else {
-            printf("reference forward error: %6.4e\n", relativeErr);
-        }
-    }
-    if(printCompact){
-        printf("\n");
-    }
+    printHeader(flagVec, m, n);
+    printInfo(refPerf, represErr, orthErr, flagVec, "reference");
 
     // free our arrays
 freeMemory:
