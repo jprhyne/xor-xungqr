@@ -192,8 +192,8 @@
 *> \endverbatim
 *>
 *  =====================================================================
-      SUBROUTINE DLARFB( SIDE, TRANS, DIRECT, STOREV, M, N, K, V, LDV,
-     $                   T, LDT, C, LDC, WORK, LDWORK )
+      SUBROUTINE DLARFB_REF( SIDE, TRANS, DIRECT, STOREV, M, N, K,
+     $                   V, LDV, T, LDT, C, LDC, WORK, LDWORK )
 *
 *  -- LAPACK auxiliary routine --
 *  -- LAPACK is a software package provided by Univ. of Tennessee,    --

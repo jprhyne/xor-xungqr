@@ -1,5 +1,4 @@
 c
-c  This file is my_dorgqr_v7.f but refactoring out dlarfb
 c
 *> \brief \b DORGQR
 *
@@ -127,7 +126,8 @@ c
 *> \ingroup doubleOTHERcomputational
 *
 *  =====================================================================
-      SUBROUTINE MY_DORGQR_V8( M, N, K, A, LDA, TAU, WORK, LWORK, INFO)
+      SUBROUTINE DORGQR_DLARFB0C2( M, N, K, A, LDA, TAU, WORK,
+     $      LWORK, INFO)
       IMPLICIT NONE
 *
 *  -- LAPACK computational routine --
@@ -153,7 +153,7 @@ c
      $                   LWKOPT, NB, NBMIN, NX
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL             DLARFB, DLARFT, DORG2R, XERBLA, MY_DLARFT_UT, 
+      EXTERNAL             DLARFB, DLARFT, DORG2R, XERBLA, DLARFT_REC
      $                     MY_DORGKR
 *     ..
 *     .. Intrinsic Functions ..
@@ -240,12 +240,7 @@ c
 *      IF( KK.EQ.0 )
 *     $   CALL DORG2R( M, N, K, A, LDA, TAU, WORK, IINFO )
       IF( KK.EQ.0 ) THEN
-         IF(K.EQ.N) THEN
-            CALL MY_DLARFT_UT(M, N, A, LDA, TAU, A, LDA)
-            CALL MY_DORGKR(M, N, A, LDA)
-         ELSE
             CALL DORG2R( M, N, K, A, LDA, TAU, WORK, IINFO ) 
-         END IF
       END IF
 *
       IF( KK.GT.0 ) THEN
@@ -258,7 +253,8 @@ c
 *           Form the triangular factor of the block reflector
 *           H = H(i) H(i+1) . . . H(i+ib-1)
 *
-         CALL MY_DLARFT_UT(M-I+1, IB, A(I,I), LDA, TAU(I), A(I,I), LDA)
+         CALL DLARFT_REC('Forward', 'Column', M-I+1, IB, A(I,I), 
+     $                     LDA, TAU(I), A(I,I), LDA)
 *
 *           Apply H to A(i:m,i+ib:n) from the left
 *
@@ -304,19 +300,14 @@ c
 *           Form the triangular factor of the block reflector
 *           H = H(i) H(i+1) . . . H(i+ib-1)
 *
-            CALL MY_DLARFT_UT(M-I+1, IB, A(I,I), LDA, TAU(I), A(I,I), 
-     $         LDA)
+            CALL DLARFT_REC('Forward', 'Column', M-I+1, IB, A(I,I), 
+     $         LDA, TAU(I), A(I,I), LDA)
 *
 *           Apply H to A(i:m,i+ib:n) from the left
 *
-!            CALL MY_DLARFB(M-I+1, N-(I+IB)+1, IB, A(I,I), LDA,
-!     $                        A(I,I+IB),LDA)
             CALL DLARFB0C2('A', 'A', 'Forward', 'Column', M-I+1, 
-     $                     N-(I+IB)+1, IB, A(I,I), LDA, A(I,I+IB),
-     $                     LDA)
-!            CALL DLARFB('Left', 'No transpose', 'Forward', 'Col',
-!     $                     M-I+1, N-(I+IB)+1, IB, A(I,I), LDA,
-!     $                     A(I,I), LDA, A(I,I+IB), LDA, WORK, LDWORK)
+     $         N-(I+IB)+1, IB, A(I,I), LDA, A(I,I), LDA, 
+     $         A(I,I+IB), LDA)
 
 *
 *           Apply H to rows i:m of current block
@@ -333,16 +324,14 @@ c
 *           Form the triangular factor of the block reflector
 *           H = H(i) H(i+1) . . . H(i+ib-1)
 *
-            CALL MY_DLARFT_UT(M-I+1, IB, A(I,I), LDA, TAU(I), A(I,I), 
-     $         LDA)
+            CALL DLARFT_REC('Forward', 'Column', M-I+1, IB, A(I,I), 
+     $         LDA, TAU(I), A(I,I), LDA)
 *
 *           Apply H to A(i:m,i+ib:n) from the left
 *
-            CALL MY_DLARFB(M-I+1, N-(I+IB)+1, IB, A(I,I), LDA,
-     $                        A(I,I+IB),LDA)
-!            CALL DLARFB('Left', 'No transpose', 'Forward', 'Col',
-!     $                     M-I+1, N-(I+IB)+1, IB, A(I,I), LDA,
-!     $                     A(I,I), LDA, A(I,I+IB), LDA, WORK, LDWORK)
+            CALL DLARFB0C2('A', 'A', 'Forward', 'Column', M-I+1, 
+     $         N-(I+IB)+1, IB, A(I,I), LDA, A(I,I), LDA, 
+     $         A(I,I+IB),LDA)
 
 *
 *           Apply H to rows i:m of current block

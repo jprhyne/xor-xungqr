@@ -74,25 +74,25 @@
             ! To achieve the same end result
 
             ! C1 = V2'*C2
-            CALL DGEMM('Transpose', 'No Transpose', K, K, M - K,
+            CALL DGEMM('Transpose', 'No Transpose', K, N, M - K,
      $                  ONE, V(K+1,1), LDV, C(K+1,1), LDC, ZERO, 
      $                  C, LDC)
             !
             ! C1 = T*C1
             !
             CALL DTRMM('Left', 'Upper', 'No Transpose', 'Non-unit', 
-     $                  K, K, ONE, T, LDT, C, LDC)
+     $                  K, N, ONE, T, LDT, C, LDC)
             !
             ! C2 = C2 - V2*C1 = -V2*C1 + C2
             !
-            CALL DGEMM('No Transpose', 'No Transpose', M-K, K, K,
+            CALL DGEMM('No Transpose', 'No Transpose', M-K, N, K,
      $                  NEG_ONE, V(K+1,1), LDV, C, LDC, ONE, 
      $                  C(K+1,1), LDC)
             !
             ! C1 = -V1*C1
             !
             CALL DTRMM('Left', 'Lower', 'No Transpose', 'Unit', 
-     $                  K, K, NEG_ONE, V, LDV, C, LDC)
+     $                  K, N, NEG_ONE, V, LDV, C, LDC)
          ELSE IF (LQ) THEN
 
          ELSE IF (QL) THEN
