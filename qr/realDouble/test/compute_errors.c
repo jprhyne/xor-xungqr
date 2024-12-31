@@ -165,6 +165,7 @@ double computeTallOrthError(size_t mS, size_t nS, double *Q) {
 }
 
 double computeWideOrthError(size_t mS, size_t nS, double *Q) {
+    int dummyVal = 0;
     // Allocate our workspace to be of size m\times m (m \leq n)
     double *work = (double *) calloc(mS*mS,sizeof(double));
     // Compute the orthogonality error

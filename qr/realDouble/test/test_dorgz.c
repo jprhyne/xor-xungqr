@@ -36,13 +36,22 @@
 #include "lapackHeaders.h"
 
 void usage() {
-    printf("./test_dorgqr.exe [-m numRows -n numCols -p -e -c -h]\n");
-    printf(" -m numCols is the number of columns in  the generated matrix\n");
-    printf(" -n numRows is the number of rows in  the generated matrix\n");
-    printf(" -p flag that prints out the performance information\n");
-    printf(" -e flag that prints out the error information\n");
-    printf(" -c flag that prints out all data in a machine readable format\n");
-    printf(" -v flag that prints out a header at the top for compact usage.\n\tNote: only respected if -c is given\n");
+    printf("./test_dorgqr.exe [-m numRows -n numCols -t -p -e -c -v -qr -lq -ql -rq -h]\n");
+    printf(" -m  numCols is the number of columns in the generated matrix\n");
+    printf("\t Default is 30\n");
+    printf(" -n  numRows is the number of rows in the generated matrix\n");
+    printf("\t Default is 20\n");
+    printf(" -t  flag that prints out the timing information\n");
+    printf(" -p  flag that prints out the performance information\n");
+    printf(" -e  flag that prints out the error information\n");
+    printf(" -c  flag that prints out all data in a machine readable format\n");
+    printf(" -v  flag that prints out a header at the top for compact usage\n");
+    printf("\tNote: only respected if -c is given\n");
+    printf(" -qr flag that states to print out qr information\n");
+    printf(" -lq flag that states to print out lq information\n");
+    printf(" -ql flag that states to print out ql information\n");
+    printf(" -rq flag that states to print out rq information\n");
+    printf("\tNote: if none of the qr, lq, ql, rq flags are given, then all are printed\n");
     printf(" -h Print this usage information and exit\n");
 }
 
@@ -62,11 +71,6 @@ typedef double (*computeOrthFunc)(size_t mS, size_t nS, double *Q);
 typedef double (*computeRepresFunc)(size_t mS, size_t nS, double *A, double *Q, double *X);
 
 // Struct to hold multiple results for our return easier.
-typedef struct myResultsStruct {
-    double perfVal;
-    double represErr;
-    double orthErr;
-} myResults;
 // This function will compute the orthogonality and representation error metrics as well as the 
 // performance metrics. The inputs are typedef'd function pointers. They are defined directly before
 // this function definition.
@@ -86,8 +90,12 @@ typedef struct myResultsStruct {
  * Outputs
  *  A pointer to a heap allocated struct containing our results. Caller is responsible for freeing
  *  this memory.
+ *      retVal[0] is the timing metrics
+ *      retVal[1] is the performance value
+ *      retVal[2] is the representation error
+ *      retVal[3] is the orthogonality error
  */
-myResults* computeMetrics(factorizeFunc factor, constructQFunc formQ, computePerfFunc computePerf,
+double* computeMetrics(factorizeFunc factor, constructQFunc formQ, computePerfFunc computePerf,
         computeRepresFunc computeRepr, computeOrthFunc computeOrthErr, size_t mS, size_t nS,
         double *A, bool upperFactor, bool factorStartTop, bool timeFactorization) {
     // Scalars
@@ -100,11 +108,11 @@ myResults* computeMetrics(factorizeFunc factor, constructQFunc formQ, computePer
     // Arrays
     // double
     double *Q, *X, *tau, *work; // X is either L or R depending on the routine used.
+    // return array
+    double *retVal;
     // Structs
     // timing helper
     struct timeval tp;
-    // return struct
-    myResults *retVal;
     // Beginning of executable statements
     neg_one = -1;
     m = (int) mS;
@@ -122,7 +130,7 @@ myResults* computeMetrics(factorizeFunc factor, constructQFunc formQ, computePer
     X = (double *) malloc(minDim*minDim*sizeof(double));
     tau = (double *) malloc(minDim*sizeof(double));
     work = (double *) malloc(sizeof(double));
-    retVal = (myResults *) malloc(sizeof(myResults));
+    retVal = (double *) calloc(4, sizeof(double));
 
     // Copy A into Q
     dlacpy_(&aChar, &m, &n, A, &m, Q, &m);
@@ -167,28 +175,30 @@ myResults* computeMetrics(factorizeFunc factor, constructQFunc formQ, computePer
     gettimeofday(&tp,NULL);
     elapsed+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec); 
     // Now compute our metrics
-    retVal->perfVal = computePerf((double) m, (double) n, (double) minDim, elapsed);
-    retVal->represErr = computeRepr(mS, nS, A, Q, X);
-    retVal->orthErr = computeOrthErr(mS, nS, Q);
+    retVal[0] = elapsed;
+    retVal[1] = computePerf((double) m, (double) n, (double) minDim, elapsed);
+    retVal[2] = computeRepr(mS, nS, A, Q, X);
+    retVal[3] = computeOrthErr(mS, nS, Q);
 
     // Free all our arrays
     free(Q);
     free(X);
     free(tau);
     free(work);
-    // Return our metrics. Caller MUST free this (3 bytes is a lot of data you know!)
+    // Return our metrics. Caller MUST free this (32 bytes is a lot of data you know!)
     return retVal;
 }
 
 int main(int argc, char *argv[]) {
     // Scalars
     // size_t (these are used to allocate data and thus should not be signed because -1 bytes is
-    // nonsense
+    // nonsense)
     size_t m, n;
     // double
     double norm_orth, norm_repres, elapsed;
     // logical
-    bool printPerf, printErrors, printCompact, verboseHeader;
+    bool printTime, printPerf, printErrors, printCompact, verboseHeader;
+    bool printQR, printLQ, printQL, printRQ;
     // character
     char aChar, uChar;
     // Arrays
@@ -197,10 +207,15 @@ int main(int argc, char *argv[]) {
     // Structs
 
     // Set default values
+    printTime = false;
     printPerf = false;
     printErrors = false;
     printCompact = false;
     verboseHeader = false;
+    printQR = false;
+    printLQ = false;
+    printQL = false;
+    printRQ = false;
     m = 30;
     n = 20;
     aChar = 'A';
@@ -221,6 +236,10 @@ int main(int argc, char *argv[]) {
             i++;
         }
         // Check if the user wants to print out timing information or not
+        if( strcmp( argv[i], "-t" ) == 0) {
+            printTime = true;
+        }
+
         if( strcmp( argv[i], "-p" ) == 0) {
             printPerf = true;
         }
@@ -237,14 +256,36 @@ int main(int argc, char *argv[]) {
             verboseHeader = true;
         }
 
+        if( strcmp( argv[i], "-qr" ) == 0) {
+            printQR = true;
+        }
+
+        if( strcmp( argv[i], "-lq" ) == 0) {
+            printLQ = true;
+        }
+
+        if( strcmp( argv[i], "-ql" ) == 0) {
+            printQL = true;
+        }
+
+        if( strcmp( argv[i], "-rq" ) == 0) {
+            printRQ = true;
+        }
+
         if( strcmp( argv[i], "-h" ) == 0) {
             usage();
             return 0;
         }
     }
     // Store our printing flags in an array for ease of passing into functions
-    bool flagVec[4] = {printPerf, printErrors, printCompact, verboseHeader};
-
+    bool flagVec[5] = {printTime, printPerf, printErrors, printCompact, verboseHeader};
+    bool printAny = printTime || printPerf || printErrors;
+    if (!(printQR || printLQ || printQL || printRQ)) {
+        printQR = true;
+        printLQ = true;
+        printQL = true;
+        printRQ = true;
+    }
     // sets size_t variables to be the same value as their integer counterparts
     // Allocate our arrays
     A  = (double *) malloc(m*n*sizeof(double));
@@ -255,107 +296,111 @@ int main(int argc, char *argv[]) {
         tmpVal = rand() / (double) (RAND_MAX) - 0.5e+00;
         A[i] = tmpVal;
     }
-    myResults *metrics = NULL;
-    //-------------------------------------------------------------------------------------------//
-    // Try QR                                                                                    //
-    //-------------------------------------------------------------------------------------------//
-    //-------------------------------------------------------------------------------------------//
-    // Reference                                                                                 //
-    //-------------------------------------------------------------------------------------------//
-    metrics = computeMetrics(dgeqrf_, dorgqr_ref_, computeDorgqxPerf, 
-            computeQRRepresError, computeTallOrthError, m, n, A, true /*upperFactor*/,
-            true /*factorStartTop*/, false /*timeFactorization*/);
-    printf("QR metrics\n");
+    double *metrics = NULL;
     printHeader(flagVec, m, n);
-    printInfo(metrics->perfVal, metrics->represErr, metrics->orthErr, flagVec, "reference", "ref");
-    free(metrics);
-    metrics = NULL;
-    //-------------------------------------------------------------------------------------------//
-    // Optimized                                                                                 //
-    //-------------------------------------------------------------------------------------------//
-    metrics = computeMetrics(dgeqrf_, dorgqr_, computeDorgqxPerf, computeQRRepresError, 
-            computeTallOrthError, m, n, A, true, true, false);
-    printInfo(metrics->perfVal, metrics->represErr, metrics->orthErr, flagVec, "optimized", "opt");
-    free(metrics);
-    metrics = NULL;
-    //-------------------------------------------------------------------------------------------//
-    // DLARFB0C2                                                                                 //
-    //-------------------------------------------------------------------------------------------//
-    metrics = computeMetrics(dgeqrf_, dorgqr_dlarfb0c2_, computeDorgqxPerf, computeQRRepresError, 
-            computeTallOrthError, m, n, A, true, true, false);
-    printInfo(metrics->perfVal, metrics->represErr, metrics->orthErr, flagVec, "optimized", "opt");
-    free(metrics);
-    metrics = NULL;
-    //-------------------------------------------------------------------------------------------//
-    // Try QL                                                                                    //
-    //-------------------------------------------------------------------------------------------//
-    //-------------------------------------------------------------------------------------------//
-    // Reference                                                                                 //
-    //-------------------------------------------------------------------------------------------//
-    metrics = computeMetrics(dgeqlf_, dorgql_ref_, computeDorgqxPerf, 
-            computeQLRepresError, computeTallOrthError, m, n, A, false /*upperFactor*/,
-            false /*factorStartTop*/, false /*timeFactorization*/);
-    printf("QL metrics\n");
-    printHeader(flagVec, m, n);
-    printInfo(metrics->perfVal, metrics->represErr, metrics->orthErr, flagVec, "reference", "ref");
-    free(metrics);
-    metrics=NULL;
-    //-------------------------------------------------------------------------------------------//
-    // Optimized                                                                                 //
-    //-------------------------------------------------------------------------------------------//
-    metrics = computeMetrics(dgeqlf_, dorgql_, computeDorgqxPerf, 
-            computeQLRepresError, computeTallOrthError, m, n, A, false /*upperFactor*/,
-            false /*factorStartTop*/, false /*timeFactorization*/);
-    printInfo(metrics->perfVal, metrics->represErr, metrics->orthErr, flagVec, "optimized", "opt");
-    free(metrics);
-    metrics=NULL;
-    //-------------------------------------------------------------------------------------------//
-    // Try LQ                                                                                    //
-    //-------------------------------------------------------------------------------------------//
-    //-------------------------------------------------------------------------------------------//
-    // Reference                                                                                 //
-    //-------------------------------------------------------------------------------------------//
-    metrics = computeMetrics(dgelqf_, dorglq_ref_, computeDorgxqPerf, 
-            computeLQRepresError, computeWideOrthError, n, m, A, false /*upperFactor*/,
-            true /*factorStartTop*/, false /*timeFactorization*/);
-    printf("LQ metrics\n");
-    printHeader(flagVec, m, n);
-    printInfo(metrics->perfVal, metrics->represErr, metrics->orthErr, flagVec, "reference", "ref");
-    free(metrics);
-    metrics=NULL;
-    //-------------------------------------------------------------------------------------------//
-    // Optimized                                                                                 //
-    //-------------------------------------------------------------------------------------------//
-    metrics = computeMetrics(dgelqf_, dorglq_ref_, computeDorgxqPerf, 
-            computeLQRepresError, computeWideOrthError, n, m, A, false /*upperFactor*/,
-            true /*factorStartTop*/, false /*timeFactorization*/);
-    printInfo(metrics->perfVal, metrics->represErr, metrics->orthErr, flagVec, "optimized", "opt");
-    free(metrics);
-    metrics=NULL;
-    //-------------------------------------------------------------------------------------------//
-    // Try RQ                                                                                    //
-    //-------------------------------------------------------------------------------------------//
-    //-------------------------------------------------------------------------------------------//
-    // Reference                                                                                 //
-    //-------------------------------------------------------------------------------------------//
-    metrics = computeMetrics(dgerqf_, dorgrq_ref_, computeDorgxqPerf, 
-            computeRQRepresError, computeWideOrthError, n, m, A, true /*upperFactor*/,
-            false /*factorStartTop*/, false /*timeFactorization*/);
-    printf("RQ metrics\n");
-    printHeader(flagVec, m, n);
-    printInfo(metrics->perfVal, metrics->represErr, metrics->orthErr, flagVec, "reference", "ref");
-    free(metrics);
-    metrics=NULL;
-    //-------------------------------------------------------------------------------------------//
-    // Optimized                                                                                 //
-    //-------------------------------------------------------------------------------------------//
-    metrics = computeMetrics(dgerqf_, dorgrq_ref_, computeDorgxqPerf, 
-            computeRQRepresError, computeWideOrthError, n, m, A, true /*upperFactor*/,
-            false /*factorStartTop*/, false /*timeFactorization*/);
-    printInfo(metrics->perfVal, metrics->represErr, metrics->orthErr, flagVec, "reference", "ref");
-    free(metrics);
-    metrics=NULL;
-    
+    if(printQR) {
+        //----------------------------------------------------------------------------------------//
+        // Try QR                                                                                 //
+        //----------------------------------------------------------------------------------------//
+        //----------------------------------------------------------------------------------------//
+        // Reference                                                                              //
+        //----------------------------------------------------------------------------------------//
+        metrics = computeMetrics(dgeqrf_, dorgqr_ref_, computeDorgqxPerf, 
+                computeQRRepresError, computeTallOrthError, m, n, A, true /*upperFactor*/,
+                true /*factorStartTop*/, false /*timeFactorization*/);
+        if(printAny) printf("QR metrics\n");
+        printInfo(metrics, flagVec, "reference", "ref");
+        free(metrics);
+        metrics = NULL;
+        //----------------------------------------------------------------------------------------//
+        // Optimized                                                                              //
+        //----------------------------------------------------------------------------------------//
+        metrics = computeMetrics(dgeqrf_, dorgqr_, computeDorgqxPerf, computeQRRepresError, 
+                computeTallOrthError, m, n, A, true, true, false);
+        printInfo(metrics, flagVec, "optimized", "opt");
+        free(metrics);
+        metrics = NULL;
+        //----------------------------------------------------------------------------------------//
+        // DLARFB0C2                                                                              //
+        //----------------------------------------------------------------------------------------//
+        metrics = computeMetrics(dgeqrf_, dorgqr_dlarfb0c2_, computeDorgqxPerf, computeQRRepresError, 
+                computeTallOrthError, m, n, A, true, true, false);
+        printInfo(metrics, flagVec, "DLARFB0C2", "0c2");
+        free(metrics);
+        metrics = NULL;
+    }
+    if (printLQ) {
+        //----------------------------------------------------------------------------------------//
+        // Try LQ                                                                                 //
+        //----------------------------------------------------------------------------------------//
+        //----------------------------------------------------------------------------------------//
+        // Reference                                                                              //
+        //----------------------------------------------------------------------------------------//
+        metrics = computeMetrics(dgelqf_, dorglq_ref_, computeDorgxqPerf, 
+                computeLQRepresError, computeWideOrthError, n, m, A, false /*upperFactor*/,
+                true /*factorStartTop*/, false /*timeFactorization*/);
+        if(printAny) printf("LQ metrics\n");
+        printInfo(metrics, flagVec, "reference", "ref");
+        free(metrics);
+        metrics=NULL;
+        //----------------------------------------------------------------------------------------//
+        // Optimized                                                                              //
+        //----------------------------------------------------------------------------------------//
+        metrics = computeMetrics(dgelqf_, dorglq_ref_, computeDorgxqPerf, 
+                computeLQRepresError, computeWideOrthError, n, m, A, false /*upperFactor*/,
+                true /*factorStartTop*/, false /*timeFactorization*/);
+        printInfo(metrics, flagVec, "optimized", "opt");
+        free(metrics);
+        metrics=NULL;
+    }
+    if (printQL) {
+        //----------------------------------------------------------------------------------------//
+        // Try QL                                                                                 //
+        //----------------------------------------------------------------------------------------//
+        //----------------------------------------------------------------------------------------//
+        // Reference                                                                              //
+        //----------------------------------------------------------------------------------------//
+        metrics = computeMetrics(dgeqlf_, dorgql_ref_, computeDorgqxPerf, 
+                computeQLRepresError, computeTallOrthError, m, n, A, false /*upperFactor*/,
+                false /*factorStartTop*/, false /*timeFactorization*/);
+        if(printAny) printf("QL metrics\n");
+        printInfo(metrics, flagVec, "reference", "ref");
+        free(metrics);
+        metrics=NULL;
+        //----------------------------------------------------------------------------------------//
+        // Optimized                                                                              //
+        //----------------------------------------------------------------------------------------//
+        metrics = computeMetrics(dgeqlf_, dorgql_, computeDorgqxPerf, 
+                computeQLRepresError, computeTallOrthError, m, n, A, false /*upperFactor*/,
+                false /*factorStartTop*/, false /*timeFactorization*/);
+        printInfo(metrics, flagVec, "optimized", "opt");
+        free(metrics);
+        metrics=NULL;
+    }
+    if (printRQ) {
+        //----------------------------------------------------------------------------------------//
+        // Try RQ                                                                                 //
+        //----------------------------------------------------------------------------------------//
+        //----------------------------------------------------------------------------------------//
+        // Reference                                                                              //
+        //----------------------------------------------------------------------------------------//
+        metrics = computeMetrics(dgerqf_, dorgrq_ref_, computeDorgxqPerf, 
+                computeRQRepresError, computeWideOrthError, n, m, A, true /*upperFactor*/,
+                false /*factorStartTop*/, false /*timeFactorization*/);
+        if(printAny) printf("RQ metrics\n");
+        printInfo(metrics, flagVec, "reference", "ref");
+        free(metrics);
+        metrics=NULL;
+        //----------------------------------------------------------------------------------------//
+        // Optimized                                                                              //
+        //----------------------------------------------------------------------------------------//
+        metrics = computeMetrics(dgerqf_, dorgrq_, computeDorgxqPerf, 
+                computeRQRepresError, computeWideOrthError, n, m, A, true /*upperFactor*/,
+                false /*factorStartTop*/, false /*timeFactorization*/);
+        printInfo(metrics, flagVec, "optimized", "opt");
+        free(metrics);
+        metrics=NULL;
+    }
 freeMemory:
     // free our arrays
     free(A);
