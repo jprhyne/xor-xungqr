@@ -2,6 +2,9 @@ include ../make.inc
 # Groups
 srcObjs := $(patsubst %.f,%.o,$(wildcard ../src/*.f))
 refObjs := $(patsubst %.f,%.o,$(wildcard ../referenceFiles/*.f))
+0c2Objs := $(patsubst %.f,%.o,$(wildcard ../src/*0c2.f))
+helperObjs := myNorm.o compute_errors.o perf_calc.o print_helpers.o qToL.o qToR.o
+krObjs := ../../../2r/realDouble/src/dtrmmoop.o  ../../../2r/realDouble/src/dtvt.o ../../../2r/realDouble/src/lumm.o ../../../2r/realDouble/src/my_dorgkr.o
 
 default: srcFiles refFiles krFiles test_dorgz.exe
 
@@ -21,7 +24,7 @@ print:
 	echo $(CFLAGS)
 
 # Executables
-test_dorgz.exe: test_dorgz.o myNorm.o compute_errors.o perf_calc.o print_helpers.o $(refObjs) qToL.o qToR.o ../src/dlarfb0c2.o ../../../2r/realDouble/src/dtrmmoop.o  ../../../2r/realDouble/src/dtvt.o ../../../2r/realDouble/src/lumm.o ../../../2r/realDouble/src/my_dorgkr.o ../src/dorgqr_dlarfb0c2.o
+test_dorgz.exe: test_dorgz.o $(0c2Objs) $(helperObjs) $(refObjs) $(krObjs) 
 	$(FC) $(CFLAGS) $^ $(OPTBLAS) -o $@
 
 # Object files

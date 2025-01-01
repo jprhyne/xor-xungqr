@@ -346,10 +346,19 @@ int main(int argc, char *argv[]) {
         //----------------------------------------------------------------------------------------//
         // Optimized                                                                              //
         //----------------------------------------------------------------------------------------//
-        metrics = computeMetrics(dgelqf_, dorglq_ref_, computeDorgxqPerf, 
+        metrics = computeMetrics(dgelqf_, dorglq_, computeDorgxqPerf, 
                 computeLQRepresError, computeWideOrthError, n, m, A, false /*upperFactor*/,
                 true /*factorStartTop*/, false /*timeFactorization*/);
         printInfo(metrics, flagVec, "optimized", "opt");
+        free(metrics);
+        metrics=NULL;
+        //----------------------------------------------------------------------------------------//
+        // DLARFB0C2                                                                              //
+        //----------------------------------------------------------------------------------------//
+        metrics = computeMetrics(dgelqf_, dorglq_dlarfb0c2_, computeDorgxqPerf, 
+                computeLQRepresError, computeWideOrthError, n, m, A, false /*upperFactor*/,
+                true /*factorStartTop*/, false /*timeFactorization*/);
+        printInfo(metrics, flagVec, "DLARFB0C2", "0c2");
         free(metrics);
         metrics=NULL;
     }
@@ -376,6 +385,15 @@ int main(int argc, char *argv[]) {
         printInfo(metrics, flagVec, "optimized", "opt");
         free(metrics);
         metrics=NULL;
+        //----------------------------------------------------------------------------------------//
+        // DLARFB0C2                                                                              //
+        //----------------------------------------------------------------------------------------//
+        metrics = computeMetrics(dgeqlf_, dorgql_dlarfb0c2_, computeDorgqxPerf, 
+                computeQLRepresError, computeTallOrthError, m, n, A, false /*upperFactor*/,
+                false /*factorStartTop*/, false /*timeFactorization*/);
+        printInfo(metrics, flagVec, "DLARFB0C2", "0c2");
+        free(metrics);
+        metrics=NULL;
     }
     if (printRQ) {
         //----------------------------------------------------------------------------------------//
@@ -398,6 +416,15 @@ int main(int argc, char *argv[]) {
                 computeRQRepresError, computeWideOrthError, n, m, A, true /*upperFactor*/,
                 false /*factorStartTop*/, false /*timeFactorization*/);
         printInfo(metrics, flagVec, "optimized", "opt");
+        free(metrics);
+        metrics=NULL;
+        //----------------------------------------------------------------------------------------//
+        // DLARFB0C2                                                                              //
+        //----------------------------------------------------------------------------------------//
+        metrics = computeMetrics(dgerqf_, dorgrq_dlarfb0c2_, computeDorgxqPerf, 
+                computeRQRepresError, computeWideOrthError, n, m, A, true /*upperFactor*/,
+                false /*factorStartTop*/, false /*timeFactorization*/);
+        printInfo(metrics, flagVec, "DLARFB0C2", "0c2");
         free(metrics);
         metrics=NULL;
     }

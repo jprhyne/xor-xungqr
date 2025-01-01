@@ -169,8 +169,7 @@ c
 *
       INFO = 0
       NB = ILAENV( 1, 'DORGQR', ' ', M, N, K, -1 )
-      ! Only need a workspace for dorg2r in case of bailout and 
-      ! for the panel factorization
+      ! Need N in case of bailout to dorg2r
       LWKOPT = MAX( 1, N )
       WORK( 1 ) = LWKOPT
       LQUERY = ( LWORK.EQ.-1 )
@@ -182,8 +181,8 @@ c
          INFO = -3
       ELSE IF( LDA.LT.MAX( 1, M ) ) THEN
          INFO = -5
-      ELSE IF( LWORK.LT.MAX( 1, N ) .AND. .NOT.LQUERY ) THEN
-         INFO = -8
+      !ELSE IF( LWORK.LT.MAX( 1, N*NB ) .AND. .NOT.LQUERY ) THEN
+      !   INFO = -8
       END IF
       IF( INFO.NE.0 ) THEN
          CALL XERBLA( 'DORGQR', -INFO )
@@ -199,11 +198,11 @@ c
          RETURN
       END IF
 *
-      ! Probably not needed anymore
       NBMIN = 2
-      ! Parameter that controls when we cross from blocked to
-      ! unblocked
       NX = 0
+*
+*     Determine when to cross over from blocked to unblocked code.
+*
 *
       IF( NB.GE.NBMIN .AND. NB.LT.K .AND. NX.LT.K ) THEN
 *
@@ -272,7 +271,7 @@ c
 *
 *        Apply H to rows i:m of current block
 *
-         CALL DORG2R(M-I+1, IB, IB, A(I,I), LDA, TAU(I), WORK, IINFO)
+         CALL MY_DORGKR(M-I+1, IB, A(I,I), LDA)
          DO I = KI + 1, 1, -NB
             IB = NB
 *
@@ -291,8 +290,7 @@ c
 *
 *           Apply H to rows i:m of current block
 *
-            CALL DORG2R(M-I+1, IB, IB, A(I,I), LDA, TAU(I), WORK, 
-     $         IINFO)
+            CALL MY_DORGKR(M-I+1, IB, A(I,I), LDA)
          END DO
 *        This checks for if K was a perfect multiple of NB
 *        so that we only have a special case for the last block when
@@ -316,8 +314,7 @@ c
 *
 *           Apply H to rows i:m of current block
 *
-            CALL DORG2R(M-I+1, IB, IB, A(I,I), LDA, TAU(I), WORK, 
-     $         IINFO)
+            CALL MY_DORGKR(M-I+1, IB, A(I,I), LDA)
          END IF
       END IF
 *
