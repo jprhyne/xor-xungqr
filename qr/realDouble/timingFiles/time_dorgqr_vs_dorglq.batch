@@ -1,0 +1,11 @@
+#!/bin/env bash
+# time_dorgqr_vs_dorglq.batch
+# batch job for running time_dorgqr_vs_dorglq.sh on the alderaan cluster
+# Johnathan Rhyne
+#SBATCH --job-name=time_dorgqr_vs_dorglq.sh
+#SBATCH --partition=math-alderaan
+#SBATCH --time=24:00:00
+#SBATCH --ntasks=12
+
+dateString=$(date "+%d.%B.%Y")
+./timeDorgqrVsDorglq.sh > "dorgqrDorglqTiming.$dateString.txt"

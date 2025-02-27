@@ -123,8 +123,7 @@
 *> \ingroup unglq
 *
 *  =====================================================================
-      SUBROUTINE DORGLQ_DLARFB0C2( M, N, K, A, LDA, TAU, WORK,
-     $      LWORK, INFO )
+      SUBROUTINE DORGLQ_LAP( M, N, K, A, LDA, TAU, WORK, LWORK, INFO )
 *
 *  -- LAPACK computational routine --
 *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -139,14 +138,10 @@
 *
 *  =====================================================================
 *
-*     .. Parameters ..
-      DOUBLE PRECISION   ZERO
-      PARAMETER          ( ZERO = 0.0D+0 )
-*     ..
 *     .. Local Scalars ..
       LOGICAL            LQUERY
-      INTEGER            I, IB, IINFO, IWS, J, KI, KK, L, LDWORK,
-     $                   LWKOPT, NB, NBMIN, NX
+      INTEGER            I, IB, IINFO, IWS, KI, KK, LDWORK, LWKOPT,
+     $                   NB, NBMIN, NX
 *     ..
 *     .. External Subroutines ..
       EXTERNAL           DLARFB0C2, DLARFT, DORGL2, XERBLA
@@ -164,8 +159,7 @@
 *
       INFO = 0
       NB = ILAENV( 1, 'DORGLQ', ' ', M, N, K, -1 )
-      ! DLARFB0C2 means we only need a workspace for calls to dorgl2
-      LWKOPT = MAX( 1, M )
+      LWKOPT = MAX( 1, M ) * NB
       WORK( 1 ) = LWKOPT
       LQUERY = ( LWORK.EQ.-1 )
       IF( M.LT.0 ) THEN
@@ -221,8 +215,8 @@
 *
       IF( NB.GE.NBMIN .AND. NB.LT.K .AND. NX.LT.K ) THEN
 *
-*        Use blocked code after the last block.
-*        The first kk rows are handled by the block method.
+*        Handle the first block assuming we are applying to the
+*        identity, then resume regular blocking method after
 *
          KI = K - 2 * NB
          KK = K - NB
@@ -279,9 +273,11 @@
             CALL DORGL2( IB, N-I+1, IB, A( I, I ), LDA, TAU( I ),
      $                   WORK, IINFO )
          END DO
+*
 *        This checks for if K was a perfect multiple of NB
 *        so that we only have a special case for the last block when
 *        necessary
+*
          IF(I.LT.1) THEN
             IB = I + NB - 1
             I = 1

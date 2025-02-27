@@ -124,8 +124,7 @@
 *> \ingroup doubleOTHERcomputational
 *
 *  =====================================================================
-      SUBROUTINE DORGQR_DLARFB0C2( M, N, K, A, LDA, TAU, WORK,
-     $      LWORK, INFO)
+      SUBROUTINE DORGQR_LAP( M, N, K, A, LDA, TAU, WORK, LWORK, INFO )
 *
 *  -- LAPACK computational routine --
 *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -140,14 +139,10 @@
 *
 *  =====================================================================
 *
-*     .. Parameters ..
-      DOUBLE PRECISION   ZERO, ONE
-      PARAMETER          ( ZERO = 0.0D+0, ONE = 1.0D+0 )
-*     ..
 *     .. Local Scalars ..
       LOGICAL            LQUERY
-      INTEGER            I, IB, IINFO, IWS, J, KI, KK, L, LDWORK,
-     $                   LWKOPT, NB, NBMIN, NX
+      INTEGER            I, IB, IINFO, IWS, KI, KK, LWKOPT,
+     $                   NB, NBMIN, NX
 *     ..
 *     .. External Subroutines ..
       EXTERNAL             DLARFB0C2, DLARFT, DORG2R, XERBLA
@@ -195,16 +190,14 @@
          RETURN
       END IF
 *
-      ! Probably not needed anymore
       NBMIN = 2
-      ! Parameter that controls when we cross from blocked to
-      ! unblocked
-      NX = 0
+      NX = MAX(0, ILAENV(3, 'SORGQR', ' ', M, N, K, -1))
+      IWS = N
 *
       IF( NB.GE.NBMIN .AND. NB.LT.K .AND. NX.LT.K ) THEN
 *
-*        Use blocked code after the last block.
-*        The first kk columns are handled by the block method.
+*        Handle the first block assuming we are applying to the
+*        identity, then resume regular blocking method after
 *
          KI = K - 2 * NB
          KK = K - NB
@@ -212,7 +205,7 @@
          KK = 0
       END IF
 *
-*     Use unblocked code for the only block.
+*     Potentially bail to the unblocked code.
 *
       IF( KK.EQ.0 ) THEN
             CALL DORG2R( M, N, K, A, LDA, TAU, WORK, IINFO )
@@ -258,9 +251,11 @@
             CALL DORG2R(M-I+1, IB, IB, A(I,I), LDA, TAU(I), WORK,
      $         IINFO)
          END DO
+*
 *        This checks for if K was a perfect multiple of NB
 *        so that we only have a special case for the last block when
 *        necessary
+*
          IF(I.LT.1) THEN
             IB = I + NB - 1
             I = 1
@@ -285,7 +280,7 @@
          END IF
       END IF
 *
-*      WORK( 1 ) = IWS
+      WORK( 1 ) = IWS
       RETURN
 *
 *     End of DORGQR

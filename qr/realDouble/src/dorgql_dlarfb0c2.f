@@ -124,7 +124,7 @@
 *> \ingroup ungql
 *
 *  =====================================================================
-      SUBROUTINE DORGQL_DLARFB0C2( M, N, K, A, LDA, TAU, WORK, 
+      SUBROUTINE DORGQL_DLARFB0C2( M, N, K, A, LDA, TAU, WORK,
      $      LWORK, INFO )
 *
 *  -- LAPACK computational routine --
@@ -141,16 +141,16 @@
 *  =====================================================================
 *
 *     .. Parameters ..
-      DOUBLE PRECISION   ZERO
-      PARAMETER          ( ZERO = 0.0D+0 )
+      DOUBLE PRECISION   ZERO, ONE
+      PARAMETER          ( ZERO = 0.0D+0, ONE = 1.0D+0)
 *     ..
 *     .. Local Scalars ..
       LOGICAL            LQUERY
-      INTEGER            I, IB, IINFO, IWS, J, KK, L, LDWORK, LWKOPT,
+      INTEGER            I, IB, IINFO, IWS, J, KK, L, LWKOPT,
      $                   NB, NBMIN, NX
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL           DLARFB_0C2, DLARFT, DORG2L, XERBLA
+      EXTERNAL           DLARFB0C2, DLARFT, DORG2L, XERBLA
 *     ..
 *     .. Intrinsic Functions ..
       INTRINSIC          MAX, MIN
@@ -180,7 +180,8 @@
             LWKOPT = 1
          ELSE
             NB = ILAENV( 1, 'DORGQL', ' ', M, N, K, -1 )
-            LWKOPT = N*NB
+            ! Only need a workspace for calls to dorg2l
+            LWKOPT = MAX(1, N)
          END IF
          WORK( 1 ) = LWKOPT
 *
@@ -205,80 +206,76 @@
       NBMIN = 2
       NX = 0
       IWS = N
-      IF( NB.GT.1 .AND. NB.LT.K ) THEN
-*
-*        Determine when to cross over from blocked to unblocked code.
-*
-         NX = MAX( 0, ILAENV( 3, 'DORGQL', ' ', M, N, K, -1 ) )
-         IF( NX.LT.K ) THEN
-*
-*           Determine if workspace is large enough for blocked code.
-*
-            LDWORK = N
-            IWS = LDWORK*NB
-            IF( LWORK.LT.IWS ) THEN
-*
-*              Not enough workspace to use optimal NB:  reduce NB and
-*              determine the minimum value of NB.
-*
-               NB = LWORK / LDWORK
-               NBMIN = MAX( 2, ILAENV( 2, 'DORGQL', ' ', M, N, K,
-     $                      -1 ) )
-            END IF
-         END IF
-      END IF
 *
       IF( NB.GE.NBMIN .AND. NB.LT.K .AND. NX.LT.K ) THEN
 *
-*        Use blocked code after the first block.
-*        The last kk columns are handled by the block method.
+*        We want to use the blocking method as long as our matrix is big enough
 *
-         KK = MIN( K, ( ( K-NX+NB-1 ) / NB )*NB )
-*
-*        Set A(m-kk+1:m,1:n-kk) to zero.
-*
-         DO 20 J = 1, N - KK
-            DO 10 I = M - KK + 1, M
-               A( I, J ) = ZERO
-   10       CONTINUE
-   20    CONTINUE
+         KK = K
       ELSE
          KK = 0
       END IF
 *
-*     Use unblocked code for the first or only block.
+*     Possibly bail to the unblocked code.
 *
-      CALL DORG2L( M-KK, N-KK, K-KK, A, LDA, TAU, WORK, IINFO )
+      IF( KK.EQ.0 ) THEN
+         CALL DORG2L( M, N, K, A, LDA, TAU, WORK, IINFO )
+      END IF
+*
+*     Use our blocked code for everything
 *
       IF( KK.GT.0 ) THEN
 *
-*        Use blocked code
+*        Factor the first block assuming that our first application
+*        will be on the Identity matrix
 *
-         DO 50 I = K - KK + 1, K, NB
-            IB = MIN( NB, K-I+1 )
-            IF( N-K+I.GT.1 ) THEN
+         I = 1
+         IB = NB
 *
-*              Form the triangular factor of the block reflector
-*              H = H(i+ib-1) . . . H(i+1) H(i)
+*        Form the triangular factor of the block reflector
+*        H = H(i+ib-1) . . . H(i+1) H(i)
 *
-               CALL DLARFT( 'Backward', 'Columnwise', M-K+I+IB-1, IB,
-     $                      A( 1, N-K+I ), LDA, TAU( I ), WORK, LDWORK )
+         CALL DLARFT( 'Backward', 'Columnwise', M-K+I+IB-1, IB,
+     $                  A( 1, N-K+I ), LDA, TAU( I ),
+     $                  A( M-K+I, N-K+I ), LDA)
 *
-*              Apply H to A(1:m-k+i+ib-1,1:n-k+i-1) from the left
+*        Apply H to A(1:m-k+i+ib-1,1:n-k+i-1) from the left
 *
-               CALL DLARFB0C2('A', 'A', 'Backward', 'Columnwise',
-     $               M-K+I+IB-1, N-K+I-1, IB, A(1, N-K+I), LDA, 
-     $               WORK, LDWORK, A, LDA)
-            END IF
+         CALL DLARFB0C2(.TRUE., 'Left', 'No Transpose', 'Backward', 
+     $         'Columnwise', M-K+I+IB-1, N-K+I-1, IB, A(1, N-K+I), 
+     $         LDA, A( M-K+I, N-K+I ), LDA, A, LDA)
+*
+*        Apply H to rows 1:m-k+i+ib-1 of current block
+*
+         CALL DORG2L( M-K+I+IB-1, IB, IB, A( 1, N-K+I ), LDA,
+     $                TAU( I ), WORK, IINFO )
+
+*        Use blocked code on the remaining blocks if there are any.
+*
+         DO I = NB+1, K, NB
+*
+*           The last block may be less than size NB
+*
+            IB = MIN(NB, K-I+1)
+*
+*           Form the triangular factor of the block reflector
+*           H = H(i+ib-1) . . . H(i+1) H(i)
+*
+            CALL DLARFT( 'Backward', 'Columnwise', M-K+I+IB-1, IB,
+     $                  A( 1, N-K+I ), LDA, TAU( I ), 
+     $                  A( M-K+I, N-K+I ), LDA )
+*
+*           Apply H to A(1:m-k+i+ib-1,1:n-k+i-1) from the left
+*
+            CALL DLARFB0C2(.FALSE., 'Left', 'No Transpose',
+     $            'Backward', 'Columnwise', M-K+I+IB-1, N-K+I-1, IB, 
+     $            A(1, N-K+I), LDA, A( M-K+I, N-K+I ), LDA, A, LDA)
 *
 *           Apply H to rows 1:m-k+i+ib-1 of current block
 *
             CALL DORG2L( M-K+I+IB-1, IB, IB, A( 1, N-K+I ), LDA,
      $                   TAU( I ), WORK, IINFO )
-*
-*           Set rows m-k+i+ib:m of current block to zero
-*
-   50    CONTINUE
+         END DO
       END IF
 *
       WORK( 1 ) = IWS

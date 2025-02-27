@@ -17,6 +17,8 @@
          ! External functions
          LOGICAL           LSAME
          EXTERNAL          LSAME
+         ! External subroutines
+         EXTERNAL          DGEMM, DTRMM, XERBLA
          ! Parameters
          DOUBLE PRECISION ONE, ZERO, NEG_ONE
          PARAMETER(ONE=1.0D+0, ZERO = 0.0D+0, NEG_ONE = -1.0D+0)

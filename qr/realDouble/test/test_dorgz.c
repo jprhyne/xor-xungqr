@@ -38,9 +38,9 @@
 void usage() {
     printf("./test_dorgqr.exe [-m numRows -n numCols -t -p -e -c -v -qr -lq -ql -rq -h]\n");
     printf(" -m  numCols is the number of columns in the generated matrix\n");
-    printf("\t Default is 30\n");
+    printf("\tDefault is 30\n");
     printf(" -n  numRows is the number of rows in the generated matrix\n");
-    printf("\t Default is 20\n");
+    printf("\tDefault is 20\n");
     printf(" -t  flag that prints out the timing information\n");
     printf(" -p  flag that prints out the performance information\n");
     printf(" -e  flag that prints out the error information\n");
@@ -70,7 +70,6 @@ typedef double (*computeOrthFunc)(size_t mS, size_t nS, double *Q);
 // X represents either R or L depending on which factorization is used
 typedef double (*computeRepresFunc)(size_t mS, size_t nS, double *A, double *Q, double *X);
 
-// Struct to hold multiple results for our return easier.
 // This function will compute the orthogonality and representation error metrics as well as the 
 // performance metrics. The inputs are typedef'd function pointers. They are defined directly before
 // this function definition.
