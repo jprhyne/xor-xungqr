@@ -115,8 +115,8 @@ int main(int argc, char **argv) {
     perfLQ = computeDorgxqPerf((double) n, (double) m, (double) k, timeLQ);
 
     // Print to console
-    printf("qr:New%10.10e\n",perfQR);
-    printf("lq:New%10.10e\n",perfLQ);
+    printf("qr:New:%10.10e\n",perfQR);
+    printf("lq:New:%10.10e\n",perfLQ);
 
     // Copy A into Q and A**T into Qt
     for(i = 0; i < m; ++i) {
