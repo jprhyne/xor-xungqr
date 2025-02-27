@@ -115,9 +115,8 @@ int main(int argc, char **argv) {
     perfLQ = computeDorgxqPerf((double) n, (double) m, (double) k, timeLQ);
 
     // Print to console
-    printf("New Version\n");
-    printf("QR: %10.10e\n",perfQR);
-    printf("LQ: %10.10e\n",perfLQ);
+    printf("qrNeq: %10.10e\n",perfQR);
+    printf("lqNew: %10.10e\n",perfLQ);
 
     // Copy A into Q and A**T into Qt
     for(i = 0; i < m; ++i) {
@@ -159,9 +158,8 @@ int main(int argc, char **argv) {
     perfLQ = computeDorgxqPerf((double) n, (double) m, (double) k, timeLQ);
 
     // Print to console
-    printf("Old Version\n");
-    printf("QR: %10.10e\n",perfQR);
-    printf("LQ: %10.10e\n",perfLQ);
+    printf("qrOld: %10.10e\n",perfQR);
+    printf("lqOld: %10.10e\n",perfLQ);
 
     free(A);
     free(Q);
