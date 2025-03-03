@@ -15,7 +15,7 @@ CBLASLIB=$(LAPACKROOT)/libcblas.a
 CC=gcc
 FC=gfortran
 
-CFLAGS=-g -Wno-implicit-function-declaration
+CFLAGS=-g -Wno-implicit-function-declaration -lpthread
 FFLAGS=-fimplicit-none -g
 
 # This is the compilation flags needed to compile with optimized blas
@@ -30,4 +30,4 @@ FFLAGS=-fimplicit-none -g
 #         AOCL-libFLAME
 #OPTBLAS=-m64  -I"/opt/intel/oneapi/mkl/2023.2.0/include"  -L$(MKLROOT)/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl
 #OPTBLAS=$(AOCLROOT)/lib/libflame.so $(AOCLROOT)/lib/libblis.so
-OPTBLAS= /home/lidesia/Documents/CUDenver/RAShip/gitRepos/aocl-utils/build/libaoclutils.a /home/lidesia/Documents/CUDenver/RAShip/gitRepos/libflame/lib/x86_64-unknown-linux-gnu/libflame.a /home/lidesia/Documents/CUDenver/RAShip/gitRepos/blis/lib/amdzen/libblis.a
+OPTBLAS=/home/rhynej/AOCL/libflame.a /home/rhynej/AOCL/libblis.a /home/rhynej/AOCL/libaoclutils.a

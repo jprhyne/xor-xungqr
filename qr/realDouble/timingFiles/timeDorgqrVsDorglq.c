@@ -8,7 +8,7 @@ int main(int argc, char **argv) {
     // Local params
     int info, m, n, k, lwork;
     size_t mS, nS, kS, iS;
-    double *A, *Q, *Qt, *tau1, *tau2, *workMat;
+    double *A, *Q, *Qt, *tau1, *tau2, *workMat, *V, *Vt;
     double normA, tmpVal;
     double timeQR, perfQR, timeLQ, perfLQ;
     struct timeval tp;
@@ -65,7 +65,9 @@ int main(int argc, char **argv) {
     // Allocate our matrices
     A = (double *) calloc(mS*kS, sizeof(double));
     Q = (double *) calloc(mS*nS, sizeof(double));
+    V = (double *) calloc(mS*nS, sizeof(double));
     Qt= (double *) calloc(nS*mS, sizeof(double));
+    Vt= (double *) calloc(nS*mS, sizeof(double));
     tau1 = (double *) calloc(nS, sizeof(double));
     tau2 = (double *) calloc(nS, sizeof(double));
 
@@ -97,6 +99,11 @@ int main(int argc, char **argv) {
     // factorize A and A**T
     dgeqrf_(&m, &n, Q,  &m, tau1, workMat, &lwork, &info);
     dgelqf_(&n, &m, Qt, &n, tau2, workMat, &lwork, &info);
+    // Copy them into V and Vt respectively
+    for( size_t k = 0; k < mS * nS; ++k ) {
+        V[k] = Q[k];
+        Vt[k] = Qt[k];
+    }
     // Compute A = QR
     gettimeofday(&tp, NULL);
     timeQR=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
@@ -118,28 +125,19 @@ int main(int argc, char **argv) {
     printf("qr:New:%10.10e\n",perfQR);
     printf("lq:New:%10.10e\n",perfLQ);
 
-    // Copy A into Q and A**T into Qt
-    for(i = 0; i < m; ++i) {
-        for (j=0; j < k; ++j) {
-            Q[i + j*m] = A[i + j*m];
-            Qt[j + i*n] = A[i + j*m];
-        }
+    // Copy V into Q and V**T into Qt
+    for( size_t k = 0; k < mS * nS; ++k ) {
+        V[k] = Q[k];
+        Vt[k] = Qt[k];
     }
-    dgeqrf_(&m, &n, Q, &m, tau1, workQuery, &negOne, &info);
-    lwork = ((int) workQuery[0]);
-    dgelqf_(&n, &m, Qt, &n, tau2, workQuery, &negOne, &info);
-    lwork = (lwork < ((int) workQuery[0])) ? ((int) workQuery[0]) : lwork;
     dorgqr_ref_(&m, &n, &k, Q, &m, tau1, workQuery, &negOne, &info);
-    lwork = (lwork < ((int) workQuery[0])) ? ((int) workQuery[0]) : lwork;
+    lwork = ((int) workQuery[0]);
     dorglq_ref_(&n, &m, &k, Qt, &n, tau2, workQuery, &negOne, &info);
     lwork = (lwork < ((int) workQuery[0])) ? ((int) workQuery[0]) : lwork;
     free(workMat);
 
     // Allocate our workspace to be the needed size
     workMat = (double *) malloc(lwork * sizeof(double));
-    // factorize A and A**T
-    dgeqrf_(&m, &n, Q,  &m, tau1, workMat, &lwork, &info);
-    dgelqf_(&n, &m, Qt, &n, tau2, workMat, &lwork, &info);
     // Compute A = QR
     gettimeofday(&tp, NULL);
     timeQR=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
@@ -161,9 +159,45 @@ int main(int argc, char **argv) {
     printf("qr:Old:%10.10e\n",perfQR);
     printf("lq:Old:%10.10e\n",perfLQ);
 
+    // Copy V into Q and V**T into Qt
+    for( size_t k = 0; k < mS * nS; ++k ) {
+        V[k] = Q[k];
+        Vt[k] = Qt[k];
+    }
+    dorgqr_(&m, &n, &k, Q, &m, tau1, workQuery, &negOne, &info);
+    lwork = ((int) workQuery[0]);
+    dorglq_(&n, &m, &k, Qt, &n, tau2, workQuery, &negOne, &info);
+    lwork = (lwork < ((int) workQuery[0])) ? ((int) workQuery[0]) : lwork;
+    free(workMat);
+
+    // Allocate our workspace to be the needed size
+    workMat = (double *) malloc(lwork * sizeof(double));
+    // Compute A = QR
+    gettimeofday(&tp, NULL);
+    timeQR=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    dorgqr_(&m, &n, &k, Q, &m, tau1, workMat, &lwork, &info);
+    gettimeofday(&tp, NULL);
+    timeQR+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    // Compute A**T = LQ
+    gettimeofday(&tp, NULL);
+    timeLQ=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    dorglq_(&n, &m, &k, Qt, &n, tau1, workMat, &lwork, &info);
+    gettimeofday(&tp, NULL);
+    timeLQ+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+
+    // Compute our performance values
+    perfQR = computeDorgqxPerf((double) m, (double) n, (double) k, timeQR);
+    perfLQ = computeDorgxqPerf((double) n, (double) m, (double) k, timeLQ);
+
+    // Print to console
+    printf("qr:Opt:%10.10e\n",perfQR);
+    printf("lq:Opt:%10.10e\n",perfLQ);
+
     free(A);
     free(Q);
+    free(V);
     free(Qt);
+    free(Vt);
     free(tau1);
     free(tau2);
     free(workMat);

@@ -4,7 +4,7 @@
 # Johnathan Rhyne
 #SBATCH --job-name=time_dorgqr_vs_dorglq.sh
 #SBATCH --partition=math-alderaan
-#SBATCH --time=24:00:00
+#SBATCH --time=48:00:00
 #SBATCH --ntasks=12
 
 dateString=$(date "+%d.%B.%Y")
