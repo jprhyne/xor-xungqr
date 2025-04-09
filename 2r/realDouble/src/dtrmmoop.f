@@ -201,7 +201,7 @@
 *        .. Scalar Arguments ..
          DOUBLE PRECISION  ALPHA, BETA
          INTEGER           M, N, LDA, LDB, LDC
-         CHARACTER         SIDE, UPLO, TRANSB, TRANSC, DIAG
+         CHARACTER         SIDE, UPLO, TRANSA, TRANSB, DIAG
 *        ..
 *        .. Array Arguments ..
          DOUBLE PRECISION  A(LDA,*), B(LDB,*), C(LDC,*)
@@ -268,6 +268,7 @@
                   END IF
                END IF
             END IF
+            RETURN
          ELSE IF (M.EQ.1) THEN
 *
 *           This means that C is a row vector. If BETA is 0, then we
@@ -283,7 +284,7 @@
 *
 *              Recall that the number of columns of B is determined by SIDE
 *
-               IF (SIDEL) THEN
+               IF (LSIDE) THEN
 *
 *                 Determine if A is a row or column vector
 *
@@ -404,6 +405,7 @@
                   END IF
                END IF
             END IF
+            RETURN
          ELSE IF (N.EQ.1) THEN
 *
 *           This means that C is a column vector. If BETA is 0, then we
@@ -422,7 +424,7 @@
                ELSE
                   INCA = 1   ! A is a column vector
                END IF
-               IF (SIDEL) THEN
+               IF (LSIDE) THEN
                   IF (UPPER) THEN
                      IF (TRANST) THEN
                         IF (UNIT) THEN
@@ -532,6 +534,7 @@
                   END IF
                END IF
             END IF
+            RETURN
          END IF
 *
 *        Recursive Case
