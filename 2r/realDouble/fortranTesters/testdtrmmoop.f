@@ -18,6 +18,8 @@
          ! Intrinsic functions
          INTRINSIC MAX
          ! Parameters
+         DOUBLE PRECISION ZERO
+         PARAMETER(ZERO=0.0D+0)
          ! Beginning of executable statements
          TERMINATE = .FALSE.
 
@@ -33,12 +35,13 @@
          TRANSBS(3) = 'C'
 
          DIAGS(1) = 'N'
-         DIAGS(2) = 'D'
+         DIAGS(2) = 'U'
 
          UPLOS(1) = 'U'
          UPLOS(2) = 'L'
 
-         MAXMN = MAX(M,N)
+         MAXMN = M
+         IF (N.GT.M) MAXMN = N
 
          ! Allocate our memory
          ALLOCATE(A(MAXMN,MAXMN))
@@ -93,12 +96,12 @@
                         END IF
                         ! Determine if we did the correct operations
                         IF (TRANSAS(J).EQ.'N') THEN
-                           CALL DLACPY('ALL', MAXMN, MAXMN, Cs, MAXMN,
+                           CALL DLACPY('ALL', MAXMN, MAXMN, As, MAXMN,
      $                        WORK, MAXMN)
                         ELSE
                            DO II = 1, MAXMN
                               DO IJ = 1, MAXMN
-                                 WORK(II,IJ) = Cs(IJ,II)
+                                 WORK(II,IJ) = As(IJ,II)
                               END DO
                            END DO
                         END IF
@@ -123,10 +126,13 @@
                         TMP = 0.0
                         DO II = 1, M
                            DO IJ = 1, N
-                              TMP = TMP + C(II,IJ) * C(II,IJ)
+                              TMP = TMP + WORK(II,IJ) * WORK(II,IJ)
                            END DO
                         END DO
-                        NORM_F = NORM_F / TMP
+                        TMP = SQRT(TMP)
+                        IF (TMP.NE.ZERO) THEN
+                           NORM_F = NORM_F / TMP
+                        END IF
 
                         WRITE(*,*) "Parameters to DTRMMOOP",
      $                     SIDES(I), UPLOS(O), TRANSAS(J), TRANSBS(K),
