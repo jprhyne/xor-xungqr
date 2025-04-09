@@ -1,0 +1,13 @@
+#!/bin/env bash
+# time_dgeqrf.batch
+# batch job for running time_dgeqrf.sh on the alderaan cluster
+# Johnathan Rhyne
+#SBATCH --job-name=time_dgeqrf.sh
+#SBATCH --partition=math-alderaan
+#SBATCH --time=48:00:00
+#SBATCH --ntasks=5
+#SBATCH --nodes=1
+
+
+dateString=$(date "+%d.%B.%Y")
+./time_dgeqrf.sh > "dgeqrf_timing.$dateString.txt"

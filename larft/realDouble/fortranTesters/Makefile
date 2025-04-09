@@ -4,7 +4,7 @@ srcObjs := $(patsubst %.f,%.o,$(wildcard ../src/*.f))
 depObjs := $(patsubst %.f,%.o,$(wildcard ../../../2r/realDouble/src/*.f))
 
 # Groups
-all: objectFiles driver_dlarft.exe
+all: objectFiles driver_dlarft.exe driver_dgeqrf.exe
 
 clean:
 	rm *.o *.exe
@@ -12,6 +12,9 @@ clean:
 objectFiles: 
 	$(MAKE) -C ../src all
 	$(MAKE) -C ../referenceFiles all
+
+driver_dgeqrf.exe: driver_dgeqrf.o test_dgeqrf.o ../referenceFiles/dgeqrf_qr3.o $(srcObjs) $(depObjs)
+	$(FC) $(CFLAGS) $^ $(OPTBLAS) -o $@
 
 driver_dlarft.exe: driver_dlarft.o test_dlarft.o ../referenceFiles/dlarft.o $(srcObjs) $(depObjs)
 	$(FC) $(CFLAGS) $^ $(OPTBLAS) -o $@
@@ -22,3 +25,8 @@ driver_dlarft.o: driver_dlarft.c
 test_dlarft.o:   test_dlarft.f
 	$(FC) -c $(FFLAGS) $^ -o $@
 
+driver_dgeqrf.o: driver_dgeqrf.c
+	$(CC) -c $(CFLAGS) $^ -o $@
+
+test_dgeqrf.o:   test_dgeqrf.f
+	$(FC) -c $(FFLAGS) $^ -o $@

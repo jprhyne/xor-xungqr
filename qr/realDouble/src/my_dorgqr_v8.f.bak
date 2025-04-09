@@ -240,12 +240,7 @@ c
 *      IF( KK.EQ.0 )
 *     $   CALL DORG2R( M, N, K, A, LDA, TAU, WORK, IINFO )
       IF( KK.EQ.0 ) THEN
-         IF(K.EQ.N) THEN
-            CALL MY_DLARFT_UT(M, N, A, LDA, TAU, A, LDA)
-            CALL MY_DORGKR(M, N, A, LDA)
-         ELSE
             CALL DORG2R( M, N, K, A, LDA, TAU, WORK, IINFO ) 
-         END IF
       END IF
 *
       IF( KK.GT.0 ) THEN
@@ -309,8 +304,11 @@ c
 *
 *           Apply H to A(i:m,i+ib:n) from the left
 *
-            CALL MY_DLARFB(M-I+1, N-(I+IB)+1, IB, A(I,I), LDA,
-     $                        A(I,I+IB),LDA)
+!            CALL MY_DLARFB(M-I+1, N-(I+IB)+1, IB, A(I,I), LDA,
+!     $                        A(I,I+IB),LDA)
+            CALL DLARFB0C2('A', 'A', 'Forward', 'Column', M-I+1, 
+     $                     N-(I+IB)+1, IB, A(I,I), LDA, A(I,I+IB),
+     $                     LDA)
 !            CALL DLARFB('Left', 'No transpose', 'Forward', 'Col',
 !     $                     M-I+1, N-(I+IB)+1, IB, A(I,I), LDA,
 !     $                     A(I,I), LDA, A(I,I+IB), LDA, WORK, LDWORK)

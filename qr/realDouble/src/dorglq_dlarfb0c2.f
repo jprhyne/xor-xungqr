@@ -1,4 +1,4 @@
-*> \brief \b DORGQR
+*> \brief \b DORGLQ
 *
 *  =========== DOCUMENTATION ===========
 *
@@ -6,19 +6,19 @@
 *            http://www.netlib.org/lapack/explore-html/
 *
 *> \htmlonly
-*> Download DORGQR + dependencies
-*> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/dorgqr.f">
+*> Download DORGLQ + dependencies
+*> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/dorglq.f">
 *> [TGZ]</a>
-*> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/dorgqr.f">
+*> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/dorglq.f">
 *> [ZIP]</a>
-*> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/dorgqr.f">
+*> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/dorglq.f">
 *> [TXT]</a>
 *> \endhtmlonly
 *
 *  Definition:
 *  ===========
 *
-*       SUBROUTINE DORGQR( M, N, K, A, LDA, TAU, WORK, LWORK, INFO )
+*       SUBROUTINE DORGLQ( M, N, K, A, LDA, TAU, WORK, LWORK, INFO )
 *
 *       .. Scalar Arguments ..
 *       INTEGER            INFO, K, LDA, LWORK, M, N
@@ -33,13 +33,13 @@
 *>
 *> \verbatim
 *>
-*> DORGQR generates an M-by-N real matrix Q with orthonormal columns,
-*> which is defined as the first N columns of a product of K elementary
-*> reflectors of order M
+*> DORGLQ generates an M-by-N real matrix Q with orthonormal rows,
+*> which is defined as the first M rows of a product of K elementary
+*> reflectors of order N
 *>
-*>       Q  =  H(1) H(2) . . . H(k)
+*>       Q  =  H(k) . . . H(2) H(1)
 *>
-*> as returned by DGEQRF.
+*> as returned by DGELQF.
 *> \endverbatim
 *
 *  Arguments:
@@ -54,23 +54,22 @@
 *> \param[in] N
 *> \verbatim
 *>          N is INTEGER
-*>          The number of columns of the matrix Q. M >= N >= 0.
+*>          The number of columns of the matrix Q. N >= M.
 *> \endverbatim
 *>
 *> \param[in] K
 *> \verbatim
 *>          K is INTEGER
 *>          The number of elementary reflectors whose product defines the
-*>          matrix Q. N >= K >= 0.
+*>          matrix Q. M >= K >= 0.
 *> \endverbatim
 *>
 *> \param[in,out] A
 *> \verbatim
 *>          A is DOUBLE PRECISION array, dimension (LDA,N)
-*>          On entry, the i-th column must contain the vector which
-*>          defines the elementary reflector H(i), for i = 1,2,...,k, as
-*>          returned by DGEQRF in the first k columns of its array
-*>          argument A.
+*>          On entry, the i-th row must contain the vector which defines
+*>          the elementary reflector H(i), for i = 1,2,...,k, as returned
+*>          by DGELQF in the first k rows of its array argument A.
 *>          On exit, the M-by-N matrix Q.
 *> \endverbatim
 *>
@@ -84,7 +83,7 @@
 *> \verbatim
 *>          TAU is DOUBLE PRECISION array, dimension (K)
 *>          TAU(i) must contain the scalar factor of the elementary
-*>          reflector H(i), as returned by DGEQRF.
+*>          reflector H(i), as returned by DGELQF.
 *> \endverbatim
 *>
 *> \param[out] WORK
@@ -96,9 +95,9 @@
 *> \param[in] LWORK
 *> \verbatim
 *>          LWORK is INTEGER
-*>          The dimension of the array WORK. LWORK >= max(1,N).
-*>          For optimum performance LWORK >= N*NB, where NB is the
-*>          optimal blocksize.
+*>          The dimension of the array WORK. LWORK >= max(1,M).
+*>          For optimum performance LWORK >= M*NB, where NB is
+*>          the optimal blocksize.
 *>
 *>          If LWORK = -1, then a workspace query is assumed; the routine
 *>          only calculates the optimal size of the WORK array, returns
@@ -121,10 +120,11 @@
 *> \author Univ. of Colorado Denver
 *> \author NAG Ltd.
 *
-*> \ingroup doubleOTHERcomputational
+*> \ingroup unglq
 *
 *  =====================================================================
-      SUBROUTINE DORGQR( M, N, K, A, LDA, TAU, WORK, LWORK, INFO )
+      SUBROUTINE DORGLQ_DLARFB0C2( M, N, K, A, LDA, TAU, WORK,
+     $      LWORK, INFO )
 *
 *  -- LAPACK computational routine --
 *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -149,7 +149,7 @@
      $                   LWKOPT, NB, NBMIN, NX
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL           DLARFB, DLARFT, DORG2R, XERBLA
+      EXTERNAL           DLARFB0C2, DLARFT, DORGL2, XERBLA
 *     ..
 *     .. Intrinsic Functions ..
       INTRINSIC          MAX, MIN
@@ -163,23 +163,24 @@
 *     Test the input arguments
 *
       INFO = 0
-      NB = ILAENV( 1, 'DORGQR', ' ', M, N, K, -1 )
-      LWKOPT = MAX( 1, N )*NB
+      NB = ILAENV( 1, 'DORGLQ', ' ', M, N, K, -1 )
+      ! DLARFB0C2 means we only need a workspace for calls to dorgl2
+      LWKOPT = MAX( 1, M )
       WORK( 1 ) = LWKOPT
       LQUERY = ( LWORK.EQ.-1 )
       IF( M.LT.0 ) THEN
          INFO = -1
-      ELSE IF( N.LT.0 .OR. N.GT.M ) THEN
+      ELSE IF( N.LT.M ) THEN
          INFO = -2
-      ELSE IF( K.LT.0 .OR. K.GT.N ) THEN
+      ELSE IF( K.LT.0 .OR. K.GT.M ) THEN
          INFO = -3
       ELSE IF( LDA.LT.MAX( 1, M ) ) THEN
          INFO = -5
-      ELSE IF( LWORK.LT.MAX( 1, N ) .AND. .NOT.LQUERY ) THEN
+      ELSE IF( LWORK.LT.MAX( 1, M ) .AND. .NOT.LQUERY ) THEN
          INFO = -8
       END IF
       IF( INFO.NE.0 ) THEN
-         CALL XERBLA( 'DORGQR', -INFO )
+         CALL XERBLA( 'DORGLQ', -INFO )
          RETURN
       ELSE IF( LQUERY ) THEN
          RETURN
@@ -187,24 +188,24 @@
 *
 *     Quick return if possible
 *
-      IF( N.LE.0 ) THEN
+      IF( M.LE.0 ) THEN
          WORK( 1 ) = 1
          RETURN
       END IF
 *
       NBMIN = 2
       NX = 0
-      IWS = N
+      IWS = M
       IF( NB.GT.1 .AND. NB.LT.K ) THEN
 *
 *        Determine when to cross over from blocked to unblocked code.
 *
-         NX = MAX( 0, ILAENV( 3, 'DORGQR', ' ', M, N, K, -1 ) )
+         NX = MAX( 0, ILAENV( 3, 'DORGLQ', ' ', M, N, K, -1 ) )
          IF( NX.LT.K ) THEN
 *
 *           Determine if workspace is large enough for blocked code.
 *
-            LDWORK = N
+            LDWORK = M
             IWS = LDWORK*NB
             IF( LWORK.LT.IWS ) THEN
 *
@@ -212,7 +213,8 @@
 *              determine the minimum value of NB.
 *
                NB = LWORK / LDWORK
-               NBMIN = MAX( 2, ILAENV( 2, 'DORGQR', ' ', M, N, K, -1 ) )
+               NBMIN = MAX( 2, ILAENV( 2, 'DORGLQ', ' ', M, N, K,
+     $                      -1 ) )
             END IF
          END IF
       END IF
@@ -220,68 +222,92 @@
       IF( NB.GE.NBMIN .AND. NB.LT.K .AND. NX.LT.K ) THEN
 *
 *        Use blocked code after the last block.
-*        The first kk columns are handled by the block method.
+*        The first kk rows are handled by the block method.
 *
-         KI = ( ( K-NX-1 ) / NB )*NB
-         KK = MIN( K, KI+NB )
-*
-*        Set A(1:kk,kk+1:n) to zero.
-*
-         DO 20 J = KK + 1, N
-            DO 10 I = 1, KK
-               A( I, J ) = ZERO
-   10       CONTINUE
-   20    CONTINUE
+         KI = K - 2 * NB
+         KK = K - NB
       ELSE
          KK = 0
       END IF
 *
-*     Use unblocked code for the last or only block.
+*     Potentially bail to the unblocked version
 *
-      IF( KK.LT.N )
-     $   CALL DORG2R( M-KK, N-KK, K-KK, A( KK+1, KK+1 ), LDA,
-     $                TAU( KK+1 ), WORK, IINFO )
+      IF( KK.EQ.0 ) THEN
+         CALL DORGL2( M, N, K, A, LDA, TAU, WORK, IINFO )
+      END IF
 *
       IF( KK.GT.0 ) THEN
+         I = KK + 1
+         IB = NB
+*
+*        Form the triangular factor of the block reflector
+*        H = H(i) H(i+1) . . . H(i+ib-1)
+*
+         CALL DLARFT( 'Forward', 'Rowwise', N-I+1, IB, A( I, I ),
+     $               LDA, TAU( I ), WORK, LDWORK )
+*
+*        Apply H**T to A(i+ib:m,i:n) from the right
+*
+         CALL DLARFB0C2(.TRUE., 'Right', 'Transpose', 'Forward',
+     $         'Rowwise', M-I-IB+1, N-I+1, IB, A(I,I), LDA, WORK, 
+     $         LDWORK, A(I+IB,I), LDA)
+*
+*        Apply H**T to columns i:n of current block
+
+         CALL DORGL2( IB, N-I+1, IB, A( I, I ), LDA, TAU( I ),
+     $                WORK, IINFO )
 *
 *        Use blocked code
 *
-         DO 50 I = KI + 1, 1, -NB
-            IB = MIN( NB, K-I+1 )
-            IF( I+IB.LE.N ) THEN
+         DO I = KI + 1, 1, -NB
+            IB = NB
 *
-*              Form the triangular factor of the block reflector
-*              H = H(i) H(i+1) . . . H(i+ib-1)
+*           Form the triangular factor of the block reflector
+*           H = H(i) H(i+1) . . . H(i+ib-1)
 *
-               CALL DLARFT( 'Forward', 'Columnwise', M-I+1, IB,
-     $                      A( I, I ), LDA, TAU( I ), WORK, LDWORK )
+            CALL DLARFT( 'Forward', 'Rowwise', N-I+1, IB, A( I, I ),
+     $                  LDA, TAU( I ), WORK, LDWORK )
 *
-*              Apply H to A(i:m,i+ib:n) from the left
+*           Apply H**T to A(i+ib:m,i:n) from the right
 *
-               CALL DLARFB( 'Left', 'No transpose', 'Forward',
-     $                      'Columnwise', M-I+1, N-I-IB+1, IB,
-     $                      A( I, I ), LDA, WORK, LDWORK, A( I, I+IB ),
-     $                      LDA, WORK( IB+1 ), LDWORK )
-            END IF
+            CALL DLARFB0C2(.FALSE., 'Right', 'Transpose', 'Forward',
+     $            'Rowwise', M-I-IB+1, N-I+1, IB, A(I,I), LDA, WORK, 
+     $            LDWORK, A(I+IB,I), LDA)
 *
-*           Apply H to rows i:m of current block
+*           Apply H**T to columns i:n of current block
+
+            CALL DORGL2( IB, N-I+1, IB, A( I, I ), LDA, TAU( I ),
+     $                   WORK, IINFO )
+         END DO
+*        This checks for if K was a perfect multiple of NB
+*        so that we only have a special case for the last block when
+*        necessary
+         IF(I.LT.1) THEN
+            IB = I + NB - 1
+            I = 1
 *
-            CALL DORG2R( M-I+1, IB, IB, A( I, I ), LDA, TAU( I ), WORK,
-     $                   IINFO )
+*           Form the triangular factor of the block reflector
+*           H = H(i) H(i+1) . . . H(i+ib-1)
 *
-*           Set rows 1:i-1 of current block to zero
+            CALL DLARFT( 'Forward', 'Rowwise', N-I+1, IB, A( I, I ),
+     $                  LDA, TAU( I ), WORK, LDWORK )
 *
-            DO 40 J = I, I + IB - 1
-               DO 30 L = 1, I - 1
-                  A( L, J ) = ZERO
-   30          CONTINUE
-   40       CONTINUE
-   50    CONTINUE
+*           Apply H**T to A(i+ib:m,i:n) from the right
+*
+            CALL DLARFB0C2(.FALSE., 'Right', 'Transpose', 'Forward',
+     $            'Rowwise', M-I-IB+1, N-I+1, IB, A(I,I), LDA, WORK, 
+     $            LDWORK, A(I+IB,I), LDA)
+*
+*           Apply H**T to columns i:n of current block
+
+            CALL DORGL2( IB, N-I+1, IB, A( I, I ), LDA, TAU( I ),
+     $                   WORK, IINFO )
+         END IF
       END IF
 *
       WORK( 1 ) = IWS
       RETURN
 *
-*     End of DORGQR
+*     End of DORGLQ
 *
       END

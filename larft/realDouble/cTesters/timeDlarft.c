@@ -255,7 +255,7 @@ int main(int argc, char *argv[]) {
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     // Call reference dlarft using optimized blas as the backend
-    my_dlarft_rec_(&m, &n, V, &m, tau, T, &n);
+    my_dlarft_rec_(&fChar, &cChar,&m, &n, V, &m, tau, T, &n);
     // grab the execution time
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
@@ -301,9 +301,14 @@ int main(int argc, char *argv[]) {
     // Compute ||A - Q*R||_F / ||A||_F
     norm_repres_ut = computeRepresNorm(m, n, V, A, lda, As, lda, normA);
 
+    printf("ref:%6.4e|%6.4e\n", refTime,refFlop);
+    printf("opt:%6.4e|%6.4e\n", optTime,optFlop);
+    printf("rec:%6.4e|%6.4e\n", recTime,recFlop);
     // Now, we print out the testing information
+    /*
     printf("reference DLARFT\ntime: %10.10e\nperf: %10.10e\north: %10.10e\nrepres: %10.10e\n", refTime, refFlop, norm_orth_ref, norm_repres_ref);
     printf("optimized DLARFT\ntime: %10.10e\nperf: %10.10e\north: %10.10e\nrepres: %10.10e\n", optTime, optFlop, norm_orth_opt, norm_repres_opt);
     printf("MY_DLARFT_REC\ntime: %10.10e\nperf: %10.10e\north: %10.10e\nrepres: %10.10e\n", recTime, recFlop, norm_orth_rec, norm_repres_rec);
     printf("MY_DLARFT_UT\ntime: %10.10e\nperf: %10.10e\north: %10.10e\nrepres: %10.10e\n", utTime, utFlop, norm_orth_ut, norm_repres_ut);
+    */
 }

@@ -1,0 +1,11 @@
+#!/bin/env bash
+# time_dlarft_smaller.batch
+# batch job for running time_dlarft_smaller.sh on the alderaan cluster
+# Johnathan Rhyne
+#SBATCH --job-name=time_dlarft.sh
+#SBATCH --partition=math-alderaan
+#SBATCH --time=24:00:00
+#SBATCH --ntasks=5
+
+dateString=$(date "+%d.%B.%Y")
+./time_dlarft_smaller.sh > "dlarft_timing_smaller.$dateString.txt"
