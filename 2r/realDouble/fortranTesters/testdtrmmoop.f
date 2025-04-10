@@ -113,8 +113,7 @@
                               WORK(II,IJ) = WORK(II,IJ) + BETA*Cs(II,IJ)
                            END DO
                         END DO
-                        ! Check to make sure that ||WORK - C|| / ||WORK|| is
-                        ! small
+                        ! Print out the error to console for visual inspection
                         NORM_F = 0.0
                         DO II = 1, M
                            DO IJ = 1, N
@@ -133,11 +132,12 @@
                         IF (TMP.NE.ZERO) THEN
                            NORM_F = NORM_F / TMP
                         END IF
-
+                        ! Print out the flags used to allow for repeatability
                         WRITE(*,*) "Parameters to DTRMMOOP"
                         WRITE(*,*) "Side=",SIDES(I)," UPLO=",UPLOS(O),
      $                     " TRANSA=",TRANSAS(J)," TRANSB=", TRANSBS(K),
      $                     " DIAG=", DIAGS(L)
+                        ! Print the error out
                         WRITE(*,*) "Forward error: ", NORM_F
                      END DO
                   END DO
