@@ -247,25 +247,16 @@
 *           \beta C where all components are 1-by-1 matrices
 *
 
-            IF(ALPHA.EQ.ZERO) THEN
-               IF(BETA.EQ.ZERO) THEN
-                  C(1,1) = ZERO
-               ELSE
-                  C(1,1) = BETA*C(1,1)
-               END IF
+            IF (BETA.EQ.ZERO) THEN
+               C(1,1) = ZERO
             ELSE
-               IF (UNIT) THEN
-                  IF(BETA.EQ.ZERO) THEN
-                     C(1,1) = ALPHA*A(1,1)
-                  ELSE
-                     C(1,1) = ALPHA*A(1,1) + BETA*C(1,1)
-                  END IF
+               C(1,1) = C(1,1) * BETA
+            END IF
+            IF(ALPHA.NE.ZERO) THEN
+               IF(UNIT) THEN
+                  C(1,1) = C(1,1) + ALPHA*A(1,1)
                ELSE
-                  IF(BETA.EQ.ZERO) THEN
-                     C(1,1) = ALPHA*A(1,1)*B(1,1)
-                  ELSE
-                     C(1,1) = ALPHA*A(1,1)*B(1,1) + BETA*C(1,1)
-                  END IF
+                  C(1,1) = C(1,1) + ALPHA*A(1,1)*B(1,1)
                END IF
             END IF
             RETURN
@@ -274,9 +265,9 @@
 *           This means that C is a row vector. If BETA is 0, then we
 *           set it explicitly, otherwise we overwrite it with BETA*C
 *
-            IF (BETA.EQ.0) THEN
+            IF (BETA.EQ.ZERO) THEN
                ! This ensures we don't reference C unless we need to
-               CALL DLASET(M, N, ZERO, ZERO, C, LDC)
+               CALL DLASET('All', M, N, ZERO, ZERO, C, LDC)
             ELSE
                CALL DSCAL(N, BETA, C, LDC)
             END IF
@@ -320,26 +311,30 @@
                            IF (UNIT) THEN
                               DO I = 1, N
                                  C(1,I) = ALPHA * DDOT(N-I,
-     $                              A(I+1,1), 1, B(I,I+1), LDB)
+     $                              A(I+1,1), 1, B(I,I+1), LDB) +
+     $                              C(1,I)
                               END DO
                               CALL DAXPY(N, ALPHA, A, INCA, C, LDC)
                            ELSE
                               DO I = 1, N
                                  C(1,I) = ALPHA * DDOT(N-I+1,
-     $                              A(I,1), 1, B(I,I), LDB)
+     $                              A(I,1), 1, B(I,I), LDB) +
+     $                              C(1,I)
                               END DO
                            END IF
                         ELSE ! Not transposing A
                            IF (UNIT) THEN
                               DO I = 1, N
                                  C(1,I) = ALPHA * DDOT(N-I,
-     $                              A(1,I+1), LDA, B(I,I+1), LDB)
+     $                              A(1,I+1), LDA, B(I,I+1), LDB) +
+     $                              C(1,I)
                               END DO
                               CALL DAXPY(N, ALPHA, A, INCA, C, LDC)
                            ELSE
                               DO I = 1, N
                                  C(1,I) = ALPHA * DDOT(N-I+1,
-     $                              A(1,I), LDA, B(I,I), LDB)
+     $                              A(1,I), LDA, B(I,I), LDB) +
+     $                              C(1,I)
                               END DO
                            END IF
                         END IF
@@ -378,26 +373,30 @@
                            IF (UNIT) THEN
                               DO I = 1, N
                                  C(1,I) = ALPHA * DDOT(N-I,
-     $                              A(I+1,1), 1, B(I+1,I), 1)
+     $                              A(I+1,1), 1, B(I+1,I), 1) +
+     $                              C(1,I)
                               END DO
                               CALL DAXPY(N, ALPHA, A, INCA, C, LDC)
                            ELSE
                               DO I = 1, N
                                  C(1,I) = ALPHA * DDOT(N-I+1,
-     $                              A(I,1), 1, B(I,I), 1)
+     $                              A(I,1), 1, B(I,I), 1) +
+     $                              C(1,I)
                               END DO
                            END IF
                         ELSE! A is not transposed
                            IF (UNIT) THEN
                               DO I = 1, N
                                  C(1,I) = ALPHA * DDOT(N-I,
-     $                              A(1,I+1), LDA, B(I+1,I), 1)
+     $                              A(1,I+1), LDA, B(I+1,I), 1) +
+     $                              C(1,I)
                               END DO
                               CALL DAXPY(N, ALPHA, A, INCA, C, LDC)
                            ELSE
                               DO I = 1, N
                                  C(1,I) = ALPHA * DDOT(N-I+1,
-     $                              A(1,I), LDA, B(I,I), 1)
+     $                              A(1,I), LDA, B(I,I), 1) +
+     $                              C(1,I)
                               END DO
                            END IF
                         END IF
@@ -411,11 +410,11 @@
 *           This means that C is a column vector. If BETA is 0, then we
 *           set it explicitly, otherwise we overwrite it with BETA*C
 *
-            IF (BETA.EQ.0) THEN
+            IF (BETA.EQ.ZERO) THEN
                ! This ensures we don't reference C unless we need to
-               CALL DLASET(M, N, ZERO, ZERO, C, LDC)
+               CALL DLASET('All', M, N, ZERO, ZERO, C, LDC)
             ELSE
-               CALL DSCAL(N, BETA, C, LDC)
+               CALL DSCAL(M, BETA, C, 1)
             END IF
 
             IF (ALPHA.NE.ZERO) THEN
@@ -443,7 +442,7 @@
                         IF (TRANSG) THEN
                            IF (UNIT) THEN
                               DO I = 1, M
-                                 C(I,1) = ALPHA * DDOT(N-I,
+                                 C(I,1) = ALPHA * DDOT(M-I,
      $                              B(I,I+1), LDB, A(1, I+1), LDA) +
      $                              C(I,1)
                               END DO
@@ -451,7 +450,7 @@
                               CALL DAXPY(M, ALPHA, A, LDA, C, 1)
                            ELSE
                               DO I = 1, M
-                                 C(I,1) = ALPHA * DDOT(N-I+1,
+                                 C(I,1) = ALPHA * DDOT(M-I+1,
      $                              B(I,I), LDB, A(1,I), LDA) +
      $                              C(I,1)
                               END DO
@@ -459,7 +458,7 @@
                         ELSE ! A is not transposed
                            IF (UNIT) THEN
                               DO I = 1, M
-                                 C(I,1) = ALPHA * DDOT(N-I,
+                                 C(I,1) = ALPHA * DDOT(M-I,
      $                              B(I,I+1), LDB, A(I+1,1), 1) +
      $                              C(I,1)
                               END DO
@@ -467,7 +466,7 @@
                               CALL DAXPY(M, ALPHA, A, 1, C, 1)
                            ELSE
                               DO I = 1, M
-                                 C(I,1) = ALPHA * DDOT(N-I+1,
+                                 C(I,1) = ALPHA * DDOT(M-I+1,
      $                              B(I,I), LDB, A(I,1), 1) +
      $                              C(I,1)
                               END DO
@@ -479,7 +478,7 @@
                         IF (TRANSG) THEN
                            IF (UNIT) THEN
                               DO I = 1, M
-                                 C(I,1) = ALPHA * DDOT(N-I,
+                                 C(I,1) = ALPHA * DDOT(M-I,
      $                              B(I+1,I), 1, A(1,I+1), LDA) +
      $                              C(I,1)
                               END DO
@@ -487,24 +486,24 @@
                               CALL DAXPY(M, ALPHA, A, LDA, C, 1)
                            ELSE
                               DO I = 1, M
-                                 C(I,1) = ALPHA * DDOT(N-I+1,
-     $                              B(I,I), LDB, A(1,I), LDA) +
+                                 C(I,1) = ALPHA * DDOT(M-I+1,
+     $                              B(I,I), 1, A(1,I), LDA) +
      $                              C(I,1)
                               END DO
                            END IF
                         ELSE ! A is not transposed
                            IF (UNIT) THEN
                               DO I = 1, M
-                                 C(I,1) = ALPHA * DDOT(N-I,
-     $                              B(I,I+1), 1, A(I+1,1), 1) +
+                                 C(I,1) = ALPHA * DDOT(M-I,
+     $                              B(I+1,I), 1, A(I+1,1), 1) +
      $                              C(I,1)
                               END DO
 
                               CALL DAXPY(M, ALPHA, A, 1, C, 1)
                            ELSE
                               DO I = 1, M
-                                 C(I,1) = ALPHA * DDOT(N-I+1,
-     $                              B(I,I), LDB, A(I,1), 1) +
+                                 C(I,1) = ALPHA * DDOT(M-I+1,
+     $                              B(I,I), 1, A(I,1), 1) +
      $                              C(I,1)
                               END DO
                            END IF
