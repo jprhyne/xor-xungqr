@@ -240,6 +240,7 @@
 *
 *        Terminating Case
 *
+         ! TODO: Add some documentation explaining these cases
          UNIT  = LSAME(DIAG, 'U')
          IF (M.EQ.1.AND.N.EQ.1) THEN
 *
@@ -570,6 +571,16 @@
 *                          |A_{12}**T A_{22}**T|
 *                          |-------------------|
 *
+*                    Where
+*                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
+*                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
+*
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times m-\ell}
+*                    B_{21}\in\R^{m-\ell\times\ell} B_{22}\in\R^{m-\ell\times m-\ell}
+*
+*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times m-\ell}
+*                    A_{21}\in\R^{n-\ell\times\ell} A_{22}\in\R^{n-\ell\times m-\ell}
+*
 *                    Which means that we get
 *                    C_{11} = \alpha B_{11}**T * A_{11}**T + \beta C_{11}
 *                    C_{12} = \alpha B_{11}**T * A_{21}**T + \beta C_{12}
@@ -586,6 +597,28 @@
 *                    C_{22} = \alpha B_{12}**T * A_{21}**T + \beta C_{22} (GEMM call)
 *                    C_{22} = \alpha B_{22}**T * A_{22}**T + C_{22} (This routine)
 *
+                     ! C_{11}
+                     CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+     $                        L, L, ALPHA, A, LDA, B, LDB, BETA, C,
+     $                        LDC)
+                     ! C_{12}
+                     CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+     $                        L, N-L, ALPHA, A(1, L+1), LDA, B, LDB,
+     $                        BETA, C, LDC)
+                     ! C_{21}
+                     CALL DGEMM(TRANSB, TRANSA, M-L, L, L, ALPHA,
+     $                        B(1, L+1), LDB, A, LDA, BETA, C(L+1,1),
+     $                        LDC)
+                     CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+     $                        M-L, L, ALPHA, A(1,L+1), LDA, B(L+1,L+1),
+     $                        LDB, ONE, C(L+1,1), LDC)
+                     ! C_{22}
+                     CALL DGEMM(TRANSB, TRANSA, M-L, N-L, L, ALPHA,
+     $                        B(1, L+1), LDB, A(L+1,1), LDA, BETA,
+     $                        C(L+1,L+1), LDC)
+                     CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+     $                        M-L, N-L, ALPHA, A(L+1,L+1), LDA,
+     $                        B(L+1,L+1), LDB, ONE, C(L+1,L+1), LDC)
                   ELSE
 *
 *                    We are not transposing A.
@@ -602,6 +635,16 @@
 *                    A =   |A_{11} A_{12}|
 *                          |A_{21} A_{22}|
 *                          |-------------|
+*
+*                    Where
+*                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
+*                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
+*
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times m-\ell}
+*                    B_{21}\in\R^{m-\ell\times\ell} B_{22}\in\R^{m-\ell\times m-\ell}
+*
+*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times n-\ell}
+*                    A_{21}\in\R^{m-\ell\times\ell} A_{22}\in\R^{m-\ell\times n-\ell}
 *
 *                    Which means that we get
 *                    C_{11} = \alpha B_{11}**T * A_{11} + \beta C_{11}
@@ -641,6 +684,16 @@
 *                          |A_{12}**T A_{22}**T|
 *                          |-------------------|
 *
+*                    Where
+*                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
+*                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
+*
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times m-\ell}
+*                    B_{21}\in\R^{m-\ell\times\ell} B_{22}\in\R^{m-\ell\times m-\ell}
+*
+*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times m-\ell}
+*                    A_{21}\in\R^{n-\ell\times\ell} A_{22}\in\R^{n-\ell\times m-\ell}
+*
 *                    Which means that we get
 *                    C_{11} = \alpha B_{11} * A_{11}**T + \alpha B_{12} * A_{12}**T + \beta C_{11}
 *                    C_{12} = \alpha B_{11} * A_{21}**T + \alpha B_{12} * A_{22}**T + \beta C_{12}
@@ -673,6 +726,16 @@
 *                    A =   |A_{11} A_{12}|
 *                          |A_{21} A_{22}|
 *                          |-------------|
+*
+*                    Where
+*                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
+*                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
+*
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times m-\ell}
+*                    B_{21}\in\R^{m-\ell\times\ell} B_{22}\in\R^{m-\ell\times m-\ell}
+*
+*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times n-\ell}
+*                    A_{21}\in\R^{m-\ell\times\ell} A_{22}\in\R^{m-\ell\times n-\ell}
 *
 *                    Which means that we get
 *                    C_{11} = \alpha B_{11} * A_{11} + \alpha B_{12} * A_{21} + \beta C_{11}
@@ -717,6 +780,16 @@
 *                          |A_{12}**T A_{22}**T|
 *                          |-------------------|
 *
+*                    Where
+*                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
+*                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
+*
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times m-\ell}
+*                    B_{21}\in\R^{m-\ell\times\ell} B_{22}\in\R^{m-\ell\times m-\ell}
+*
+*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times m-\ell}
+*                    A_{21}\in\R^{n-\ell\times\ell} A_{22}\in\R^{n-\ell\times m-\ell}
+*
 *                    Which means that we get
 *                    C_{11} = \alpha B_{11}**T * A_{11}**T + \alpha B_{21}**T * A_{12}**T + \beta C_{11}
 *                    C_{12} = \alpha B_{11}**T * A_{21}**T + \alpha B_{21}**T * A_{22}**T + \beta C_{12}
@@ -749,6 +822,16 @@
 *                    A =   |A_{11} A_{12}|
 *                          |A_{21} A_{22}|
 *                          |-------------|
+*
+*                    Where
+*                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
+*                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
+*
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times m-\ell}
+*                    B_{21}\in\R^{m-\ell\times\ell} B_{22}\in\R^{m-\ell\times m-\ell}
+*
+*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times n-\ell}
+*                    A_{21}\in\R^{m-\ell\times\ell} A_{22}\in\R^{m-\ell\times n-\ell}
 *
 *                    Which means that we get
 *                    C_{11} = \alpha B_{11}**T * A_{11} + \alpha B_{21}**T * A_{21} + \beta C_{11}
@@ -788,6 +871,16 @@
 *                          |A_{12}**T A_{22}**T|
 *                          |-------------------|
 *
+*                    Where
+*                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
+*                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
+*
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times m-\ell}
+*                    B_{21}\in\R^{m-\ell\times\ell} B_{22}\in\R^{m-\ell\times m-\ell}
+*
+*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times m-\ell}
+*                    A_{21}\in\R^{n-\ell\times\ell} A_{22}\in\R^{n-\ell\times m-\ell}
+*
 *                    Which means that we get
 *                    C_{11} = \alpha B_{11} * A_{11}**T + \beta C_{11}
 *                    C_{12} = \alpha B_{11} * A_{21}**T + \beta C_{12}
@@ -820,6 +913,16 @@
 *                    A =   |A_{11} A_{12}|
 *                          |A_{21} A_{22}|
 *                          |-------------|
+*
+*                    Where
+*                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
+*                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
+*
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times m-\ell}
+*                    B_{21}\in\R^{m-\ell\times\ell} B_{22}\in\R^{m-\ell\times m-\ell}
+*
+*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times n-\ell}
+*                    A_{21}\in\R^{m-\ell\times\ell} A_{22}\in\R^{m-\ell\times n-\ell}
 *
 *                    Which means that we get
 *                    C_{11} = \alpha B_{11} * A_{11} + \beta C_{11}
@@ -870,6 +973,16 @@
 *                          |A_{12}**T A_{22}**T|
 *                          |-------------------|
 *
+*                    Where
+*                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
+*                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
+*
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times n-\ell}
+*                    B_{21}\in\R^{n-\ell\times\ell} B_{22}\in\R^{n-\ell\times n-\ell}
+*
+*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times m-\ell}
+*                    A_{21}\in\R^{n-\ell\times\ell} A_{22}\in\R^{n-\ell\times m-\ell}
+*
 *                    Which means that we get
 *                    C_{11} = \alpha A_{11}**T * B_{11}**T + \alpha A_{21}**T * B_{12}**T + \beta C_{11}
 *                    C_{12} = \alpha A_{21}**T * B_{22}**T + \beta C_{12}
@@ -902,6 +1015,16 @@
 *                    A =   |A_{11} A_{12}|
 *                          |A_{21} A_{22}|
 *                          |-------------|
+*
+*                    Where
+*                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
+*                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
+*
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times n-\ell}
+*                    B_{21}\in\R^{n-\ell\times\ell} B_{22}\in\R^{n-\ell\times n-\ell}
+*
+*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times n-\ell}
+*                    A_{21}\in\R^{m-\ell\times\ell} A_{22}\in\R^{m-\ell\times n-\ell}
 *
 *                    Which means that we get
 *                    C_{11} = \alpha A_{11} * B_{11}**T + \alpha A_{12} * B_{12}**T + \beta C_{11}
@@ -941,6 +1064,16 @@
 *                          |A_{12}**T A_{22}**T|
 *                          |-------------------|
 *
+*                    Where
+*                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
+*                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
+*
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times n-\ell}
+*                    B_{21}\in\R^{n-\ell\times\ell} B_{22}\in\R^{n-\ell\times n-\ell}
+*
+*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times m-\ell}
+*                    A_{21}\in\R^{n-\ell\times\ell} A_{22}\in\R^{n-\ell\times m-\ell}
+*
 *                    Which means that we get
 *                    C_{11} = \alpha A_{11}**T * B_{11} + \beta C_{11}
 *                    C_{12} = \alpha A_{11}**T * B_{12} + \alpha A_{21}**T * B_{22} + \beta C_{12}
@@ -973,6 +1106,16 @@
 *                    A =   |A_{11} A_{12}|
 *                          |A_{21} A_{22}|
 *                          |-------------|
+*
+*                    Where
+*                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
+*                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
+*
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times n-\ell}
+*                    B_{21}\in\R^{n-\ell\times\ell} B_{22}\in\R^{n-\ell\times n-\ell}
+*
+*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times n-\ell}
+*                    A_{21}\in\R^{m-\ell\times\ell} A_{22}\in\R^{m-\ell\times n-\ell}
 *
 *                    Which means that we get
 *                    C_{11} = \alpha A_{11} * B_{11} + \beta C_{11}
@@ -1017,6 +1160,16 @@
 *                          |A_{12}**T A_{22}**T|
 *                          |-------------------|
 *
+*                    Where
+*                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
+*                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
+*
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times n-\ell}
+*                    B_{21}\in\R^{n-\ell\times\ell} B_{22}\in\R^{n-\ell\times n-\ell}
+*
+*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times m-\ell}
+*                    A_{21}\in\R^{n-\ell\times\ell} A_{22}\in\R^{n-\ell\times m-\ell}
+*
 *                    Which means that we get
 *                    C_{11} = \alpha A_{11}**T * B_{11} + \beta C_{11}
 *                    C_{12} = \alpha A_{11}**T * B_{21}**T + \alpha A_{21}**T * B_{22}**T + \beta C_{12}
@@ -1049,6 +1202,16 @@
 *                    A =   |A_{11} A_{12}|
 *                          |A_{21} A_{22}|
 *                          |-------------|
+*
+*                    Where
+*                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
+*                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
+*
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times n-\ell}
+*                    B_{21}\in\R^{n-\ell\times\ell} B_{22}\in\R^{n-\ell\times n-\ell}
+*
+*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times n-\ell}
+*                    A_{21}\in\R^{m-\ell\times\ell} A_{22}\in\R^{m-\ell\times n-\ell}
 *
 *                    Which means that we get
 *                    C_{11} = \alpha A_{11} * B_{11} + \beta C_{11}
@@ -1088,6 +1251,16 @@
 *                          |A_{12}**T A_{22}**T|
 *                          |-------------------|
 *
+*                    Where
+*                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
+*                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
+*
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times n-\ell}
+*                    B_{21}\in\R^{n-\ell\times\ell} B_{22}\in\R^{n-\ell\times n-\ell}
+*
+*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times m-\ell}
+*                    A_{21}\in\R^{n-\ell\times\ell} A_{22}\in\R^{n-\ell\times m-\ell}
+*
 *                    Which means that we get
 *                    C_{11} = \alpha A_{11}**T * B_{11} + \alpha A_{21}**T * B_{21} + \beta C_{11}
 *                    C_{12} = \alpha A_{21}**T * B_{22} + \beta C_{12}
@@ -1120,6 +1293,16 @@
 *                    A =   |A_{11} A_{12}|
 *                          |A_{21} A_{22}|
 *                          |-------------|
+*
+*                    Where
+*                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
+*                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
+*
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times n-\ell}
+*                    B_{21}\in\R^{n-\ell\times\ell} B_{22}\in\R^{n-\ell\times n-\ell}
+*
+*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times n-\ell}
+*                    A_{21}\in\R^{m-\ell\times\ell} A_{22}\in\R^{m-\ell\times n-\ell}
 *
 *                    Which means that we get
 *                    C_{11} = \alpha A_{11} * B_{11} + \alpha A_{12} * B_{21} + \beta C_{11}
