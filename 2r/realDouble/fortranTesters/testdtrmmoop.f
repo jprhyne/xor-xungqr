@@ -134,9 +134,10 @@
                            NORM_F = NORM_F / TMP
                         END IF
 
-                        WRITE(*,*) "Parameters to DTRMMOOP",
-     $                     SIDES(I), UPLOS(O), TRANSAS(J), TRANSBS(K),
-     $                     DIAGS(L)
+                        WRITE(*,*) "Parameters to DTRMMOOP"
+                        WRITE(*,*) "Side=",SIDES(I)," UPLO=",UPLOS(O),
+     $                     " TRANSA=",TRANSAS(J)," TRANSB=", TRANSBS(K),
+     $                     " DIAG=", DIAGS(L)
                         WRITE(*,*) "Forward error: ", NORM_F
                      END DO
                   END DO
