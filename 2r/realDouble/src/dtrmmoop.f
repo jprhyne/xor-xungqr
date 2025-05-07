@@ -31,11 +31,11 @@
 *>                      or
 *>       C = \alpha op(B) * op(A) + \beta C
 *>
-*> where \alpha and \beta are scalars, C is an m-by-n matrix, B is
-*> a unit, or non-unit, upper or lower triangular matrix, and op(B) is
+*> where \alpha and \beta are scalars, C is an m-by-n matrix, A is
+*> a unit, or non-unit, upper or lower triangular matrix, and op(A) is
 *> is one of
 *>
-*>       op(B) = B      or       op(B) = B**T
+*>       op(A) = A      or       op(A) = A**T
 *> \endverbatim
 *
 *  Arguments:
@@ -44,22 +44,22 @@
 *> \param[in] SIDE
 *> \verbatim
 *>          SIDE is CHARACTER*1
-*>           On entry, SIDE specifies whether op(B) multiplies op(A) from
+*>           On entry, SIDE specifies whether op(A) multiplies op(B) from
 *>           the left or right as follows:
 *>
-*>             SIDE = 'L' or 'l'    C = \alpha op(B) * op(A) + \beta C
+*>             SIDE = 'L' or 'l'    C = \alpha op(A) * op(B) + \beta C
 *>
-*>             SIDE = 'R' or 'r'    C = \alpha op(A) * op(B) + \beta C
+*>             SIDE = 'R' or 'r'    C = \alpha op(B) * op(A) + \beta C
 *> \endverbatim
 *>
 *> \param[in] UPLO
 *> \verbatim
 *>          UPLO is CHARACTER*1
-*>           On entry, UPLO specifies whether the matrix B is an upper or
+*>           On entry, UPLO specifies whether the matrix A is an upper or
 *>           lower triangular matrix as follows:
-*>             UPLO = 'U' or 'u'    B is upper triangular
+*>             UPLO = 'U' or 'u'    A is upper triangular
 *>
-*>             UPLO = 'L' or 'l'    B is lower triangular
+*>             UPLO = 'L' or 'l'    A is lower triangular
 *> \Endverbatim
 *>
 *> \param[in] TRANSA
@@ -89,12 +89,12 @@
 *> \param[in] DIAG
 *> \verbatim
 *>          DIAG is CHARACTER*1
-*>           On entry, DIAG specifies whether or not B is unit triangular
+*>           On entry, DIAG specifies whether or not A is unit triangular
 *>           as follows:
 *>
-*>              DIAG = 'U' or 'u'      B is assumed to be unit triangular.
+*>              DIAG = 'U' or 'u'      A is assumed to be unit triangular.
 *>
-*>              DIAG = 'N' or 'n'      B is not assumed to be unit
+*>              DIAG = 'N' or 'n'      A is not assumed to be unit
 *>                                  triangular.
 *> \endverbatim
 *>
@@ -122,44 +122,44 @@
 *>
 *> \param[in] A
 *> \verbatim
-*>           A is DOUBLE PRECISION array, dimension ( LDA, K ), where K is M
-*>           If SIDE='R' and TRANSA='N', or SIDE='L' and TRANSA='T' and N
-*>           otherwise. On entry, the leading k-by-k submatrix must contain
-*>           A.
+*>          A is DOUBLE PRECISION array, dimension ( LDB, K ) where
+*>           K is M when SIDE = 'L' and K is N when SIDE='R'
+*>           Before entry with UPLO = 'U' or 'u', the leading k-by-k
+*>           upper triangular part of the array A must contain the upper
+*>           triangular matrix and the strictly lower triangular part of
+*>           A is not referenced.
+*>           Before entry  with  UPLO = 'L' or 'l', the leading k-by-k
+*>           lower triangular part of the array A must contain the lower
+*>           triangular matrix and the strictly upper triangular part of
+*>           A is not referenced.
+*>           Note that when  DIAG = 'U' or 'u',  the diagonal elements of
+*>           A  are not referenced either,  but are assumed to be  unity.
 *> \endverbatim
 *>
 *> \param[in] LDA
 *> \verbatim
 *>          LDA is INTEGER
 *>           On entry, LDA specifies the first dimension of A as declared
-*>           in the calling (sub) program.  When  SIDE = 'R' and TRANSA='N'
-*>           then LDA  must be at least  max( 1, m ), when SIDE = 'R'
-*>           and TRANSA = 'T' then LDA must be at least max( 1, n ).
+*>           in the calling (sub) program. When SIDE = 'L' or 'l' then
+*>           LDA must be at least max( 1, m ), when  SIDE = 'R' or 'r'
+*>           then LDA must be at least max( 1, n ).
 *> \endverbatim
 *>
 *> \param[in] B
 *> \verbatim
-*>          B is DOUBLE PRECISION array, dimension ( LDB, K ) where
-*>           K is M when SIDE = 'L' and K is N when SIDE='R'
-*>           Before entry with UPLO = 'U' or 'u', the leading k-by-k
-*>           upper triangular part of the array B must contain the upper
-*>           triangular matrix and the strictly lower triangular part of
-*>           B is not referenced.
-*>           Before entry  with  UPLO = 'L' or 'l', the leading k-by-k
-*>           lower triangular part of the array B must contain the lower
-*>           triangular matrix and the strictly upper triangular part of
-*>           B is not referenced.
-*>           Note that when  DIAG = 'U' or 'u',  the diagonal elements of
-*>           B  are not referenced either,  but are assumed to be  unity.
+*>           B is DOUBLE PRECISION array, dimension ( LDA, K ), where K is M
+*>           If SIDE='R' and TRANSA='N', or SIDE='L' and TRANSA='T' and N
+*>           otherwise. On entry, the leading k-by-k submatrix must contain
+*>           B.
 *> \endverbatim
 *>
 *> \param[in] LDB
 *> \verbatim
 *>          LDB is INTEGER
-*>           On entry, LDB specifies the first dimension of B as declared
-*>           in the calling (sub) program. When SIDE = 'L' or 'l' then
-*>           LDB must be at least max( 1, m ), when  SIDE = 'R' or 'r'
-*>           then LDB must be at least max( 1, n ).
+*>           On entry, LDB specifies the first dimension of A as declared
+*>           in the calling (sub) program.  When  SIDE = 'R' and TRANSB='N'
+*>           then LDB  must be at least  max( 1, m ), when SIDE = 'R'
+*>           and TRANSB = 'T' then LDB must be at least max( 1, n ).
 *> \endverbatim
 *>
 *> \param[in] BETA
@@ -221,7 +221,7 @@
          INTRINSIC         MIN
 *        ..
 *        .. Local Scalars ..
-         INTEGER           I, L, K, INCA, OFFB
+         INTEGER           I, L, K, INCB
          LOGICAL           LSIDE, UPPER, UNIT, TRANST, TRANSG
 *        ..
 *        .. Local Parameters ..
@@ -233,14 +233,13 @@
 *
          LSIDE = LSAME(SIDE, 'L')
          UPPER = LSAME(UPLO, 'U')
-         ! If we are transposing the triangular matrix (B)
-         TRANST= LSAME(TRANSB, 'T').OR.LSAME(TRANSB, 'C')
-         ! If we are transposing the general matrix (A)
-         TRANSG= LSAME(TRANSA, 'T').OR.LSAME(TRANSA, 'C')
+         ! If we are transposing the triangular matrix (A)
+         TRANST= LSAME(TRANSA, 'T').OR.LSAME(TRANSA, 'C')
+         ! If we are transposing the general matrix (B)
+         TRANSG= LSAME(TRANSB, 'T').OR.LSAME(TRANSB, 'C')
 *
 *        Terminating Case
 *
-         ! TODO: Add some documentation explaining these cases
          UNIT  = LSAME(DIAG, 'U')
          IF (M.EQ.1.AND.N.EQ.1) THEN
 *
@@ -255,7 +254,7 @@
             END IF
             IF(ALPHA.NE.ZERO) THEN
                IF(UNIT) THEN
-                  C(1,1) = C(1,1) + ALPHA*A(1,1)
+                  C(1,1) = C(1,1) + ALPHA*B(1,1)
                ELSE
                   C(1,1) = C(1,1) + ALPHA*A(1,1)*B(1,1)
                END IF
@@ -274,37 +273,37 @@
             END IF
             IF (ALPHA.NE.ZERO) THEN
 *
-*              Recall that the number of columns of B is determined by SIDE
+*              Recall that the number of columns of A is determined by SIDE
 *
                IF (LSIDE) THEN
 *
-*                 Determine if A is a row or column vector
+*                 Determine if B is a row or column vector
 *
                   IF (TRANSG) THEN
-                     INCA = 1   ! This means that A is a column vector
+                     INCB = 1   ! This means that B is a column vector
                   ELSE
-                     INCA = LDA ! This means that A is a row vector
+                     INCB = LDB ! This means that B is a row vector
                   END IF
 *
-*                 This means that B is a scalar, so it is either assumed to be
-*                 ONE or explicitly stored in B(1,1)
+*                 This means that A is a scalar, so it is either assumed to be
+*                 ONE or explicitly stored in A(1,1)
 *
                   IF (UNIT) THEN
-                     CALL DAXPY(N, ALPHA, A, INCA, C, LDC)
+                     CALL DAXPY(N, ALPHA, B, INCB, C, LDC)
                   ELSE
-                     CALL DAXPY(N, ALPHA * B(1,1), A, INCA, C, LDC)
+                     CALL DAXPY(N, ALPHA * A(1,1), B, INCB, C, LDC)
                   END IF
-               ELSE ! B is on the right
+               ELSE ! A is on the right
 *
-*                 Determine if A is a row or column vector
+*                 Determine if B is a row or column vector
 *
                   IF (TRANSG) THEN
-                     INCA = 1    ! This means that A is a column vector
+                     INCB = 1    ! This means that B is a column vector
                   ELSE
-                     INCA = LDA  ! This means that A is a row vector
+                     INCB = LDB  ! This means that B is a row vector
                   END IF
 *
-*                 This means that B is an n-by-n matrix
+*                 This means that A is an n-by-n matrix
 *
                   IF (UPPER) THEN
                      IF (TRANST) THEN
@@ -312,91 +311,91 @@
                            IF (UNIT) THEN
                               DO I = 1, N
                                  C(1,I) = ALPHA * DDOT(N-I,
-     $                              A(I+1,1), 1, B(I,I+1), LDB) +
+     $                              B(I+1,1), 1, A(I,I+1), LDA) +
      $                              C(1,I)
                               END DO
-                              CALL DAXPY(N, ALPHA, A, INCA, C, LDC)
+                              CALL DAXPY(N, ALPHA, B, INCB, C, LDC)
                            ELSE
                               DO I = 1, N
                                  C(1,I) = ALPHA * DDOT(N-I+1,
-     $                              A(I,1), 1, B(I,I), LDB) +
+     $                              B(I,1), 1, A(I,I), LDA) +
      $                              C(1,I)
                               END DO
                            END IF
-                        ELSE ! Not transposing A
+                        ELSE ! Not transposing B
                            IF (UNIT) THEN
                               DO I = 1, N
                                  C(1,I) = ALPHA * DDOT(N-I,
-     $                              A(1,I+1), LDA, B(I,I+1), LDB) +
+     $                              B(1,I+1), LDB, A(I,I+1), LDA) +
      $                              C(1,I)
                               END DO
-                              CALL DAXPY(N, ALPHA, A, INCA, C, LDC)
+                              CALL DAXPY(N, ALPHA, B, INCB, C, LDC)
                            ELSE
                               DO I = 1, N
                                  C(1,I) = ALPHA * DDOT(N-I+1,
-     $                              A(1,I), LDA, B(I,I), LDB) +
+     $                              B(1,I), LDB, A(I,I), LDA) +
      $                              C(1,I)
                               END DO
                            END IF
                         END IF
-                     ELSE ! Not transposing B
+                     ELSE ! Not transposing A
                         IF (UNIT) THEN
                            DO I = 1, N
-                              C(1,I) = ALPHA * DDOT(I-1, A, INCA,
-     $                           B(1,I), 1) + C(1,I)
+                              C(1,I) = ALPHA * DDOT(I-1, B, INCB,
+     $                           A(1,I), 1) + C(1,I)
                            END DO
 
-                           CALL DAXPY(N, ALPHA, A, INCA, C, LDC)
+                           CALL DAXPY(N, ALPHA, B, INCB, C, LDC)
                         ELSE
                            DO I = 1, N
-                              C(1,I) = ALPHA * DDOT(I, A, INCA,
-     $                           B(1,I), 1) + C(1,I)
+                              C(1,I) = ALPHA * DDOT(I, B, INCB,
+     $                           A(1,I), 1) + C(1,I)
                            END DO
                         END IF
                      END IF
-                  ELSE ! B is lower
+                  ELSE ! A is lower
                      IF (TRANST) THEN
                         IF (UNIT) THEN
                            DO I = 1, N
-                              C(1,I) = ALPHA * DDOT(I-1, A, INCA,
-     $                           B(I,1), LDB) + C(1,I)
+                              C(1,I) = ALPHA * DDOT(I-1, B, INCB,
+     $                           A(I,1), LDA) + C(1,I)
                            END DO
 
-                           CALL DAXPY(N, ALPHA, A, INCA, C, LDC)
+                           CALL DAXPY(N, ALPHA, B, INCB, C, LDC)
                         ELSE
                            DO I = 1, N
-                              C(1,I) = ALPHA * DDOT(I, A, INCA,
-     $                           B(I,1), LDB) + C(1,I)
+                              C(1,I) = ALPHA * DDOT(I, B, INCB,
+     $                           A(I,1), LDA) + C(1,I)
                            END DO
                         END IF
-                     ELSE ! B is not transposed
+                     ELSE ! A is not transposed
                         IF (TRANSG) THEN
                            IF (UNIT) THEN
                               DO I = 1, N
                                  C(1,I) = ALPHA * DDOT(N-I,
-     $                              A(I+1,1), 1, B(I+1,I), 1) +
+     $                              B(I+1,1), 1, A(I+1,I), 1) +
      $                              C(1,I)
                               END DO
-                              CALL DAXPY(N, ALPHA, A, INCA, C, LDC)
+                              CALL DAXPY(N, ALPHA, B, INCB, C, LDC)
                            ELSE
                               DO I = 1, N
                                  C(1,I) = ALPHA * DDOT(N-I+1,
-     $                              A(I,1), 1, B(I,I), 1) +
+     $                              B(I,1), 1, A(I,I), 1) +
      $                              C(1,I)
                               END DO
                            END IF
-                        ELSE! A is not transposed
+                        ELSE! B is not transposed
                            IF (UNIT) THEN
                               DO I = 1, N
                                  C(1,I) = ALPHA * DDOT(N-I,
-     $                              A(1,I+1), LDA, B(I+1,I), 1) +
+     $                              B(1,I+1), LDB, A(I+1,I), 1) +
      $                              C(1,I)
                               END DO
-                              CALL DAXPY(N, ALPHA, A, INCA, C, LDC)
+                              CALL DAXPY(N, ALPHA, B, INCB, C, LDC)
                            ELSE
                               DO I = 1, N
                                  C(1,I) = ALPHA * DDOT(N-I+1,
-     $                              A(1,I), LDA, B(I,I), 1) +
+     $                              B(1,I), LDB, A(I,I), 1) +
      $                              C(1,I)
                               END DO
                            END IF
@@ -420,75 +419,75 @@
 
             IF (ALPHA.NE.ZERO) THEN
                IF (TRANSG) THEN
-                  INCA = LDA ! A is a row vector
+                  INCB = LDB ! B is a row vector
                ELSE
-                  INCA = 1   ! A is a column vector
+                  INCB = 1   ! B is a column vector
                END IF
                IF (LSIDE) THEN
                   IF (UPPER) THEN
                      IF (TRANST) THEN
                         IF (UNIT) THEN
                            DO I = 1, M
-                              C(I,1) = ALPHA * DDOT(I-1, B(1, I),
-     $                           1, A, INCA) + C(I,1)
+                              C(I,1) = ALPHA * DDOT(I-1, A(1, I),
+     $                           1, B, INCB) + C(I,1)
                            END DO
-                           CALL DAXPY(M, ALPHA, A, INCA, C, 1)
+                           CALL DAXPY(M, ALPHA, B, INCB, C, 1)
                         ELSE
                            DO I = 1, M
-                              C(I,1) = ALPHA * DDOT(I, B(1, I), 1,
-     $                           A, INCA) + C(I,1)
+                              C(I,1) = ALPHA * DDOT(I, A(1, I), 1,
+     $                           B, INCB) + C(I,1)
                            END DO
                         END IF
-                     ELSE ! B is not transposed
+                     ELSE ! A is not transposed
                         IF (TRANSG) THEN
                            IF (UNIT) THEN
                               DO I = 1, M
                                  C(I,1) = ALPHA * DDOT(M-I,
-     $                              B(I,I+1), LDB, A(1, I+1), LDA) +
+     $                              A(I,I+1), LDA, B(1, I+1), LDB) +
      $                              C(I,1)
                               END DO
 
-                              CALL DAXPY(M, ALPHA, A, LDA, C, 1)
+                              CALL DAXPY(M, ALPHA, B, LDB, C, 1)
                            ELSE
                               DO I = 1, M
                                  C(I,1) = ALPHA * DDOT(M-I+1,
-     $                              B(I,I), LDB, A(1,I), LDA) +
+     $                              A(I,I), LDA, B(1,I), LDB) +
      $                              C(I,1)
                               END DO
                            END IF
-                        ELSE ! A is not transposed
+                        ELSE ! B is not transposed
                            IF (UNIT) THEN
                               DO I = 1, M
                                  C(I,1) = ALPHA * DDOT(M-I,
-     $                              B(I,I+1), LDB, A(I+1,1), 1) +
+     $                              A(I,I+1), LDA, B(I+1,1), 1) +
      $                              C(I,1)
                               END DO
 
-                              CALL DAXPY(M, ALPHA, A, 1, C, 1)
+                              CALL DAXPY(M, ALPHA, B, 1, C, 1)
                            ELSE
                               DO I = 1, M
                                  C(I,1) = ALPHA * DDOT(M-I+1,
-     $                              B(I,I), LDB, A(I,1), 1) +
+     $                              A(I,I), LDA, B(I,1), 1) +
      $                              C(I,1)
                               END DO
                            END IF
                         END IF
                      END IF
-                  ELSE ! B is lower
+                  ELSE ! A is lower
                      IF (TRANST) THEN
                         IF (TRANSG) THEN
                            IF (UNIT) THEN
                               DO I = 1, M
                                  C(I,1) = ALPHA * DDOT(M-I,
-     $                              B(I+1,I), 1, A(1,I+1), LDA) +
+     $                              A(I+1,I), 1, B(1,I+1), LDB) +
      $                              C(I,1)
                               END DO
 
-                              CALL DAXPY(M, ALPHA, A, LDA, C, 1)
+                              CALL DAXPY(M, ALPHA, B, LDB, C, 1)
                            ELSE
                               DO I = 1, M
                                  C(I,1) = ALPHA * DDOT(M-I+1,
-     $                              B(I,I), 1, A(1,I), LDA) +
+     $                              A(I,I), 1, B(1,I), LDB) +
      $                              C(I,1)
                               END DO
                            END IF
@@ -496,41 +495,41 @@
                            IF (UNIT) THEN
                               DO I = 1, M
                                  C(I,1) = ALPHA * DDOT(M-I,
-     $                              B(I+1,I), 1, A(I+1,1), 1) +
+     $                              A(I+1,I), 1, B(I+1,1), 1) +
      $                              C(I,1)
                               END DO
 
-                              CALL DAXPY(M, ALPHA, A, 1, C, 1)
+                              CALL DAXPY(M, ALPHA, B, 1, C, 1)
                            ELSE
                               DO I = 1, M
                                  C(I,1) = ALPHA * DDOT(M-I+1,
-     $                              B(I,I), 1, A(I,1), 1) +
+     $                              A(I,I), 1, B(I,1), 1) +
      $                              C(I,1)
                               END DO
                            END IF
                         END IF
-                     ELSE ! B is not transposed
+                     ELSE ! A is not transposed
                         IF (UNIT) THEN
                            DO I = 1, M
-                              C(I,1) = ALPHA * DDOT(I-1, B(I,1),
-     $                           LDB, A, INCA) + C(I,1)
+                              C(I,1) = ALPHA * DDOT(I-1, A(I,1),
+     $                           LDA, B, INCB) + C(I,1)
                            END DO
-                           CALL DAXPY(M, ALPHA, A, INCA, C, 1)
+                           CALL DAXPY(M, ALPHA, B, INCB, C, 1)
                         ELSE
                            DO I = 1, M
-                              C(I,1) = ALPHA * DDOT(I, B(I,1), LDB,
-     $                           A, INCA) + C(I,1)
+                              C(I,1) = ALPHA * DDOT(I, A(I,1), LDA,
+     $                           B, INCB) + C(I,1)
                            END DO
                         END IF
                      END IF
                   END IF
-               ELSE ! B is on the right
-                  ! Since the trailing dimension of op(B) must be 1,
-                  !  we know that B must be a scalar
+               ELSE ! A is on the right
+                  ! Since the trailing dimension of op(A) must be 1,
+                  !  we know that A must be a scalar
                   IF (UNIT) THEN
-                     CALL DAXPY(M, ALPHA, A, INCA, C, 1)
+                     CALL DAXPY(M, ALPHA, B, INCB, C, 1)
                   ELSE
-                     CALL DAXPY(M, ALPHA*B(1,1), A, INCA, C, 1)
+                     CALL DAXPY(M, ALPHA*A(1,1), B, INCB, C, 1)
                   END IF
                END IF
             END IF
@@ -543,58 +542,58 @@
          IF (LSIDE) THEN
 *
 *           We are multiplying A from the left IE we are computing
-*           C = \alpha op(B)*op(A) + \beta C
+*           C = \alpha op(A)*op(B) + \beta C
 *
             IF (UPPER) THEN
 *
-*              B is upper triangular
+*              A is upper triangular
 *
                IF (TRANST) THEN
 *
-*                 We are transposing B
+*                 We are transposing A
 *
                   IF (TRANSG) THEN
 *
-*                    We are transposing A.
+*                    We are transposing
 *
 *                    So we are computing
-*                    C = \alpha B**T * A**T + \beta C. We break this down as follows
+*                    C = \alpha A**T * B**T + \beta C. We break this down as follows
 *
 *                          |-------------|         |-------------------|
-*                    C =   |C_{11} C_{12}| B**T =  |B_{11}**T 0        |
-*                          |C_{21} C_{22}|         |B_{12}**T B_{22}**T|
+*                    C =   |C_{11} C_{12}| A**T =  |A_{11}**T 0        |
+*                          |C_{21} C_{22}|         |A_{12}**T A_{22}**T|
 *                          |-------------|         |-------------------|
 *
 *                          |-------------------|
-*                    A**T =|A_{11}**T A_{21}**T|
-*                          |A_{12}**T A_{22}**T|
+*                    B**T =|B_{11}**T B_{21}**T|
+*                          |B_{12}**T B_{22}**T|
 *                          |-------------------|
 *
 *                    Where
 *                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
 *                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
 *
-*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times m-\ell}
-*                    B_{21}\in\R^{m-\ell\times\ell} B_{22}\in\R^{m-\ell\times m-\ell}
-*
 *                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times m-\ell}
-*                    A_{21}\in\R^{n-\ell\times\ell} A_{22}\in\R^{n-\ell\times m-\ell}
+*                    A_{21}\in\R^{m-\ell\times\ell} A_{22}\in\R^{m-\ell\times m-\ell}
+*
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times m-\ell}
+*                    B_{21}\in\R^{n-\ell\times\ell} B_{22}\in\R^{n-\ell\times m-\ell}
 *
 *                    Which means that we get
-*                    C_{11} = \alpha B_{11}**T * A_{11}**T + \beta C_{11}
-*                    C_{12} = \alpha B_{11}**T * A_{21}**T + \beta C_{12}
-*                    C_{21} = \alpha B_{12}**T * A_{11}**T + \alpha B_{22}**T * A_{12}**T + \beta C_{21}
-*                    C_{22} = \alpha B_{12}**T * A_{21}**T + \alpha B_{22}**T * A_{22}**T + \beta C_{22}
+*                    C_{11} = \alpha A_{11}**T * B_{11}**T + \beta C_{11}
+*                    C_{12} = \alpha A_{11}**T * B_{21}**T + \beta C_{12}
+*                    C_{21} = \alpha A_{12}**T * B_{11}**T + \alpha A_{22}**T * B_{12}**T + \beta C_{21}
+*                    C_{22} = \alpha A_{12}**T * B_{21}**T + \alpha A_{22}**T * B_{22}**T + \beta C_{22}
 *
 *                    Computing C_{11} and C_{12} is just a recursive call to
 *                    this routine but we can break down computing
 *                    C_{21} and C_{22} as follows
 *
-*                    C_{21} = \alpha B_{12}**T * A_{11}**T + \beta C_{21} (GEMM call)
-*                    C_{21} = \alpha B_{22}**T * A_{12}**T + C_{21} (This routine)
+*                    C_{21} = \alpha A_{12}**T * B_{11}**T + \beta C_{21} (GEMM call)
+*                    C_{21} = \alpha A_{22}**T * B_{12}**T + C_{21} (This routine)
 *
-*                    C_{22} = \alpha B_{12}**T * A_{21}**T + \beta C_{22} (GEMM call)
-*                    C_{22} = \alpha B_{22}**T * A_{22}**T + C_{22} (This routine)
+*                    C_{22} = \alpha A_{12}**T * B_{21}**T + \beta C_{22} (GEMM call)
+*                    C_{22} = \alpha A_{22}**T * B_{22}**T + C_{22} (This routine)
 *
                      ! C_{11}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
@@ -602,81 +601,81 @@
      $                        LDC)
                      ! C_{12}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                        L, N-L, ALPHA, A(L+1, 1), LDA, B, LDB,
+     $                        L, N-L, ALPHA, A, LDA, B(L+1, 1), LDB,
      $                        BETA, C(1, L+1), LDC)
                      ! C_{21}
-                     CALL DGEMM(TRANSB, TRANSA, M-L, L, L, ALPHA,
-     $                        B(1, L+1), LDB, A, LDA, BETA, C(L+1,1),
+                     CALL DGEMM(TRANSA, TRANSB, M-L, L, L, ALPHA,
+     $                        A(1, L+1), LDA, B, LDB, BETA, C(L+1,1),
      $                        LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                        M-L, L, ALPHA, A(1,L+1), LDA, B(L+1,L+1),
+     $                        M-L, L, ALPHA, A(L+1,L+1), LDA, B(1,L+1),
      $                        LDB, ONE, C(L+1,1), LDC)
                      ! C_{22}
-                     CALL DGEMM(TRANSB, TRANSA, M-L, N-L, L, ALPHA,
-     $                        B(1, L+1), LDB, A(L+1,1), LDA, BETA,
+                     CALL DGEMM(TRANSA, TRANSB, M-L, N-L, L, ALPHA,
+     $                        A(1, L+1), LDA, B(L+1,1), LDB, BETA,
      $                        C(L+1,L+1), LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                        M-L, N-L, ALPHA, A(L+1,L+1), LDA,
      $                        B(L+1,L+1), LDB, ONE, C(L+1,L+1), LDC)
                   ELSE
 *
-*                    We are not transposing A.
+*                    We are not transposing B.
 *
 *                    So we are computing
-*                    C = \alpha B**T * A + \beta C. We break this down as follows
+*                    C = \alpha A**T * B + \beta C. We break this down as follows
 *
 *                          |-------------|         |-------------------|
-*                    C =   |C_{11} C_{12}| B**T =  |B_{11}**T 0        |
-*                          |C_{21} C_{22}|         |B_{12}**T B_{22}**T|
+*                    C =   |C_{11} C_{12}| A**T =  |A_{11}**T 0        |
+*                          |C_{21} C_{22}|         |A_{12}**T A_{22}**T|
 *                          |-------------|         |-------------------|
 *
 *                          |-------------|
-*                    A =   |A_{11} A_{12}|
-*                          |A_{21} A_{22}|
+*                    B =   |B_{11} B_{12}|
+*                          |B_{21} B_{22}|
 *                          |-------------|
 *
 *                    Where
 *                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
 *                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
 *
-*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times m-\ell}
-*                    B_{21}\in\R^{m-\ell\times\ell} B_{22}\in\R^{m-\ell\times m-\ell}
+*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times m-\ell}
+*                    A_{21}\in\R^{m-\ell\times\ell} A_{22}\in\R^{m-\ell\times m-\ell}
 *
-*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times n-\ell}
-*                    A_{21}\in\R^{m-\ell\times\ell} A_{22}\in\R^{m-\ell\times n-\ell}
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times n-\ell}
+*                    B_{21}\in\R^{m-\ell\times\ell} B_{22}\in\R^{m-\ell\times n-\ell}
 *
 *                    Which means that we get
-*                    C_{11} = \alpha B_{11}**T * A_{11} + \beta C_{11}
-*                    C_{12} = \alpha B_{11}**T * A_{12} + \beta C_{12}
-*                    C_{21} = \alpha B_{12}**T * A_{11} + \alpha B_{22}**T * A_{21} + \beta C_{21}
-*                    C_{22} = \alpha B_{12}**T * A_{12} + \alpha B_{22}**T * A_{22} + \beta C_{22}
+*                    C_{11} = \alpha A_{11}**T * B_{11} + \beta C_{11}
+*                    C_{12} = \alpha A_{11}**T * B_{12} + \beta C_{12}
+*                    C_{21} = \alpha A_{12}**T * B_{11} + \alpha A_{22}**T * B_{21} + \beta C_{21}
+*                    C_{22} = \alpha A_{12}**T * B_{12} + \alpha A_{22}**T * B_{22} + \beta C_{22}
 *
 *                    Computing C_{11} and C_{12} is just a recursive call to
 *                    this routine but we can break down computing
 *                    C_{21} and C_{22} as follows
 *
-*                    C_{21} = \alpha B_{12}**T * A_{11} + \beta C_{21} (GEMM call)
-*                    C_{21} = \alpha B_{22}**T * A_{21} + C_{21} (This routine)
+*                    C_{21} = \alpha A_{12}**T * B_{11} + \beta C_{21} (GEMM call)
+*                    C_{21} = \alpha A_{22}**T * B_{21} + C_{21} (This routine)
 *
-*                    C_{22} = \alpha B_{12}**T * A_{12} + \beta C_{22} (GEMM call)
-*                    C_{22} = \alpha B_{22}**T * A_{22} + C_{22} (This routine)
+*                    C_{22} = \alpha A_{12}**T * B_{12} + \beta C_{22} (GEMM call)
+*                    C_{22} = \alpha A_{22}**T * B_{22} + C_{22} (This routine)
 *
                      ! C_{11}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     L, L, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
                      ! C_{12}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     L, N-L, ALPHA, A(1, L+1), LDA, B, LDB, BETA,
+     $                     L, N-L, ALPHA, A, LDA, B(1, L+1), LDB, BETA,
      $                     C(1, L+1), LDC)
                      ! C_{21}
-                     CALL DGEMM(TRANSB, TRANSA, M-L, L, L, ALPHA,
-     $                     B(1, L+1), LDB, A, LDA, BETA, C(L+1, 1), LDC)
+                     CALL DGEMM(TRANSA, TRANSB, M-L, L, L, ALPHA,
+     $                     A(1, L+1), LDA, B, LDB, BETA, C(L+1, 1), LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     M-L, L, ALPHA, A(L+1, 1), LDA, B(L+1, L+1),
+     $                     M-L, L, ALPHA, A(L+1, L+1), LDA, B(L+1, 1),
      $                     LDB, ONE, C(L+1, 1), LDC)
                      ! C_{22}
-                     CALL DGEMM(TRANSB, TRANSA, M-L, N-L, L,
-     $                     ALPHA, B(1, L+1), LDB, A(1, L+1), LDA, BETA,
+                     CALL DGEMM(TRANSA, TRANSB, M-L, N-L, L,
+     $                     ALPHA, A(1, L+1), LDA, B(1, L+1), LDB, BETA,
      $                     C(L+1, L+1), LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     M-L, N-L, ALPHA, A(L+1, L+1), LDA,
@@ -684,66 +683,66 @@
                   ENDIF
                ELSE
 *
-*                 We are not transposing B
+*                 We are not transposing A
 *
                   IF (TRANSG) THEN
 *
-*                    We are transposing A.
+*                    We are transposing B.
 *
 *                    So we are computing
-*                    C = \alpha B * A**T + \beta C. We break this down as follows
+*                    C = \alpha A * B**T + \beta C. We break this down as follows
 *
 *                          |-------------|      |-------------|
-*                    C =   |C_{11} C_{12}| B =  |B_{11} B_{12}|
-*                          |C_{21} C_{22}|      |0      B_{22}|
+*                    C =   |C_{11} C_{12}| A =  |A_{11} A_{12}|
+*                          |C_{21} C_{22}|      |0      A_{22}|
 *                          |-------------|      |-------------|
 *
 *                          |-------------------|
-*                    A**T =|A_{11}**T A_{21}**T|
-*                          |A_{12}**T A_{22}**T|
+*                    B**T =|B_{11}**T B_{21}**T|
+*                          |B_{12}**T B_{22}**T|
 *                          |-------------------|
 *
 *                    Where
 *                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
 *                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
 *
-*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times m-\ell}
-*                    B_{21}\in\R^{m-\ell\times\ell} B_{22}\in\R^{m-\ell\times m-\ell}
-*
 *                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times m-\ell}
-*                    A_{21}\in\R^{n-\ell\times\ell} A_{22}\in\R^{n-\ell\times m-\ell}
+*                    A_{21}\in\R^{m-\ell\times\ell} A_{22}\in\R^{m-\ell\times m-\ell}
+*
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times m-\ell}
+*                    B_{21}\in\R^{n-\ell\times\ell} B_{22}\in\R^{n-\ell\times m-\ell}
 *
 *                    Which means that we get
-*                    C_{11} = \alpha B_{11} * A_{11}**T + \alpha B_{12} * A_{12}**T + \beta C_{11}
-*                    C_{12} = \alpha B_{11} * A_{21}**T + \alpha B_{12} * A_{22}**T + \beta C_{12}
-*                    C_{21} = \alpha B_{22} * A_{12}**T + \beta C_{21}
-*                    C_{22} = \alpha B_{22} * A_{22}**T + \beta C_{22}
+*                    C_{11} = \alpha A_{11} * B_{11}**T + \alpha A_{12} * B_{12}**T + \beta C_{11}
+*                    C_{12} = \alpha A_{11} * B_{21}**T + \alpha A_{12} * B_{22}**T + \beta C_{12}
+*                    C_{21} = \alpha A_{22} * B_{12}**T + \beta C_{21}
+*                    C_{22} = \alpha A_{22} * B_{22}**T + \beta C_{22}
 *
 *                    Computing C_{21} and C_{22} is just a recursive call to
 *                    this routine but we can break down computing
 *                    C_{11} and C_{12} as follows
 *
-*                    C_{11} = \alpha B_{12} * A_{12}**T + \beta C_{11} (GEMM call)
-*                    C_{11} = \alpha B_{11} * A_{11}**T + C_{11} (This routine)
+*                    C_{11} = \alpha A_{12} * B_{12}**T + \beta C_{11} (GEMM call)
+*                    C_{11} = \alpha A_{11} * B_{11}**T + C_{11} (This routine)
 *
-*                    C_{12} = \alpha B_{12} * A_{22}**T + \beta C_{12} (GEMM call)
-*                    C_{12} = \alpha B_{11} * A_{21}**T + C_{12} (This routine)
+*                    C_{12} = \alpha A_{12} * B_{22}**T + \beta C_{12} (GEMM call)
+*                    C_{12} = \alpha A_{11} * B_{21}**T + C_{12} (This routine)
 *
                      ! C_{11}
-                     CALL DGEMM(TRANSB, TRANSA, L, L, M-L, ALPHA,
-     $                     B(1, L+1), LDB, A(1, L+1), LDA, BETA, C, LDC)
+                     CALL DGEMM(TRANSA, TRANSB, L, L, M-L, ALPHA,
+     $                     A(1, L+1), LDA, B(1, L+1), LDB, BETA, C, LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     L, L, ALPHA, A, LDA, B, LDB, ONE, C, LDC)
                      ! C_{12}
-                     CALL DGEMM(TRANSB, TRANSA, L, N-L, M-L, ALPHA,
-     $                     B(1, L+1), LDB, A(L+1, L+1), LDA, BETA,
+                     CALL DGEMM(TRANSA, TRANSB, L, N-L, M-L, ALPHA,
+     $                     A(1, L+1), LDA, B(L+1, L+1), LDB, BETA,
      $                     C(1, L+1), LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     L, N-L, ALPHA, A(L+1,1), LDA, B, LDB, ONE,
+     $                     L, N-L, ALPHA, A, LDA, B(L+1,1), LDB, ONE,
      $                     C(1, L+1), LDC)
                      ! C_{21}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     M-L, L, ALPHA, A(1, L+1), LDA, B(L+1, L+1),
+     $                     M-L, L, ALPHA, A(L+1, L+1), LDA, B(1, L+1),
      $                     LDB, BETA, C(L+1, 1), LDC)
                      ! C_{22}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
@@ -751,62 +750,62 @@
      $                     B(L+1, L+1), LDB, BETA, C(L+1, L+1), LDC)
                   ELSE
 *
-*                    We are not transposing A.
+*                    We are not transposing B.
 *
 *                    So we are computing
-*                    C = \alpha B * A + \beta C. We break this down as follows
+*                    C = \alpha A * B + \beta C. We break this down as follows
 *
 *                          |-------------|      |-------------|
-*                    C =   |C_{11} C_{12}| B =  |B_{11} B_{12}|
-*                          |C_{21} C_{22}|      |0      B_{22}|
+*                    C =   |C_{11} C_{12}| A =  |A_{11} A_{12}|
+*                          |C_{21} C_{22}|      |0      A_{22}|
 *                          |-------------|      |-------------|
 *
 *                          |-------------|
-*                    A =   |A_{11} A_{12}|
-*                          |A_{21} A_{22}|
+*                    B =   |B_{11} B_{12}|
+*                          |B_{21} B_{22}|
 *                          |-------------|
 *
 *                    Where
 *                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
 *                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
 *
-*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times m-\ell}
-*                    B_{21}\in\R^{m-\ell\times\ell} B_{22}\in\R^{m-\ell\times m-\ell}
+*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times m-\ell}
+*                    A_{21}\in\R^{m-\ell\times\ell} A_{22}\in\R^{m-\ell\times m-\ell}
 *
-*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times n-\ell}
-*                    A_{21}\in\R^{m-\ell\times\ell} A_{22}\in\R^{m-\ell\times n-\ell}
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times n-\ell}
+*                    B_{21}\in\R^{m-\ell\times\ell} B_{22}\in\R^{m-\ell\times n-\ell}
 *
 *                    Which means that we get
-*                    C_{11} = \alpha B_{11} * A_{11} + \alpha B_{12} * A_{21} + \beta C_{11}
-*                    C_{12} = \alpha B_{11} * A_{12} + \alpha B_{12} * A_{22} + \beta C_{12}
-*                    C_{21} = \alpha B_{22} * A_{21} + \beta C_{21}
-*                    C_{22} = \alpha B_{22} * A_{22} + \beta C_{22}
+*                    C_{11} = \alpha A_{11} * B_{11} + \alpha A_{12} * B_{21} + \beta C_{11}
+*                    C_{12} = \alpha A_{11} * B_{12} + \alpha A_{12} * B_{22} + \beta C_{12}
+*                    C_{21} = \alpha A_{22} * B_{21} + \beta C_{21}
+*                    C_{22} = \alpha A_{22} * B_{22} + \beta C_{22}
 *
 *                    Computing C_{21} and C_{22} is just a recursive call to
 *                    this routine but we can break down computing
 *                    C_{11} and C_{12} as follows
 *
-*                    C_{11} = \alpha B_{12} * A_{21} + \beta C_{11} (GEMM call)
-*                    C_{11} = \alpha B_{11} * A_{11} + C_{11} (This routine)
+*                    C_{11} = \alpha A_{12} * B_{21} + \beta C_{11} (GEMM call)
+*                    C_{11} = \alpha A_{11} * B_{11} + C_{11} (This routine)
 *
-*                    C_{12} = \alpha B_{12} * A_{22} + \beta C_{12} (GEMM call)
-*                    C_{12} = \alpha B_{11} * A_{12} + C_{12} (This routine)
+*                    C_{12} = \alpha A_{12} * B_{22} + \beta C_{12} (GEMM call)
+*                    C_{12} = \alpha A_{11} * B_{12} + C_{12} (This routine)
 *
                      ! C_{11}
-                     CALL DGEMM(TRANSB, TRANSA, L, L, M-L, ALPHA,
-     $                     B(1, L+1), LDB, A(L+1, 1), LDA, BETA, C, LDC)
+                     CALL DGEMM(TRANSA, TRANSB, L, L, M-L, ALPHA,
+     $                     A(1, L+1), LDA, B(L+1, 1), LDB, BETA, C, LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     L, L, ALPHA, A, LDA, B, LDB, ONE, C, LDC)
                      ! C_{12}
                      CALL DGEMM(TRANSB, TRANSA, L, N-L, M-L, ALPHA,
-     $                     B(1, L+1), LDB, A(L+1, L+1), LDA, BETA,
+     $                     A(1, L+1), LDA, B(L+1, L+1), LDB, BETA,
      $                     C(1, L+1), LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     L, N-L, ALPHA, A(1, L+1), LDA, B, LDB,
+     $                     L, N-L, ALPHA, A, LDA, B(1, L+1), LDB,
      $                     ONE, C(1, L+1), LDC)
                      ! C_{21}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     M-L, L, ALPHA, A(L+1, 1), LDA, B(L+1, L+1),
+     $                     M-L, L, ALPHA, A(L+1, L+1), LDA, B(L+1, 1),
      $                     LDB, BETA, C(L+1, 1), LDC)
                      ! C_{22}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
@@ -816,70 +815,70 @@
                END IF
             ELSE
 *
-*              B is lower triangular
+*              A is lower triangular
 *
                IF (TRANST) THEN
 *
-*                 We are transposing B
+*                 We are transposing A
 *
                   IF (TRANSG) THEN
 *
-*                    We are transposing A.
+*                    We are transposing B.
 *
 *                    So we are computing
-*                    C = \alpha B**T * A**T + \beta C. We break this down as follows
+*                    C = \alpha A**T * B**T + \beta C. We break this down as follows
 *
 *                          |-------------|         |-------------------|
-*                    C =   |C_{11} C_{12}| B**T =  |B_{11}**T B_{21}**T|
-*                          |C_{21} C_{22}|         |0         B_{22}**T|
+*                    C =   |C_{11} C_{12}| A**T =  |A_{11}**T A_{21}**T|
+*                          |C_{21} C_{22}|         |0         A_{22}**T|
 *                          |-------------|         |-------------------|
 *
 *                          |-------------------|
-*                    A**T =|A_{11}**T A_{21}**T|
-*                          |A_{12}**T A_{22}**T|
+*                    B**T =|B_{11}**T B_{21}**T|
+*                          |B_{12}**T B_{22}**T|
 *                          |-------------------|
 *
 *                    Where
 *                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
 *                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
 *
-*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times m-\ell}
-*                    B_{21}\in\R^{m-\ell\times\ell} B_{22}\in\R^{m-\ell\times m-\ell}
-*
 *                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times m-\ell}
-*                    A_{21}\in\R^{n-\ell\times\ell} A_{22}\in\R^{n-\ell\times m-\ell}
+*                    A_{21}\in\R^{m-\ell\times\ell} A_{22}\in\R^{m-\ell\times m-\ell}
+*
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times m-\ell}
+*                    B_{21}\in\R^{n-\ell\times\ell} B_{22}\in\R^{n-\ell\times m-\ell}
 *
 *                    Which means that we get
-*                    C_{11} = \alpha B_{11}**T * A_{11}**T + \alpha B_{21}**T * A_{12}**T + \beta C_{11}
-*                    C_{12} = \alpha B_{11}**T * A_{21}**T + \alpha B_{21}**T * A_{22}**T + \beta C_{12}
-*                    C_{21} = \alpha B_{22}**T * A_{12}**T + \beta C_{21}
-*                    C_{22} = \alpha B_{22}**T * A_{22}**T + \beta C_{22}
+*                    C_{11} = \alpha A_{11}**T * B_{11}**T + \alpha A_{21}**T * B_{12}**T + \beta C_{11}
+*                    C_{12} = \alpha A_{11}**T * B_{21}**T + \alpha A_{21}**T * B_{22}**T + \beta C_{12}
+*                    C_{21} = \alpha A_{22}**T * B_{12}**T + \beta C_{21}
+*                    C_{22} = \alpha A_{22}**T * B_{22}**T + \beta C_{22}
 *
 *                    Computing C_{21} and C_{22} is just a recursive call to
 *                    this routine but we can break down computing
 *                    C_{11} and C_{12} as follows
 *
-*                    C_{11} = \alpha B_{21}**T * A_{12}**T + \beta C_{11} (GEMM call)
-*                    C_{11} = \alpha B_{11}**T * A_{11}**T + C_{11} (This routine)
+*                    C_{11} = \alpha A_{21}**T * B_{12}**T + \beta C_{11} (GEMM call)
+*                    C_{11} = \alpha A_{11}**T * B_{11}**T + C_{11} (This routine)
 *
-*                    C_{12} = \alpha B_{21}**T * A_{22}**T + \beta C_{12} (GEMM call)
-*                    C_{12} = \alpha B_{11}**T * A_{21}**T + C_{12} (This routine)
+*                    C_{12} = \alpha A_{21}**T * B_{22}**T + \beta C_{12} (GEMM call)
+*                    C_{12} = \alpha A_{11}**T * B_{21}**T + C_{12} (This routine)
 *
                      ! C_{11}
-                     CALL DGEMM(TRANSB, TRANSA, L, L, M-L, ALPHA,
-     $                     B(L+1, 1), LDB, A(1, L+1), LDA, BETA, C, LDC)
+                     CALL DGEMM(TRANSA, TRANSB, L, L, M-L, ALPHA,
+     $                     A(L+1, 1), LDA, B(1, L+1), LDB, BETA, C, LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     L, L, ALPHA, A, LDA, B, LDB, ONE, C, LDC)
                      ! C_{12}
                      CALL DGEMM(TRANSB, TRANSA, L, N-L, M-L, ALPHA,
-     $                     B(L+1, 1), LDB, A(L+1, L+1), LDA, BETA,
+     $                     A(L+1, 1), LDA, B(L+1, L+1), LDB, BETA,
      $                     C(1, L+1), LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     L, N-L, ALPHA, A(L+1, 1), LDA, B, LDB, ONE,
+     $                     L, N-L, ALPHA, A, LDA, B(L+1, 1), LDB, ONE,
      $                     C(1, L+1), LDC)
                      ! C_{21}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     M-L, L, ALPHA, A(1, L+1), LDA, B(L+1, L+1),
+     $                     M-L, L, ALPHA, A(L+1, L+1), LDA, B(1, L+1),
      $                     LDB, BETA, C(L+1, 1), LDC)
                      ! C_{22}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
@@ -887,62 +886,62 @@
      $                     B(L+1, L+1), LDB, BETA, C(L+1, L+1), LDC)
                   ELSE
 *
-*                    We are not transposing A.
+*                    We are not transposing B.
 *
 *                    So we are computing
-*                    C = \alpha B**T * A + \beta C. We break this down as follows
+*                    C = \alpha A**T * B + \beta C. We break this down as follows
 *
 *                          |-------------|         |-------------------|
-*                    C =   |C_{11} C_{12}| B**T =  |B_{11}**T B_{21}**T|
-*                          |C_{21} C_{22}|         |0         B_{22}**T|
+*                    C =   |C_{11} C_{12}| A**T =  |A_{11}**T A_{21}**T|
+*                          |C_{21} C_{22}|         |0         A_{22}**T|
 *                          |-------------|         |-------------------|
 *
 *                          |-------------|
-*                    A =   |A_{11} A_{12}|
-*                          |A_{21} A_{22}|
+*                    B =   |B_{11} B_{12}|
+*                          |B_{21} B_{22}|
 *                          |-------------|
 *
 *                    Where
 *                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
 *                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
 *
-*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times m-\ell}
-*                    B_{21}\in\R^{m-\ell\times\ell} B_{22}\in\R^{m-\ell\times m-\ell}
+*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times m-\ell}
+*                    A_{21}\in\R^{m-\ell\times\ell} A_{22}\in\R^{m-\ell\times m-\ell}
 *
-*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times n-\ell}
-*                    A_{21}\in\R^{m-\ell\times\ell} A_{22}\in\R^{m-\ell\times n-\ell}
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times n-\ell}
+*                    B_{21}\in\R^{m-\ell\times\ell} B_{22}\in\R^{m-\ell\times n-\ell}
 *
 *                    Which means that we get
-*                    C_{11} = \alpha B_{11}**T * A_{11} + \alpha B_{21}**T * A_{21} + \beta C_{11}
-*                    C_{12} = \alpha B_{11}**T * A_{12} + \alpha B_{21}**T * A_{22} + \beta C_{12}
-*                    C_{21} = \alpha B_{22}**T * A_{21} + \beta C_{21}
-*                    C_{22} = \alpha B_{22}**T * A_{22} + \beta C_{22}
+*                    C_{11} = \alpha A_{11}**T * B_{11} + \alpha A_{21}**T * B_{21} + \beta C_{11}
+*                    C_{12} = \alpha A_{11}**T * B_{12} + \alpha A_{21}**T * B_{22} + \beta C_{12}
+*                    C_{21} = \alpha A_{22}**T * B_{21} + \beta C_{21}
+*                    C_{22} = \alpha A_{22}**T * B_{22} + \beta C_{22}
 *
 *                    Computing C_{21} and C_{22} is just a recursive call to
 *                    this routine but we can break down computing
 *                    C_{11} and C_{12} as follows
 *
-*                    C_{11} = \alpha B_{21}**T * A_{21} + \beta C_{11} (GEMM call)
-*                    C_{11} = \alpha B_{11}**T * A_{11} + C_{11} (This routine)
+*                    C_{11} = \alpha A_{21}**T * B_{21} + \beta C_{11} (GEMM call)
+*                    C_{11} = \alpha A_{11}**T * B_{11} + C_{11} (This routine)
 *
-*                    C_{12} = \alpha B_{21}**T * A_{22} + \beta C_{12} (GEMM call)
-*                    C_{12} = \alpha B_{11}**T * A_{12} + C_{12} (This routine)
+*                    C_{12} = \alpha A_{21}**T * B_{22} + \beta C_{12} (GEMM call)
+*                    C_{12} = \alpha A_{11}**T * B_{12} + C_{12} (This routine)
 *
                      ! C_{11}
-                     CALL DGEMM(TRANSB, TRANSA, L, L, M-L, ALPHA,
-     $                     B(L+1, 1), LDB, A(L+1, 1), LDA, BETA, C, LDC)
+                     CALL DGEMM(TRANSA, TRANSB, L, L, M-L, ALPHA,
+     $                     A(L+1, 1), LDA, B(L+1, 1), LDB, BETA, C, LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     L, L, ALPHA, A, LDA, B, LDB, ONE, C, LDC)
                      ! C_{12}
-                     CALL DGEMM(TRANSB, TRANSA, L, N-L, M-L, ALPHA,
-     $                     B(L+1, 1), LDB, A(L+1, L+1), LDA, BETA,
+                     CALL DGEMM(TRANSA, TRANSB, L, N-L, M-L, ALPHA,
+     $                     A(L+1, 1), LDA, B(L+1, L+1), LDB, BETA,
      $                     C(1, L+1), LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     L, N-L, ALPHA, A(1, L+1), LDA, B, LDB, ONE,
+     $                     L, N-L, ALPHA, A, LDA, B(1, L+1), LDB, ONE,
      $                     C(1, L+1), LDC)
                      ! C_{21}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     M-L, L, ALPHA, A(L+1, 1), LDA, B(L+1, L+1),
+     $                     M-L, L, ALPHA, A(L+1, L+1), LDA, B(L+1, 1),
      $                     LDB, BETA, C(L+1, 1), LDC)
                      ! C_{22}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
@@ -951,130 +950,130 @@
                   ENDIF
                ELSE
 *
-*                 We are not transposing B
+*                 We are not transposing A
 *
                   IF (TRANSG) THEN
 *
-*                    We are transposing A.
+*                    We are transposing B.
 *
 *                    So we are computing
-*                    C = \alpha B * A**T + \beta C. We break this down as follows
+*                    C = \alpha A * B**T + \beta C. We break this down as follows
 *
 *                          |-------------|      |-------------|
-*                    C =   |C_{11} C_{12}| B =  |B_{11} 0     |
-*                          |C_{21} C_{22}|      |B_{21} B_{22}|
+*                    C =   |C_{11} C_{12}| A =  |A_{11} 0     |
+*                          |C_{21} C_{22}|      |A_{21} A_{22}|
 *                          |-------------|      |-------------|
 *
 *                          |-------------------|
-*                    A**T =|A_{11}**T A_{21}**T|
-*                          |A_{12}**T A_{22}**T|
+*                    B**T =|B_{11}**T B_{21}**T|
+*                          |B_{12}**T B_{22}**T|
 *                          |-------------------|
 *
 *                    Where
 *                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
 *                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
 *
-*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times m-\ell}
-*                    B_{21}\in\R^{m-\ell\times\ell} B_{22}\in\R^{m-\ell\times m-\ell}
-*
 *                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times m-\ell}
-*                    A_{21}\in\R^{n-\ell\times\ell} A_{22}\in\R^{n-\ell\times m-\ell}
+*                    A_{21}\in\R^{m-\ell\times\ell} A_{22}\in\R^{m-\ell\times m-\ell}
+*
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times m-\ell}
+*                    B_{21}\in\R^{n-\ell\times\ell} B_{22}\in\R^{n-\ell\times m-\ell}
 *
 *                    Which means that we get
-*                    C_{11} = \alpha B_{11} * A_{11}**T + \beta C_{11}
-*                    C_{12} = \alpha B_{11} * A_{21}**T + \beta C_{12}
-*                    C_{21} = \alpha B_{21} * A_{11}**T + \alpha B_{22} * A_{12}**T + \beta * C_{21}
-*                    C_{22} = \alpha B_{21} * A_{21}**T + \alpha B_{22} * A_{22}**T + \beta * C_{22}
+*                    C_{11} = \alpha A_{11} * B_{11}**T + \beta C_{11}
+*                    C_{12} = \alpha A_{11} * B_{21}**T + \beta C_{12}
+*                    C_{21} = \alpha A_{21} * B_{11}**T + \alpha A_{22} * B_{12}**T + \beta * C_{21}
+*                    C_{22} = \alpha A_{21} * B_{21}**T + \alpha A_{22} * B_{22}**T + \beta * C_{22}
 *
 *                    Computing C_{11} and C_{12} is just a recursive call to
 *                    this routine but we can break down computing
 *                    C_{21} and C_{22} as follows
 *
-*                    C_{21} = \alpha B_{21} * A_{11}**T + \beta C_{21} (GEMM call)
-*                    C_{21} = \alpha B_{22} * A_{12}**T + C_{21} (This routine)
+*                    C_{21} = \alpha A_{21} * B_{11}**T + \beta C_{21} (GEMM call)
+*                    C_{21} = \alpha A_{22} * B_{12}**T + C_{21} (This routine)
 *
-*                    C_{22} = \alpha B_{21} * A_{21}**T + \beta C_{22} (GEMM call)
-*                    C_{22} = \alpha B_{22} * A_{22}**T + C_{22} (This routine)
+*                    C_{22} = \alpha A_{21} * B_{21}**T + \beta C_{22} (GEMM call)
+*                    C_{22} = \alpha A_{22} * B_{22}**T + C_{22} (This routine)
 *
                      ! C_{11}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     L, L, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
                      ! C_{12}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     L, N-L, ALPHA, A(L+1, 1), LDA, B, LDB,
+     $                     L, N-L, ALPHA, A, LDA, B(L+1, 1), LDB,
      $                     BETA, C(1, L+1), LDC)
                      ! C_{21}
-                     CALL DGEMM(TRANSB, TRANSA, M-L, L, L, ALPHA,
-     $                     B(L+1, 1), LDB, A, LDA, BETA, C(L+1, 1), LDC)
+                     CALL DGEMM(TRANSA, TRANSB, M-L, L, L, ALPHA,
+     $                     A(L+1, 1), LDA, B, LDB, BETA, C(L+1, 1), LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     M-L, L, ALPHA, A(1, L+1), LDA, B(L+1, L+1),
+     $                     M-L, L, ALPHA, A(L+1, L+1), LDA, B(1, L+1),
      $                     LDB, ONE, C(L+1, 1), LDC)
                      ! C_{22}
-                     CALL DGEMM(TRANSB, TRANSA, M-L, N-L, L,
-     $                     ALPHA, B(L+1, 1), LDB, A(L+1, 1), LDA, BETA,
+                     CALL DGEMM(TRANSA, TRANSB, M-L, N-L, L,
+     $                     ALPHA, A(L+1, 1), LDA, B(L+1, 1), LDB, BETA,
      $                     C(L+1, L+1), LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     M-L, N-L, ALPHA, A(L+1, L+1), LDA,
      $                     B(L+1, L+1), LDB, ONE, C(L+1, L+1), LDC)
                   ELSE
 *
-*                    We are not transposing A.
+*                    We are not transposing B.
 *
 *                    So we are computing
-*                    C = \alpha B * A + \beta C. We break this down as follows
+*                    C = \alpha A * B + \beta C. We break this down as follows
 *
 *                          |-------------|      |-------------|
-*                    C =   |C_{11} C_{12}| B =  |B_{11} 0     |
-*                          |C_{21} C_{22}|      |B_{21} B_{22}|
+*                    C =   |C_{11} C_{12}| A =  |A_{11} 0     |
+*                          |C_{21} C_{22}|      |A_{21} A_{22}|
 *                          |-------------|      |-------------|
 *
 *                          |-------------|
-*                    A =   |A_{11} A_{12}|
-*                          |A_{21} A_{22}|
+*                    B =   |B_{11} B_{12}|
+*                          |B_{21} B_{22}|
 *                          |-------------|
 *
 *                    Where
 *                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
 *                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
 *
-*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times m-\ell}
-*                    B_{21}\in\R^{m-\ell\times\ell} B_{22}\in\R^{m-\ell\times m-\ell}
+*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times m-\ell}
+*                    A_{21}\in\R^{m-\ell\times\ell} A_{22}\in\R^{m-\ell\times m-\ell}
 *
-*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times n-\ell}
-*                    A_{21}\in\R^{m-\ell\times\ell} A_{22}\in\R^{m-\ell\times n-\ell}
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times n-\ell}
+*                    B_{21}\in\R^{m-\ell\times\ell} B_{22}\in\R^{m-\ell\times n-\ell}
 *
 *                    Which means that we get
-*                    C_{11} = \alpha B_{11} * A_{11} + \beta C_{11}
-*                    C_{12} = \alpha B_{11} * A_{12} + \beta C_{12}
-*                    C_{21} = \alpha B_{21} * A_{11} + \alpha B_{22} * A_{21} + \beta * C_{21}
-*                    C_{22} = \alpha B_{21} * A_{12} + \alpha B_{22} * A_{22} + \beta * C_{22}
+*                    C_{11} = \alpha A_{11} * B_{11} + \beta C_{11}
+*                    C_{12} = \alpha A_{11} * B_{12} + \beta C_{12}
+*                    C_{21} = \alpha A_{21} * B_{11} + \alpha A_{22} * B_{21} + \beta * C_{21}
+*                    C_{22} = \alpha A_{21} * B_{12} + \alpha A_{22} * B_{22} + \beta * C_{22}
 *
 *                    Computing C_{11} and C_{12} is just a recursive call to
 *                    this routine but we can break down computing
 *                    C_{21} and C_{22} as follows
 *
-*                    C_{21} = \alpha B_{21} * A_{11} + \beta C_{21} (GEMM call)
-*                    C_{21} = \alpha B_{22} * A_{21} + C_{21} (This routine)
+*                    C_{21} = \alpha A_{21} * B_{11} + \beta C_{21} (GEMM call)
+*                    C_{21} = \alpha A_{22} * B_{21} + C_{21} (This routine)
 *
-*                    C_{22} = \alpha B_{21} * A_{12} + \beta C_{22} (GEMM call)
-*                    C_{22} = \alpha B_{22} * A_{22} + C_{22} (This routine)
+*                    C_{22} = \alpha A_{21} * B_{12} + \beta C_{22} (GEMM call)
+*                    C_{22} = \alpha A_{22} * B_{22} + C_{22} (This routine)
 *
                      ! C_{11}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     L, L, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
                      ! C_{12}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     L, N-L, ALPHA, A(1, L+1), LDA, B, LDB,
+     $                     L, N-L, ALPHA, A, LDA, B(1, L+1), LDB,
      $                     BETA, C(1, L+1), LDC)
                      ! C_{21}
-                     CALL DGEMM(TRANSB, TRANSA, M-L, L, L, ALPHA,
-     $                     B(L+1, 1), LDB, A, LDA, BETA, C(L+1, 1), LDC)
+                     CALL DGEMM(TRANSA, TRANSB, M-L, L, L, ALPHA,
+     $                     A(L+1, 1), LDA, B, LDB, BETA, C(L+1, 1), LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     M-L, L, ALPHA, A(L+1, 1), LDA, B(L+1, L+1),
+     $                     M-L, L, ALPHA, A(L+1, L+1), LDA, B(L+1, 1),
      $                     LDB, ONE, C(L+1, 1), LDC)
                      ! C_{22}
                      CALL DGEMM(TRANSB, TRANSA, M-L, N-L, L,
-     $                     ALPHA, B(L+1, 1), LDB, A(1, L+1), LDA, BETA,
+     $                     ALPHA, A(L+1, 1), LDA, B(1, L+1), LDB, BETA,
      $                     C(L+1, L+1), LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     M-L, N-L, ALPHA, A(L+1, L+1), LDA,
@@ -1085,74 +1084,74 @@
          ELSE
 *
 *           We are multiplying A from the right IE we are computing
-*           C = \alpha op(A)*op(B) + \beta C
+*           C = \alpha op(B)*op(A) + \beta C
 *
             IF (UPPER) THEN
 *
-*              B is upper triangular
+*              A is upper triangular
 *
                IF (TRANST) THEN
 *
-*                 We are transposing B
+*                 We are transposing A
 *
                   IF (TRANSG) THEN
 *
-*                    We are transposing A.
+*                    We are transposing B.
 *
 *                    So we are computing
-*                    C = \alpha  A**T * B**T + \beta C. We break this down as follows
+*                    C = \alpha  B**T * A**T + \beta C. We break this down as follows
 *
 *                          |-------------|         |-------------------|
-*                    C =   |C_{11} C_{12}| B**T =  |B_{11}**T 0        |
-*                          |C_{21} C_{22}|         |B_{12}**T B_{22}**T|
+*                    C =   |C_{11} C_{12}| A**T =  |A_{11}**T 0        |
+*                          |C_{21} C_{22}|         |A_{12}**T A_{22}**T|
 *                          |-------------|         |-------------------|
 *
 *                          |-------------------|
-*                    A**T =|A_{11}**T A_{21}**T|
-*                          |A_{12}**T A_{22}**T|
+*                    B**T =|B_{11}**T B_{21}**T|
+*                          |B_{12}**T B_{22}**T|
 *                          |-------------------|
 *
 *                    Where
 *                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
 *                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
 *
-*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times n-\ell}
-*                    B_{21}\in\R^{n-\ell\times\ell} B_{22}\in\R^{n-\ell\times n-\ell}
+*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times n-\ell}
+*                    A_{21}\in\R^{n-\ell\times\ell} A_{22}\in\R^{n-\ell\times n-\ell}
 *
-*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times m-\ell}
-*                    A_{21}\in\R^{n-\ell\times\ell} A_{22}\in\R^{n-\ell\times m-\ell}
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times m-\ell}
+*                    B_{21}\in\R^{n-\ell\times\ell} B_{22}\in\R^{n-\ell\times m-\ell}
 *
 *                    Which means that we get
-*                    C_{11} = \alpha A_{11}**T * B_{11}**T + \alpha A_{21}**T * B_{12}**T + \beta C_{11}
-*                    C_{12} = \alpha A_{21}**T * B_{22}**T + \beta C_{12}
-*                    C_{21} = \alpha A_{12}**T * B_{11}**T + \alpha A_{22}**T * B_{12}**T + \beta C_{21}
-*                    C_{22} = \alpha A_{22}**T * B_{22}**T + \beta C_{22}
+*                    C_{11} = \alpha B_{11}**T * A_{11}**T + \alpha B_{21}**T * A_{12}**T + \beta C_{11}
+*                    C_{12} = \alpha B_{21}**T * A_{22}**T + \beta C_{12}
+*                    C_{21} = \alpha B_{12}**T * A_{11}**T + \alpha B_{22}**T * A_{12}**T + \beta C_{21}
+*                    C_{22} = \alpha B_{22}**T * A_{22}**T + \beta C_{22}
 *
 *                    Computing C_{12} and C_{22} is just a recursive call to
 *                    this routine but we can break down computing
 *                    C_{11} and C_{21} as follows
 *
-*                    C_{11} = \alpha A_{21}**T * B_{12}**T + \beta C_{11} (GEMM call)
-*                    C_{11} = \alpha A_{11}**T * B_{11}**T + C_{11} (This routine)
+*                    C_{11} = \alpha B_{21}**T * A_{12}**T + \beta C_{11} (GEMM call)
+*                    C_{11} = \alpha B_{11}**T * A_{11}**T + C_{11} (This routine)
 *
-*                    C_{21} = \alpha A_{22}**T * B_{12}**T + \beta C_{21} (GEMM call)
-*                    C_{21} = \alpha A_{12}**T * B_{11}**T + C_{21} (This routine)
+*                    C_{21} = \alpha B_{22}**T * A_{12}**T + \beta C_{21} (GEMM call)
+*                    C_{21} = \alpha B_{12}**T * A_{11}**T + C_{21} (This routine)
 *
                      ! C_{11}
-                     CALL DGEMM(TRANSA, TRANSB, L, L, N-L, ALPHA,
-     $                     A(L+1, 1), LDA, B(1, L+1), LDB, BETA, C, LDC)
+                     CALL DGEMM(TRANSB, TRANSA, L, L, N-L, ALPHA,
+     $                     B(L+1, 1), LDB, A(1, L+1), LDA, BETA, C, LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     L, L, ALPHA, A, LDA, B, LDB, ONE, C, LDC)
                      ! C_{12}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     L, N-L, ALPHA, A(L+1, 1), LDA, B(L+1, L+1),
+     $                     L, N-L, ALPHA, A(L+1, L+1), LDA, B(L+1, 1),
      $                     LDB, BETA, C(1, L+1), LDC)
                      ! C_{21}
-                     CALL DGEMM(TRANSA, TRANSB, M-L, L, N-L, ALPHA,
-     $                     A(L+1, L+1), LDA, B(1, L+1), LDB, BETA,
+                     CALL DGEMM(TRANSB, TRANSA, M-L, L, N-L, ALPHA,
+     $                     B(L+1, L+1), LDB, A(1, L+1), LDA, BETA,
      $                     C(L+1, 1), LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     M-L, L, ALPHA, A(1, L+1), LDA, B, LDB,
+     $                     M-L, L, ALPHA, A, LDA, B(1, L+1), LDB,
      $                     ONE, C(L+1, 1), LDC)
                      ! C_{22}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
@@ -1160,62 +1159,62 @@
      $                     B(L+1, L+1), LDB, BETA, C(L+1, L+1), LDC)
                   ELSE
 *
-*                    We are not transposing A.
+*                    We are not transposing B.
 *
 *                    So we are computing
-*                    C = \alpha A * B**T + \beta C. We break this down as follows
+*                    C = \alpha B * A**T + \beta C. We break this down as follows
 *
 *                          |-------------|         |-------------------|
-*                    C =   |C_{11} C_{12}| B**T =  |B_{11}**T 0        |
-*                          |C_{21} C_{22}|         |B_{12}**T B_{22}**T|
+*                    C =   |C_{11} C_{12}| A**T =  |A_{11}**T 0        |
+*                          |C_{21} C_{22}|         |A_{12}**T A_{22}**T|
 *                          |-------------|         |-------------------|
 *
 *                          |-------------|
-*                    A =   |A_{11} A_{12}|
-*                          |A_{21} A_{22}|
+*                    B =   |B_{11} B_{12}|
+*                          |B_{21} B_{22}|
 *                          |-------------|
 *
 *                    Where
 *                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
 *                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
 *
-*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times n-\ell}
-*                    B_{21}\in\R^{n-\ell\times\ell} B_{22}\in\R^{n-\ell\times n-\ell}
-*
 *                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times n-\ell}
-*                    A_{21}\in\R^{m-\ell\times\ell} A_{22}\in\R^{m-\ell\times n-\ell}
+*                    A_{21}\in\R^{n-\ell\times\ell} A_{22}\in\R^{n-\ell\times n-\ell}
+*
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times n-\ell}
+*                    B_{21}\in\R^{m-\ell\times\ell} B_{22}\in\R^{m-\ell\times n-\ell}
 *
 *                    Which means that we get
-*                    C_{11} = \alpha A_{11} * B_{11}**T + \alpha A_{12} * B_{12}**T + \beta C_{11}
-*                    C_{12} = \alpha A_{12} * B_{22}**T + \beta C_{12}
-*                    C_{21} = \alpha A_{21} * B_{11}**T + \alpha A_{22} * B_{12}**T + \beta C_{21}
-*                    C_{22} = \alpha A_{22} * B_{22}**T + \beta C_{22}
+*                    C_{11} = \alpha B_{11} * A_{11}**T + \alpha B_{12} * A_{12}**T + \beta C_{11}
+*                    C_{12} = \alpha B_{12} * A_{22}**T + \beta C_{12}
+*                    C_{21} = \alpha B_{21} * A_{11}**T + \alpha B_{22} * A_{12}**T + \beta C_{21}
+*                    C_{22} = \alpha B_{22} * A_{22}**T + \beta C_{22}
 *
 *                    Computing C_{12} and C_{22} is just a recursive call to
 *                    this routine but we can break down computing
 *                    C_{11} and C_{21} as follows
 *
-*                    C_{11} = \alpha A_{12} * B_{12}**T + \beta C_{11} (GEMM call)
-*                    C_{11} = \alpha A_{11} * B_{11}**T + C_{11} (This routine)
+*                    C_{11} = \alpha B_{12} * A_{12}**T + \beta C_{11} (GEMM call)
+*                    C_{11} = \alpha B_{11} * A_{11}**T + C_{11} (This routine)
 *
-*                    C_{21} = \alpha A_{22} * B_{12}**T + \beta C_{21} (GEMM call)
-*                    C_{21} = \alpha A_{21} * B_{11}**T + C_{21} (This routine)
+*                    C_{21} = \alpha B_{22} * A_{12}**T + \beta C_{21} (GEMM call)
+*                    C_{21} = \alpha B_{21} * A_{11}**T + C_{21} (This routine)
 *
                      ! C_{11}
-                     CALL DGEMM(TRANSA, TRANSB, L, L, N-L, ALPHA,
-     $                     A(1,L+1), LDA, B(1,L+1), LDB, BETA, C, LDC)
+                     CALL DGEMM(TRANSB, TRANSA, L, L, N-L, ALPHA,
+     $                     B(1,L+1), LDB, A(1,L+1), LDA, BETA, C, LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     L, L, ALPHA, A, LDA, B, LDB, ONE, C, LDC)
                      ! C_{12}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     L, N-L, ALPHA, A(1, L+1), LDA, B(L+1, L+1),
+     $                     L, N-L, ALPHA, A(L+1, L+1), LDA, B(1, L+1),
      $                     LDB, BETA, C(1, L+1), LDC)
                      ! C_{21}
-                     CALL DGEMM(TRANSA, TRANSB, M-L, L, N-L, ALPHA,
-     $                     A(L+1, L+1), LDA, B(1, L+1), LDB, BETA,
+                     CALL DGEMM(TRANSB, TRANSA, M-L, L, N-L, ALPHA,
+     $                     B(L+1, L+1), LDB, A(1, L+1), LDA, BETA,
      $                     C(L+1, 1), LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     M-L, L, ALPHA, A(L+1, 1), LDA, B, LDB,
+     $                     M-L, L, ALPHA, A, LDA, B(L+1, 1), LDB,
      $                     ONE, C(L+1, 1), LDC)
                      ! C_{22}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
@@ -1224,130 +1223,130 @@
                   ENDIF
                ELSE
 *
-*                 We are not transposing B
+*                 We are not transposing A
 *
                   IF (TRANSG) THEN
 *
-*                    We are transposing A.
+*                    We are transposing B.
 *
 *                    So we are computing
-*                    C = \alpha A**T * B + \beta C. We break this down as follows
+*                    C = \alpha B**T * A + \beta C. We break this down as follows
 *
 *                          |-------------|      |-------------|
-*                    C =   |C_{11} C_{12}| B =  |B_{11} B_{12}|
-*                          |C_{21} C_{22}|      |0      B_{22}|
+*                    C =   |C_{11} C_{12}| A =  |A_{11} A_{12}|
+*                          |C_{21} C_{22}|      |0      A_{22}|
 *                          |-------------|      |-------------|
 *
 *                          |-------------------|
-*                    A**T =|A_{11}**T A_{21}**T|
-*                          |A_{12}**T A_{22}**T|
+*                    B**T =|B_{11}**T B_{21}**T|
+*                          |B_{12}**T B_{22}**T|
 *                          |-------------------|
 *
 *                    Where
 *                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
 *                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
 *
-*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times n-\ell}
-*                    B_{21}\in\R^{n-\ell\times\ell} B_{22}\in\R^{n-\ell\times n-\ell}
+*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times n-\ell}
+*                    A_{21}\in\R^{n-\ell\times\ell} A_{22}\in\R^{n-\ell\times n-\ell}
 *
-*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times m-\ell}
-*                    A_{21}\in\R^{n-\ell\times\ell} A_{22}\in\R^{n-\ell\times m-\ell}
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times m-\ell}
+*                    B_{21}\in\R^{n-\ell\times\ell} B_{22}\in\R^{n-\ell\times m-\ell}
 *
 *                    Which means that we get
-*                    C_{11} = \alpha A_{11}**T * B_{11} + \beta C_{11}
-*                    C_{12} = \alpha A_{11}**T * B_{12} + \alpha A_{21}**T * B_{22} + \beta C_{12}
-*                    C_{21} = \alpha A_{12}**T * B_{11} + \beta C_{21}
-*                    C_{22} = \alpha A_{12}**T * B_{12} + \alpha A_{22}**T * B_{22} + \beta C_{22}
+*                    C_{11} = \alpha B_{11}**T * A_{11} + \beta C_{11}
+*                    C_{12} = \alpha B_{11}**T * A_{12} + \alpha B_{21}**T * A_{22} + \beta C_{12}
+*                    C_{21} = \alpha B_{12}**T * A_{11} + \beta C_{21}
+*                    C_{22} = \alpha B_{12}**T * A_{12} + \alpha B_{22}**T * A_{22} + \beta C_{22}
 *
 *                    Computing C_{11} and C_{21} is just a recursive call to
 *                    this routine but we can break down computing
 *                    C_{12} and C_{22} as follows
 *
-*                    C_{12} = \alpha A_{11}**T * B_{12} + \beta C_{12} (GEMM call)
-*                    C_{12} = \alpha A_{21}**T * B_{22} + C_{12} (This routine)
+*                    C_{12} = \alpha B_{11}**T * A_{12} + \beta C_{12} (GEMM call)
+*                    C_{12} = \alpha B_{21}**T * A_{22} + C_{12} (This routine)
 *
-*                    C_{22} = \alpha A_{12}**T * B_{12} + \beta C_{22} (GEMM call)
-*                    C_{22} = \alpha A_{22}**T * B_{22} + C_{22} (This routine)
+*                    C_{22} = \alpha B_{12}**T * A_{12} + \beta C_{22} (GEMM call)
+*                    C_{22} = \alpha B_{22}**T * A_{22} + C_{22} (This routine)
 *
                      ! C_{11}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     L, L, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
                      ! C_{12}
-                     CALL DGEMM(TRANSA, TRANSB, L, N-L, L, ALPHA,
-     $                     A, LDA, B(1, L+1), LDB, BETA, C(1, L+1), LDC)
+                     CALL DGEMM(TRANSB, TRANSA, L, N-L, L, ALPHA,
+     $                     B, LDB, A(1, L+1), LDA, BETA, C(1, L+1), LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     L, N-L, ALPHA, A(L+1, 1), LDA, B(L+1, L+1),
+     $                     L, N-L, ALPHA, A(L+1, L+1), LDA, B(L+1, 1),
      $                     LDB, ONE, C(1, L+1), LDC)
                      ! C_{21}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     M-L, L, ALPHA, A(1, L+1), LDA, B, LDB,
+     $                     M-L, L, ALPHA, A, LDA, B(1, L+1), LDB,
      $                     BETA, C(L+1, 1), LDC)
                      ! C_{22}
-                     CALL DGEMM(TRANSA, TRANSB, M-L, N-L, L,
-     $                     ALPHA, A(1, L+1), LDA, B(1, L+1), LDB, BETA,
+                     CALL DGEMM(TRANSB, TRANSA, M-L, N-L, L,
+     $                     ALPHA, B(1, L+1), LDB, A(1, L+1), LDA, BETA,
      $                     C(L+1, L+1), LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     M-L, N-L, ALPHA, A(L+1, L+1), LDA,
      $                     B(L+1, L+1), LDB, ONE, C(L+1, L+1), LDC)
                   ELSE
 *
-*                    We are not transposing A.
+*                    We are not transposing B.
 *
 *                    So we are computing
-*                    C = \alpha A * B + \beta C. We break this down as follows
+*                    C = \alpha B * A + \beta C. We break this down as follows
 *
 *                          |-------------|      |-------------|
-*                    C =   |C_{11} C_{12}| B =  |B_{11} B_{12}|
-*                          |C_{21} C_{22}|      |0      B_{22}|
+*                    C =   |C_{11} C_{12}| A =  |A_{11} A_{12}|
+*                          |C_{21} C_{22}|      |0      A_{22}|
 *                          |-------------|      |-------------|
 *
 *                          |-------------|
-*                    A =   |A_{11} A_{12}|
-*                          |A_{21} A_{22}|
+*                    B =   |B_{11} B_{12}|
+*                          |B_{21} B_{22}|
 *                          |-------------|
 *
 *                    Where
 *                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
 *                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
 *
-*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times n-\ell}
-*                    B_{21}\in\R^{n-\ell\times\ell} B_{22}\in\R^{n-\ell\times n-\ell}
-*
 *                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times n-\ell}
-*                    A_{21}\in\R^{m-\ell\times\ell} A_{22}\in\R^{m-\ell\times n-\ell}
+*                    A_{21}\in\R^{n-\ell\times\ell} A_{22}\in\R^{n-\ell\times n-\ell}
+*
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times n-\ell}
+*                    B_{21}\in\R^{m-\ell\times\ell} B_{22}\in\R^{m-\ell\times n-\ell}
 *
 *                    Which means that we get
-*                    C_{11} = \alpha A_{11} * B_{11} + \beta C_{11}
-*                    C_{12} = \alpha A_{11} * B_{12} + \alpha A_{12} * B_{22} + \beta C_{12}
-*                    C_{21} = \alpha A_{21} * B_{11} + \beta C_{21}
-*                    C_{22} = \alpha A_{21} * B_{12} + \alpha A_{22} * B_{22} + \beta C_{22}
+*                    C_{11} = \alpha B_{11} * A_{11} + \beta C_{11}
+*                    C_{12} = \alpha B_{11} * A_{12} + \alpha B_{12} * A_{22} + \beta C_{12}
+*                    C_{21} = \alpha B_{21} * A_{11} + \beta C_{21}
+*                    C_{22} = \alpha B_{21} * A_{12} + \alpha B_{22} * A_{22} + \beta C_{22}
 *
 *                    Computing C_{11} and C_{21} is just a recursive call to
 *                    this routine but we can break down computing
 *                    C_{12} and C_{22} as follows
 *
-*                    C_{12} = \alpha A_{11} * B_{12} + \beta C_{12} (GEMM call)
-*                    C_{12} = \alpha A_{12} * B_{22} + C_{12} (This routine)
+*                    C_{12} = \alpha B_{11} * A_{12} + \beta C_{12} (GEMM call)
+*                    C_{12} = \alpha B_{12} * A_{22} + C_{12} (This routine)
 *
-*                    C_{22} = \alpha A_{21} * B_{12} + \beta C_{22} (GEMM call)
-*                    C_{22} = \alpha A_{22} * B_{22} + C_{22} (This routine)
+*                    C_{22} = \alpha B_{21} * A_{12} + \beta C_{22} (GEMM call)
+*                    C_{22} = \alpha B_{22} * A_{22} + C_{22} (This routine)
 *
                      ! C_{11}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     L, L, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
                      ! C_{12}
-                     CALL DGEMM(TRANSA, TRANSB, L, N-L, L, ALPHA,
-     $                     A, LDA, B(1, L+1), LDB, BETA, C(1, L+1), LDC)
+                     CALL DGEMM(TRANSB, TRANSA, L, N-L, L, ALPHA,
+     $                     B, LDB, A(1, L+1), LDA, BETA, C(1, L+1), LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     L, N-L, ALPHA, A(1, L+1), LDA, B(L+1, L+1),
+     $                     L, N-L, ALPHA, A(L+1, L+1), LDA, B(1, L+1),
      $                     LDB, ONE, C(1, L+1), LDC)
                      ! C_{21}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     M-L, L, ALPHA, A(L+1, 1), LDA, B, LDB, BETA,
+     $                     M-L, L, ALPHA, A, LDA, B(L+1, 1), LDB, BETA,
      $                     C(L+1, 1), LDC)
                      ! C_{22}
-                     CALL DGEMM(TRANSA, TRANSB, M-L, N-L, L,
-     $                     ALPHA, A(L+1, 1), LDA, B(1, L+1), LDB,
+                     CALL DGEMM(TRANSB, TRANSA, M-L, N-L, L,
+     $                     ALPHA, B(L+1, 1), LDB, A(1, L+1), LDA,
      $                     BETA, C(L+1, L+1), LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     M-L, N-L, ALPHA, A(L+1, L+1), LDA,
@@ -1356,134 +1355,134 @@
                END IF
             ELSE
 *
-*              B is lower triangular
+*              A is lower triangular
 *
                IF (TRANST) THEN
 *
-*                 We are transposing B
+*                 We are transposing A
 *
                   IF (TRANSG) THEN
 *
-*                    We are transposing A.
+*                    We are transposing B.
 *
 *                    So we are computing
-*                    C = \alpha A**T * B**T + \beta C. We break this down as follows
+*                    C = \alpha B**T * A**T + \beta C. We break this down as follows
 *
 *                          |-------------|         |-------------------|
-*                    C =   |C_{11} C_{12}| B**T =  |B_{11}**T B_{21}**T|
-*                          |C_{21} C_{22}|         |0         B_{22}**T|
+*                    C =   |C_{11} C_{12}| A**T =  |A_{11}**T A_{21}**T|
+*                          |C_{21} C_{22}|         |0         A_{22}**T|
 *                          |-------------|         |-------------------|
 *
 *                          |-------------------|
-*                    A**T =|A_{11}**T A_{21}**T|
-*                          |A_{12}**T A_{22}**T|
+*                    B**T =|B_{11}**T B_{21}**T|
+*                          |B_{12}**T B_{22}**T|
 *                          |-------------------|
 *
 *                    Where
 *                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
 *                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
 *
-*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times n-\ell}
-*                    B_{21}\in\R^{n-\ell\times\ell} B_{22}\in\R^{n-\ell\times n-\ell}
+*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times n-\ell}
+*                    A_{21}\in\R^{n-\ell\times\ell} A_{22}\in\R^{n-\ell\times n-\ell}
 *
-*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times m-\ell}
-*                    A_{21}\in\R^{n-\ell\times\ell} A_{22}\in\R^{n-\ell\times m-\ell}
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times m-\ell}
+*                    B_{21}\in\R^{n-\ell\times\ell} B_{22}\in\R^{n-\ell\times m-\ell}
 *
 *                    Which means that we get
-*                    C_{11} = \alpha A_{11}**T * B_{11} + \beta C_{11}
-*                    C_{12} = \alpha A_{11}**T * B_{21}**T + \alpha A_{21}**T * B_{22}**T + \beta C_{12}
-*                    C_{21} = \alpha A_{12}**T * B_{11}**T + \beta C_{21}
-*                    C_{22} = \alpha A_{12}**T * B_{21}**T + \alpha A_{22}**T * B_{22}**T + \beta C_{22}
+*                    C_{11} = \alpha B_{11}**T * A_{11}**T + \beta C_{11}
+*                    C_{12} = \alpha B_{11}**T * A_{21}**T + \alpha B_{21}**T * A_{22}**T + \beta C_{12}
+*                    C_{21} = \alpha B_{12}**T * A_{11}**T + \beta C_{21}
+*                    C_{22} = \alpha B_{12}**T * A_{21}**T + \alpha B_{22}**T * A_{22}**T + \beta C_{22}
 *
 *                    Computing C_{11} and C_{21} is just a recursive call to
 *                    this routine but we can break down computing
 *                    C_{12} and C_{22} as follows
 *
-*                    C_{12} = \alpha A_{11}**T * B_{21}**T + \beta C_{12} (GEMM call)
-*                    C_{12} = \alpha A_{21}**T * B_{22}**T + C_{12} (This routine)
+*                    C_{12} = \alpha B_{11}**T * A_{21}**T + \beta C_{12} (GEMM call)
+*                    C_{12} = \alpha B_{21}**T * A_{22}**T + C_{12} (This routine)
 *
-*                    C_{22} = \alpha A_{12}**T * B_{21}**T + \beta C_{22} (GEMM call)
-*                    C_{22} = \alpha A_{22}**T * B_{22}**T + C_{22} (This routine)
+*                    C_{22} = \alpha B_{12}**T * A_{21}**T + \beta C_{22} (GEMM call)
+*                    C_{22} = \alpha B_{22}**T * A_{22}**T + C_{22} (This routine)
 *
                      ! C_{11}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     L, L, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
                      ! C_{12}
-                     CALL DGEMM(TRANSA, TRANSB, L, N-L, L, ALPHA,
-     $                     A, LDA, B(L+1, 1), LDB, BETA, C(1, L+1), LDC)
+                     CALL DGEMM(TRANSB, TRANSA, L, N-L, L, ALPHA,
+     $                     B, LDB, A(L+1, 1), LDA, BETA, C(1, L+1), LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     L, N-L, ALPHA, A(L+1, 1), LDA, B(L+1, L+1),
+     $                     L, N-L, ALPHA, A(L+1, L+1), LDA, B(L+1, 1),
      $                     LDB, ONE, C(1, L+1), LDC)
                      ! C_{21}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     M-L, L, ALPHA, A(1, L+1), LDA, B, LDB,
+     $                     M-L, L, ALPHA, A, LDA, B(1, L+1), LDB,
      $                     BETA, C(L+1, 1), LDC)
                      ! C_{22}
-                     CALL DGEMM(TRANSA, TRANSB, M-L, N-L, L, ALPHA,
-     $                     A(1, L+1), LDA, B(L+1, 1), LDB, BETA,
+                     CALL DGEMM(TRANSB, TRANSA, M-L, N-L, L, ALPHA,
+     $                     B(1, L+1), LDB, A(L+1, 1), LDA, BETA,
      $                     C(L+1, L+1), LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     M-L, N-L, ALPHA, A(L+1, L+1), LDA,
      $                     B(L+1, L+1), LDB, ONE, C(L+1, L+1), LDC)
                   ELSE
 *
-*                    We are not transposing A.
+*                    We are not transposing B.
 *
 *                    So we are computing
-*                    C = \alpha A * B**T + \beta C. We break this down as follows
+*                    C = \alpha B * A**T + \beta C. We break this down as follows
 *
 *                          |-------------|         |-------------------|
-*                    C =   |C_{11} C_{12}| B**T =  |B_{11}**T B_{21}**T|
-*                          |C_{21} C_{22}|         |0         B_{22}**T|
+*                    C =   |C_{11} C_{12}| A**T =  |A_{11}**T A_{21}**T|
+*                          |C_{21} C_{22}|         |0         A_{22}**T|
 *                          |-------------|         |-------------------|
 *
 *                          |-------------|
-*                    A =   |A_{11} A_{12}|
-*                          |A_{21} A_{22}|
+*                    B =   |B_{11} B_{12}|
+*                          |B_{21} B_{22}|
 *                          |-------------|
 *
 *                    Where
 *                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
 *                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
 *
-*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times n-\ell}
-*                    B_{21}\in\R^{n-\ell\times\ell} B_{22}\in\R^{n-\ell\times n-\ell}
-*
 *                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times n-\ell}
-*                    A_{21}\in\R^{m-\ell\times\ell} A_{22}\in\R^{m-\ell\times n-\ell}
+*                    A_{21}\in\R^{n-\ell\times\ell} A_{22}\in\R^{n-\ell\times n-\ell}
+*
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times n-\ell}
+*                    B_{21}\in\R^{m-\ell\times\ell} B_{22}\in\R^{m-\ell\times n-\ell}
 *
 *                    Which means that we get
-*                    C_{11} = \alpha A_{11} * B_{11} + \beta C_{11}
-*                    C_{12} = \alpha A_{11} * B_{21}**T + \alpha A_{12} * B_{22}**T + \beta C_{12}
-*                    C_{21} = \alpha A_{21} * B_{11}**T + \beta C_{21}
-*                    C_{22} = \alpha A_{21} * B_{21}**T + \alpha A_{22} * B_{22}**T + \beta C_{22}
+*                    C_{11} = \alpha B_{11} * A_{11} + \beta C_{11}
+*                    C_{12} = \alpha B_{11} * A_{21}**T + \alpha A_{12} * B_{22}**T + \beta C_{12}
+*                    C_{21} = \alpha B_{21} * A_{11}**T + \beta C_{21}
+*                    C_{22} = \alpha B_{21} * A_{21}**T + \alpha A_{22} * B_{22}**T + \beta C_{22}
 *
 *                    Computing C_{11} and C_{21} is just a recursive call to
 *                    this routine but we can break down computing
 *                    C_{12} and C_{22} as follows
 *
-*                    C_{12} = \alpha A_{11} * B_{21}**T + \beta C_{12} (GEMM call)
-*                    C_{12} = \alpha A_{12} * B_{22}**T + C_{12} (This routine)
+*                    C_{12} = \alpha B_{11} * A_{21}**T + \beta C_{12} (GEMM call)
+*                    C_{12} = \alpha B_{12} * A_{22}**T + C_{12} (This routine)
 *
-*                    C_{22} = \alpha A_{21} * B_{21}**T + \beta C_{22} (GEMM call)
-*                    C_{22} = \alpha A_{22} * B_{22}**T + C_{22} (This routine)
+*                    C_{22} = \alpha B_{21} * A_{21}**T + \beta C_{22} (GEMM call)
+*                    C_{22} = \alpha B_{22} * A_{22}**T + C_{22} (This routine)
 *
                      ! C_{11}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     L, L, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
                      ! C_{12}
-                     CALL DGEMM(TRANSA, TRANSB, L, N-L, L, ALPHA,
-     $                     A, LDA, B(L+1, 1), LDB, BETA, C(1, L+1), LDC)
+                     CALL DGEMM(TRANSB, TRANSA, L, N-L, L, ALPHA,
+     $                     B, LDB, A(L+1, 1), LDA, BETA, C(1, L+1), LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     L, N-L, ALPHA, A(1, L+1), LDA, B(L+1, L+1),
+     $                     L, N-L, ALPHA, A(L+1, L+1), LDA, B(1, L+1),
      $                     LDB, ONE, C(1, L+1), LDC)
                      ! C_{21}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     M-L, L, ALPHA, A(L+1, 1), LDA, B, LDB, BETA,
+     $                     M-L, L, ALPHA, A, LDA, B(L+1, 1), LDB, BETA,
      $                     C(L+1, 1), LDC)
                      ! C_{22}
-                     CALL DGEMM(TRANSA, TRANSB, M-L, N-L, L, ALPHA,
-     $                     A(L+1, 1), LDA, B(L+1, 1), LDB, BETA,
+                     CALL DGEMM(TRANSB, TRANSA, M-L, N-L, L, ALPHA,
+     $                     B(L+1, 1), LDB, A(L+1, 1), LDA, BETA,
      $                     C(L+1, L+1), LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     M-L, N-L, ALPHA, A(L+1, L+1), LDA,
@@ -1491,66 +1490,66 @@
                   ENDIF
                ELSE
 *
-*                 We are not transposing B
+*                 We are not transposing A
 *
                   IF (TRANSG) THEN
 *
-*                    We are transposing A.
+*                    We are transposing B.
 *
 *                    So we are computing
-*                    C = \alpha A**T * B + \beta C. We break this down as follows
+*                    C = \alpha B**T * A + \beta C. We break this down as follows
 *
 *                          |-------------|      |-------------|
-*                    C =   |C_{11} C_{12}| B =  |B_{11} 0     |
-*                          |C_{21} C_{22}|      |B_{21} B_{22}|
+*                    C =   |C_{11} C_{12}| A =  |A_{11} 0     |
+*                          |C_{21} C_{22}|      |A_{21} A_{22}|
 *                          |-------------|      |-------------|
 *
 *                          |-------------------|
-*                    A**T =|A_{11}**T A_{21}**T|
-*                          |A_{12}**T A_{22}**T|
+*                    B**T =|B_{11}**T B_{21}**T|
+*                          |B_{12}**T B_{22}**T|
 *                          |-------------------|
 *
 *                    Where
 *                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
 *                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
 *
-*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times n-\ell}
-*                    B_{21}\in\R^{n-\ell\times\ell} B_{22}\in\R^{n-\ell\times n-\ell}
+*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times n-\ell}
+*                    A_{21}\in\R^{n-\ell\times\ell} A_{22}\in\R^{n-\ell\times n-\ell}
 *
-*                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times m-\ell}
-*                    A_{21}\in\R^{n-\ell\times\ell} A_{22}\in\R^{n-\ell\times m-\ell}
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times m-\ell}
+*                    B_{21}\in\R^{n-\ell\times\ell} B_{22}\in\R^{n-\ell\times m-\ell}
 *
 *                    Which means that we get
-*                    C_{11} = \alpha A_{11}**T * B_{11} + \alpha A_{21}**T * B_{21} + \beta C_{11}
-*                    C_{12} = \alpha A_{21}**T * B_{22} + \beta C_{12}
-*                    C_{21} = \alpha A_{12}**T * B_{11} + \alpha A_{22}**T * B_{21} + \beta C_{21}
-*                    C_{22} = \alpha A_{22}**T * B_{22} + \beta C_{22}
+*                    C_{11} = \alpha B_{11}**T * A_{11} + \alpha B_{21}**T * A_{21} + \beta C_{11}
+*                    C_{12} = \alpha B_{21}**T * A_{22} + \beta C_{12}
+*                    C_{21} = \alpha B_{12}**T * A_{11} + \alpha B_{22}**T * A_{21} + \beta C_{21}
+*                    C_{22} = \alpha B_{22}**T * A_{22} + \beta C_{22}
 *
 *                    Computing C_{12} and C_{22} is just a recursive call to
 *                    this routine but we can break down computing
 *                    C_{11} and C_{21} as follows
 *
-*                    C_{11} = \alpha A_{21}**T * B_{21} + \beta C_{11} (GEMM call)
-*                    C_{11} = \alpha A_{11}**T * B_{11} + C_{11}(This routine)
+*                    C_{11} = \alpha B_{21}**T * A_{21} + \beta C_{11} (GEMM call)
+*                    C_{11} = \alpha B_{11}**T * A_{11} + C_{11}(This routine)
 *
-*                    C_{21} = \alpha A_{22}**T * B_{21} + \beta C_{21} (GEMM call)
-*                    C_{21} = \alpha A_{12}**T * B_{11} + C_{21} (This routine)
+*                    C_{21} = \alpha B_{22}**T * A_{21} + \beta C_{21} (GEMM call)
+*                    C_{21} = \alpha B_{12}**T * A_{11} + C_{21} (This routine)
 *
                      ! C_{11}
-                     CALL DGEMM(TRANSA, TRANSB, L, L, N-L, ALPHA,
-     $                     A(L+1, 1), LDA, B(L+1, 1), LDB, BETA, C, LDC)
+                     CALL DGEMM(TRANSB, TRANSA, L, L, N-L, ALPHA,
+     $                     B(L+1, 1), LDB, A(L+1, 1), LDA, BETA, C, LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     L, L, ALPHA, A, LDA, B, LDB, ONE, C, LDC)
                      ! C_{12}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     L, N-L, ALPHA, A(L+1, 1), LDA, B(L+1, L+1),
+     $                     L, N-L, ALPHA, A(L+1, L+1), LDA, B(L+1, 1),
      $                     LDB, BETA, C(1, L+1), LDC)
                      ! C_{21}
-                     CALL DGEMM(TRANSA, TRANSB, M-L, L, N-L, ALPHA,
-     $                     A(L+1, L+1), LDA, B(L+1, 1), LDB, BETA,
+                     CALL DGEMM(TRANSB, TRANSA, M-L, L, N-L, ALPHA,
+     $                     B(L+1, L+1), LDB, A(L+1, 1), LDA, BETA,
      $                     C(L+1, 1), LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     M-L, L, ALPHA, A(1, L+1), LDA, B, LDB, ONE,
+     $                     M-L, L, ALPHA, A, LDA, B(1, L+1), LDB, ONE,
      $                     C(L+1, 1), LDC)
                      ! C_{22}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
@@ -1558,62 +1557,62 @@
      $                     B(L+1, L+1), LDB, BETA, C(L+1, L+1), LDC)
                   ELSE
 *
-*                    We are not transposing A.
+*                    We are not transposing B.
 *
 *                    So we are computing
-*                    C = \alpha A * B + \beta C. We break this down as follows
+*                    C = \alpha B * A + \beta C. We break this down as follows
 *
 *                          |-------------|      |-------------|
-*                    C =   |C_{11} C_{12}| B =  |B_{11} 0     |
-*                          |C_{21} C_{22}|      |B_{21} B_{22}|
+*                    C =   |C_{11} C_{12}| A =  |A_{11} 0     |
+*                          |C_{21} C_{22}|      |A_{21} A_{22}|
 *                          |-------------|      |-------------|
 *
 *                          |-------------|
-*                    A =   |A_{11} A_{12}|
-*                          |A_{21} A_{22}|
+*                    B =   |B_{11} B_{12}|
+*                          |B_{21} B_{22}|
 *                          |-------------|
 *
 *                    Where
 *                    C_{11}\in\R^{\ell\times\ell}   C_{12}\in\R^{\ell\times n-\ell}
 *                    C_{21}\in\R^{m-\ell\times\ell} C_{22}\in\R^{m-\ell\times n-\ell}
 *
-*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times n-\ell}
-*                    B_{21}\in\R^{n-\ell\times\ell} B_{22}\in\R^{n-\ell\times n-\ell}
-*
 *                    A_{11}\in\R^{\ell\times\ell}   A_{12}\in\R^{\ell\times n-\ell}
-*                    A_{21}\in\R^{m-\ell\times\ell} A_{22}\in\R^{m-\ell\times n-\ell}
+*                    A_{21}\in\R^{n-\ell\times\ell} A_{22}\in\R^{n-\ell\times n-\ell}
+*
+*                    B_{11}\in\R^{\ell\times\ell}   B_{12}\in\R^{\ell\times n-\ell}
+*                    B_{21}\in\R^{m-\ell\times\ell} B_{22}\in\R^{m-\ell\times n-\ell}
 *
 *                    Which means that we get
-*                    C_{11} = \alpha A_{11} * B_{11} + \alpha A_{12} * B_{21} + \beta C_{11}
-*                    C_{12} = \alpha A_{12} * B_{22} + \beta C_{12}
-*                    C_{21} = \alpha A_{21} * B_{11} + \alpha A_{22} * B_{21} + \beta C_{21}
-*                    C_{22} = \alpha A_{22} * B_{22} + \beta C_{22}
+*                    C_{11} = \alpha B_{11} * A_{11} + \alpha B_{12} * A_{21} + \beta C_{11}
+*                    C_{12} = \alpha B_{12} * A_{22} + \beta C_{12}
+*                    C_{21} = \alpha B_{21} * A_{11} + \alpha B_{22} * A_{21} + \beta C_{21}
+*                    C_{22} = \alpha B_{22} * A_{22} + \beta C_{22}
 *
 *                    Computing C_{12} and C_{22} is just a recursive call to
 *                    this routine but we can break down computing
 *                    C_{11} and C_{21} as follows
 *
-*                    C_{11} = \alpha A_{12} * B_{21} + \beta C_{11} (GEMM call)
-*                    C_{11} = \alpha A_{11} * B_{11} + C_{11}(This routine)
+*                    C_{11} = \alpha B_{12} * A_{21} + \beta C_{11} (GEMM call)
+*                    C_{11} = \alpha B_{11} * A_{11} + C_{11}(This routine)
 *
-*                    C_{21} = \alpha A_{22} * B_{21} + \beta C_{21} (GEMM call)
-*                    C_{21} = \alpha A_{21} * B_{11} + C_{21} (This routine)
+*                    C_{21} = \alpha B_{22} * A_{21} + \beta C_{21} (GEMM call)
+*                    C_{21} = \alpha B_{21} * A_{11} + C_{21} (This routine)
 *
                      ! C_{11}
-                     CALL DGEMM(TRANSA, TRANSB, L, L, N-L, ALPHA,
-     $                     A(1, L+1), LDA, B(L+1, 1), LDB, BETA, C, LDC)
+                     CALL DGEMM(TRANSB, TRANSA, L, L, N-L, ALPHA,
+     $                     B(1, L+1), LDB, A(L+1, 1), LDA, BETA, C, LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     L, L, ALPHA, A, LDA, B, LDB, ONE, C, LDC)
                      ! C_{12}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     L, N-L, ALPHA, A(1, L+1), LDA, B(L+1, L+1),
+     $                     L, N-L, ALPHA, A(L+1, L+1), LDA, B(1, L+1),
      $                     LDB, BETA, C(1, L+1), LDC)
                      ! C_{21}
-                     CALL DGEMM(TRANSA, TRANSB, M-L, L, N-L, ALPHA,
-     $                     A(L+1, L+1), LDA, B(L+1, 1), LDB, BETA,
+                     CALL DGEMM(TRANSB, TRANSA, M-L, L, N-L, ALPHA,
+     $                     B(L+1, L+1), LDB, A(L+1, 1), LDA, BETA,
      $                     C(L+1, 1), LDC)
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
-     $                     M-L, L, ALPHA, A(L+1, 1), LDA, B, LDB, ONE,
+     $                     M-L, L, ALPHA, A, LDA, B(L+1, 1), LDB, ONE,
      $                     C(L+1, 1), LDC)
                      ! C_{22}
                      CALL DTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,

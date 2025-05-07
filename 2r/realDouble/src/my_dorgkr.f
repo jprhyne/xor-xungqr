@@ -8,14 +8,12 @@
 
          ! Scalar variables
          INTEGER           I, J
-
-         DOUBLE PRECISION, ALLOCATABLE :: V(:,:)
          ! External subroutines
          EXTERNAL DTRMM, DTVT, LUMM
 
          ! Parameters
-         DOUBLE PRECISION NEG_ONE
-         PARAMETER(NEG_ONE=-1.0D+0)
+         DOUBLE PRECISION NEG_ONE, ONE
+         PARAMETER(NEG_ONE=-1.0D+0, ONE=1.0D+0)
          
 
          CALL DTVT(N, Q, LDQ)
@@ -36,10 +34,10 @@
          ! Compute Q_1
          CALL LUMM(N, NEG_ONE, Q, LDQ)
 
-         ! Compute "I" - Q
+         ! Compute "I" + Q = I - V*T*V_1**T
          J = MIN(M,N)
          DO I = 1, J
-            Q(I,I) = Q(I,I) + 1.0D+0
+            Q(I,I) = Q(I,I) + ONE
          END DO
 
          ! Now, we should have Q that satisfies the conditions of org2r. IE Q
