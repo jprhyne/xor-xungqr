@@ -220,6 +220,8 @@
                T(1,1) = ALPHA*V(1,1)
             ELSE
                T(1,1) = ALPHA*T(1,1)*V(1,1)
+            END IF
+            RETURN
          ELSE IF(N.LE.0) THEN
             RETURN
          END IF
@@ -227,7 +229,7 @@
 *        Recursive case
 *
          TUPPER = LSAME(UPLO,'U')
-         TLEFT  = LSAME(SIDE,'L')
+         TLEFT  = LSAME(SIDE,'R')
          VTRANS = LSAME(TRANSV,'T').OR.LSAME(TRANSV,'C')
 
          K = N / 2
@@ -273,9 +275,9 @@
 *
 *                 T_{12} = \alpha T_{11}*V_{21}**T + T_{12}
 *
-                  CALL DTRMMOOP(SIDE, UPLO, 'No Transpose', TRANSV,
-     $                     DIAGT, K, N-K, ALPHA, T, LDT, V(K+1, 1), LDV,
-     $                     ONE, T(1, K+1), LDT)
+                  CALL DTRMMOOP('Left', UPLO, 'No Transpose',
+     $                     TRANSV, DIAGT, K, N-K, ALPHA, T, LDT,
+     $                     V(K+1, 1), LDV, ONE, T(1, K+1), LDT)
                ELSE
 *
 *                 We are computing T = T*V, which we break down as follows
@@ -310,9 +312,9 @@
 *
 *                 T_{12} = \alpha T_{11}*V_{21}**T + T_{12}
 *
-                  CALL DTRMMOOP(SIDE, UPLO, 'No Transpose', TRANSV,
-     $                     DIAGT, K, N-K, ALPHA, T, LDT, V(1, K+1), LDV,
-     $                     ONE, T(1, K+1), LDT)
+                  CALL DTRMMOOP('Left', UPLO, 'No Transpose',
+     $                     TRANSV, DIAGT, K, N-K, ALPHA, T, LDT,
+     $                     V(1, K+1), LDV, ONE, T(1, K+1), LDT)
                END IF
             ELSE
 *
@@ -350,11 +352,11 @@
                   CALL DTRMM('Left', 'Lower', TRANSV, DIAGV, K,
      $                     N-K, ALPHA, V, LDV, T(1, K+1), LDT)
 *
-*                 T_{12} = \alpha V_{21}**T*T_{11} + T_{12}
+*                 T_{12} = \alpha V_{21}**T*T_{22} + T_{12}
 *
-                  CALL DTRMMOOP(SIDE, UPLO, 'No Transpose', TRANSV,
-     $                     DIAGT, K, N-K, ALPHA, T(K+1, K+1), LDT,
-     $                     V(K+1, 1), LDV, ONE, T(1, K+1), LDT)
+                  CALL DTRMMOOP('Right', UPLO, 'No Transpose',
+     $                     TRANSV, DIAGT, K, N-K, ALPHA, T(K+1, K+1),
+     $                     LDT, V(K+1, 1), LDV, ONE, T(1, K+1), LDT)
                ELSE
 *
 *                 We are computing T = V*T, which we break down as follows
@@ -389,9 +391,9 @@
 *
 *                 T_{12} = \alpha V_{12}*T_{22} + T_{12} (DTRMMOOP)
 *
-                  CALL DTRMMOOP(SIDE, UPLO, 'No Transpose', TRANSV,
-     $                     DIAGT, K, N-K, ALPHA, T(K+1, K+1), LDT,
-     $                     V(1, K+1), LDV, ONE, T(1, K+1), LDT)
+                  CALL DTRMMOOP('Right', UPLO, 'No Transpose',
+     $                     TRANSV, DIAGT, K, N-K, ALPHA, T(K+1, K+1),
+     $                     LDT, V(1, K+1), LDV, ONE, T(1, K+1), LDT)
                END IF
             END IF
          ELSE
@@ -436,9 +438,9 @@
 *
 *                 T_{21} = \alpha T_{22}*V_{12}**T + T_{21}
 *
-                  CALL DTRMMOOP(SIDE, UPLO, 'No Transpose', TRANSV,
-     $                     DIAGT, N-K, K, ALPHA, T(K+1, K+1), LDT,
-     $                     V(1, K+1), LDV, ONE, T(K+1, 1), LDT)
+                  CALL DTRMMOOP('Left', UPLO, 'No Transpose',
+     $                     TRANSV, DIAGT, N-K, K, ALPHA, T(K+1, K+1),
+     $                     LDT, V(1, K+1), LDV, ONE, T(K+1, 1), LDT)
                ELSE
 *
 *                 We are computing T = T*V, which we break down as follows
@@ -473,9 +475,9 @@
 *
 *                 T_{21} = \alpha T_{22}*V_{12} + T_{21}
 *
-                  CALL DTRMMOOP(SIDE, UPLO, 'No Transpose', TRANSV,
-     $                     DIAGT, N-K, K, ALPHA, T(K+1, K+1), LDT,
-     $                     V(K+1, 1), LDV, ONE, T(K+1, 1), LDT)
+                  CALL DTRMMOOP('Left', UPLO, 'No Transpose',
+     $                     TRANSV, DIAGT, N-K, K, ALPHA, T(K+1, K+1),
+     $                     LDT, V(K+1, 1), LDV, ONE, T(K+1, 1), LDT)
                END IF
             ELSE
 *
@@ -515,9 +517,9 @@
 *
 *                 T_{21} = \alpha V_{12}**T*T_{11} + T_{21}
 *
-                  CALL DTRMMOOP(SIDE, UPLO, 'No Transpose', TRANSV,
-     $                     DIAGT, N-K, K, ALPHA, T, LDT, V(1, K+1), LDV,
-     $                     ONE, T(K+1, 1), LDT)
+                  CALL DTRMMOOP('Right', UPLO, 'No Transpose',
+     $                     TRANSV, DIAGT, N-K, K, ALPHA, T, LDT,
+     $                     V(1, K+1), LDV, ONE, T(K+1, 1), LDT)
                ELSE
 *
 *                 We are computing T = V*T, which we break down as follows
@@ -552,9 +554,9 @@
 *
 *                 T_{21} = \alpha V_{12}*T_{11} + T_{21}
 *
-                  CALL DTRMMOOP(SIDE, UPLO, 'No Transpose', TRANSV,
-     $                     DIAGT, N-K, K, ALPHA, T, LDT, V(K+1, 1), LDV,
-     $                     ONE, T(K+1, 1), LDT)
+                  CALL DTRMMOOP('Right', UPLO, 'No Transpose',
+     $                     TRANSV, DIAGT, N-K, K, ALPHA, T, LDT,
+     $                     V(K+1, 1), LDV, ONE, T(K+1, 1), LDT)
                END IF
             END IF
          END IF
