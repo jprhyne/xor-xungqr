@@ -25,7 +25,7 @@
 *>
 *> \verbatim
 *>
-*> DTRMMOOP performs one  of the matrix-matrix operatiions
+*> DTRMMOOP performs one of the matrix-matrix operations
 *>
 *>       C = \alpha op(A) * op(B) + \beta C
 *>                      or
@@ -122,7 +122,7 @@
 *>
 *> \param[in] A
 *> \verbatim
-*>          A is DOUBLE PRECISION array, dimension ( LDB, K ) where
+*>          A is DOUBLE PRECISION array, dimension ( LDA, K ) where
 *>           K is M when SIDE = 'L' and K is N when SIDE='R'
 *>           Before entry with UPLO = 'U' or 'u', the leading k-by-k
 *>           upper triangular part of the array A must contain the upper
@@ -147,7 +147,7 @@
 *>
 *> \param[in] B
 *> \verbatim
-*>           B is DOUBLE PRECISION array, dimension ( LDA, K ), where K is M
+*>           B is DOUBLE PRECISION array, dimension ( LDB, K ), where K is M
 *>           If SIDE='R' and TRANSA='N', or SIDE='L' and TRANSA='T' and N
 *>           otherwise. On entry, the leading k-by-k submatrix must contain
 *>           B.
@@ -156,7 +156,7 @@
 *> \param[in] LDB
 *> \verbatim
 *>          LDB is INTEGER
-*>           On entry, LDB specifies the first dimension of A as declared
+*>           On entry, LDB specifies the first dimension of B as declared
 *>           in the calling (sub) program.  When  SIDE = 'R' and TRANSB='N'
 *>           then LDB  must be at least  max( 1, m ), when SIDE = 'R'
 *>           and TRANSB = 'T' then LDB must be at least max( 1, n ).
@@ -172,7 +172,7 @@
 *>
 *> \param[in,out] C
 *> \verbatim
-*>          C is DOUBLE PRECISION array, dimension ( LDB, N )
+*>          C is DOUBLE PRECISION array, dimension ( LDC, N )
 *>           Before entry, the leading m-by-n part of the array C must
 *>           contain the matrix C, and on exit is overwritten by the
 *>           transformed matrix.
@@ -585,7 +585,7 @@
 *                    C_{21} = \alpha A_{12}**T * B_{11}**T + \alpha A_{22}**T * B_{12}**T + \beta C_{21}
 *                    C_{22} = \alpha A_{12}**T * B_{21}**T + \alpha A_{22}**T * B_{22}**T + \beta C_{22}
 *
-*                    Computing C_{11} and C_{12} is just a recursive call to
+*                    Computing C_{12} and C_{12} is just a recursive call to
 *                    this routine but we can break down computing
 *                    C_{21} and C_{22} as follows
 *
