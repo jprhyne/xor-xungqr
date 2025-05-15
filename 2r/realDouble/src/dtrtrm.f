@@ -25,7 +25,7 @@
 *>
 *> \verbatim
 *>
-*> DTRMMOOP performs one  of the matrix-matrix operatiions
+*> DTRTRM performs one  of the matrix-matrix operations
 *>
 *>       T = \alpha op(V) * T
 *>                      or
