@@ -5,10 +5,10 @@
          ! Matrix variables
          DOUBLE PRECISION  V(LDV,*), TAU(N)
          ! Local variables
-         INTEGER           I,J,K,INFO
+         INTEGER           I, INFO
          ! Parameters
-         DOUBLE PRECISION ONE, NEG_ONE, ZERO, HALF
-         PARAMETER(ONE=1.0D+0, HALF=0.5D+0, ZERO = 0.0)
+         DOUBLE PRECISION ONE
+         PARAMETER(ONE=1.0D+0)
          ! Implementation of the algorithm listed in the following paper
          ! https://www.cs.utexas.edu/users/flame/pubs/p169-joffrain.pdf
          ! Compute T = V^\top V
@@ -34,6 +34,7 @@
          ! Compute V = V_2**T * V_2 + V
          CALL DSYRK('Upper', 'Transpose', N, M-N, ONE, V(N+1,1), LDV,
      $               ONE, V, LDV)
+         ! Set the diagonal equal to TAU
          DO I = 1, N
             V(I,I) = TAU(I)
          END DO

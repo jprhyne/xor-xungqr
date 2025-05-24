@@ -6,27 +6,29 @@
 #include <math.h>
 int main(int argc, char *argv[]) {
     // integer variables
-    int info, m, n, i;
+    int n, i, j;
     // double variables
+    double alphas[3];
 
-    m = 30;
+    // Default values
     n = 20;
+    alphas[0] = 0;
+    alphas[1] = 1;
+    alphas[2] = (double) rand() / (double) (RAND_MAX) - 0.5e+00;
 
     for(i = 1; i < argc; ++i){
-        if( strcmp( *(argv + i), "-m") == 0) {
-            m  = atoi( *(argv + i + 1) );
-            i++;
-        }
         if( strcmp( *(argv + i), "-n") == 0) {
             n  = atoi( *(argv + i + 1) );
             i++;
         }
     }
 
-    printf("dgeqrf dlarft dorgkr: m = %4d, n = %4d\n", m, n);
-
-    // Call the test file
-    test_dorgkr_(&m, &n);
+    for (i = 0; i < 3; i++) {
+        for (j = 0; j < 3; j++){
+            printf("dtrmmoop: alpha=%lf\n", alphas[i]);
+            testdtrtrm_(&n, alphas+i);
+        }
+    }
 
     return 0;
 

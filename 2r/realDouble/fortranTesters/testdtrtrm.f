@@ -73,6 +73,10 @@
                               END IF
                            END DO
                         END DO
+                        ! Check to make sure only the part of T we are
+                        ! considering is touched
+                        !IF (UPLOS(J).EQ.'U') THEN
+                           ! Check that we did not touch the lower part
                         IF (TERMINATE) THEN
                            GOTO 10 ! Free our memory then exit!
                         END IF
@@ -126,6 +130,7 @@
                               NORM_ERR = NORM_ERR + TMP*TMP
                            END DO
                         END DO
+                        ! Don't divide by 0
                         IF (NORM_WORK.NE.ZERO) THEN
                            NORM_ERR = NORM_ERR/NORM_WORK
                         END IF

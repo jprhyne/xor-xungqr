@@ -23,10 +23,10 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    printf("dgeqrf dlarft dorgkr: m = %4d, n = %4d\n", m, n);
+    printf("dgeqrf dlarft dorgkl: m = %4d, n = %4d\n", m, n);
 
     // Call the test file
-    test_dorgkr_(&m, &n);
+    test_dorgkl_(&m, &n);
 
     return 0;
 

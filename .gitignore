@@ -77,3 +77,6 @@ tex/*thm
 
 # Exclude temp file
 ParseTimeFileW.ipynb
+*pdf
+*md
+*png

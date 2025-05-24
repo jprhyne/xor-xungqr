@@ -224,8 +224,8 @@
 *
 *        Then, consider the product:
 *
-*        (I - V_1'*T_{1,1}*V_1)*(I - V_2'*T_{2,2}*V_2)
-*        = I - V_1'*T_{1,1}*V_1 - V_2'*T_{2,2}*V_2 + V_1'*T_{1,1}*V_1*V_2'*T_{2,2}*V_2
+*        (I - V_1'*T_{1,1}'*V_1)*(I - V_2'*T_{2,2}'*V_2)
+*        = I - V_1'*T_{1,1}'*V_1 - V_2'*T_{2,2}'*V_2 + V_1'*T_{1,1}'*V_1*V_2'*T_{2,2}'*V_2
 *
 *        Define T_{1,2} = -T_{1,1}*V_1*V_2'*T_{2,2}
 *
@@ -236,7 +236,7 @@
 *            |---|
 *
 *        So, our product is equivalent to the matrix product
-*        I - V'*T*V
+*        I - V'*T'*V
 *        This means, we can compute T_{1,1} and T_{2,2}, then use this information
 *        to compute T_{1,2}
 *
@@ -501,8 +501,8 @@
 *
 *        Then, consider the product:
 *
-*        (I - V_2'*T_{2,2}*V_2)*(I - V_1'*T_{1,1}*V_1)
-*        = I - V_2'*T_{2,2}*V_2 - V_1'*T_{1,1}*V_1 + V_2'*T_{2,2}*V_2*V_1'*T_{1,1}*V_1
+*        (I - V_2'*T_{2,2}'*V_2)*(I - V_1'*T_{1,1}'*V_1)
+*        = I - V_2'*T_{2,2}'*V_2 - V_1'*T_{1,1}'*V_1 + V_2'*T_{2,2}'*V_2*V_1'*T_{1,1}'*V_1
 *
 *        Define T_{2,1} = -T_{2,2}*V_2*V_1'*T_{1,1}
 *
@@ -513,7 +513,7 @@
 *            |---|
 *
 *        So, our product is equivalent to the matrix product
-*        I - V'*T*V
+*        I - V'*T'*V
 *        This means, we can compute T_{1,1} and T_{2,2}, then use this information
 *        to compute T_{2,1}
 *
@@ -588,7 +588,7 @@
 *
 *        T_{1,1}\in\R^{k-l, k-l} non-unit upper triangular
 *        T_{2,2}\in\R^{l, l}     non-unit upper triangular
-*        T_{1,2}\in\R^{l, k-l}   rectangular
+*        T_{1,2}\in\R^{k-l, l}   rectangular
 *
 *        Where l = floor(k/2)
 *

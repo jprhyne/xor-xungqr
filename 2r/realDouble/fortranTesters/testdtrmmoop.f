@@ -95,18 +95,18 @@
                            GOTO 10 ! Make sure we free our memory
                         END IF
                         ! Determine if we did the correct operations
-                        IF (TRANSAS(J).EQ.'N') THEN
-                           CALL DLACPY('ALL', MAXMN, MAXMN, As, MAXMN,
+                        IF (TRANSBS(K).EQ.'N') THEN
+                           CALL DLACPY('ALL', MAXMN, MAXMN, Bs, MAXMN,
      $                        WORK, MAXMN)
                         ELSE
                            DO II = 1, MAXMN
                               DO IJ = 1, MAXMN
-                                 WORK(II,IJ) = As(IJ,II)
+                                 WORK(II,IJ) = Bs(IJ,II)
                               END DO
                            END DO
                         END IF
-                        CALL DTRMM(SIDES(I), UPLOS(O), TRANSBS(K),
-     $                     DIAGS(L), M, N, ALPHA, B, MAXMN, WORK, MAXMN)
+                        CALL DTRMM(SIDES(I), UPLOS(O), TRANSAS(J),
+     $                     DIAGS(L), M, N, ALPHA, A, MAXMN, WORK, MAXMN)
                         ! Now add \beta C to WORK
                         DO II = 1, M
                            DO IJ = 1, N
