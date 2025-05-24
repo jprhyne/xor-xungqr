@@ -1,4 +1,4 @@
-      SUBROUTINE TEST_DORGKR(M, N)
+      SUBROUTINE TEST_DORGRK(M, N)
 *
 *        Arguments
 *
@@ -25,7 +25,7 @@
 *        External Subroutines
 *
          EXTERNAL          DGEMM, DGEQRF, DLACPY, DLARFT, DLASET,
-     $                     DORGKR
+     $                     DORGRK
 *
 *        External Functions
 *
@@ -42,14 +42,14 @@
 *
          ALLOCATE(A(M,N))
          ALLOCATE(As(M,N))
-         ALLOCATE(R(N,N))
-         ALLOCATE(TAU(N))
+         ALLOCATE(R(M,M))
+         ALLOCATE(TAU(M))
          ALLOCATE(WORK(1))
-         ALLOCATE(WORKMAT(N,N))
+         ALLOCATE(WORKMAT(M,M))
 *
 *        Set R to be the 0 matrix
 *
-         CALL DLASET('All', N, N, ZERO, ZERO, R, N)
+         CALL DLASET('All', M, M, ZERO, ZERO, R, M)
 *
 *        Generate our data matrix A randomly
 *
@@ -61,48 +61,49 @@
 *
 *        Determine the size of work needed
 *
-         CALL DGEQRF(M, N, A, M, TAU, WORK, INEG_ONE, INFO)
+         CALL DGERQF(M, N, A, M, TAU, WORK, INEG_ONE, INFO)
          LWORK = WORK(1)
          DEALLOCATE(WORK)
          ALLOCATE(WORK(LWORK))
 *
 *        Factorize A
 *
-         CALL DGEQRF(M, N, A, M, TAU, WORK, LWORK, INFO)
+         CALL DGERQF(M, N, A, M, TAU, WORK, LWORK, INFO)
 *
 *        Copy the upper triangular part of A (R) into R
 *
-         CALL DLACPY('Upper', M, N, A, M, R, N)
+         CALL DLACPY('Upper', M, M, A(1, N-M+1), M, R, M)
 *
 *        Compute the T matrix associated with V and Tau
 *
-         CALL DLARFT('Forward', 'Columnwise', M, N, A, M, TAU, A, M)
+         CALL MY_DLARFT_REC('Transpose', 'Rowwise', N, M, A, M, TAU,
+     $            A(1, N-M+1), M)
 *
 *        Compute Q using our routine
 *
-         CALL DORGKR(M, N, A, M)
+         CALL DORGRK(M, N, A, M)
 *
 *        Determine if Q is orthogonal
 *
-*        First, we must set WORKMAT to be I_n
+*        First, we must set WORKMAT to be I_m
 *
-         CALL DLASET('All', N, N, ZERO, ONE, WORKMAT, N)
+         CALL DLASET('All', M, M, ZERO, ONE, WORKMAT, M)
 *
-*        Next, we compute Q**T*Q - I
+*        Next, we compute Q*Q' - I
 *
-         CALL DGEMM('Transpose', 'No Transpose', N, N, M, ONE, A,
-     $         M, A, M, DNEG_ONE, WORKMAT, N)
+         CALL DGEMM('No Transpose', 'Transpose', M, M, N, ONE, A,
+     $         M, A, M, DNEG_ONE, WORKMAT, M)
 *
 *        Compute ||Q**T*Q - I_n||_F
 *
          NORM_ORTH = ZERO
-         DO I = 1, N
-            DO J = 1, N
+         DO I = 1, M
+            DO J = 1, M
                NORM_ORTH = NORM_ORTH + WORKMAT(I,J)*WORKMAT(I,J)
             END DO
          END DO
 *
-*        Compute ||Q**T*Q - I_n||_F / ||I_n||_F
+*        Compute ||Q*Q' - I_n||_F / ||I_n||_F
 *
          NORM_ORTH = SQRT(NORM_ORTH) / SQRT(DBLE(N))
 *
@@ -118,12 +119,12 @@
          END DO
          NORMA = SQRT(NORMA)
 *
-*        Compute As = Q*R - As
+*        Compute As = R*Q - As
 *
-         CALL DGEMM('No Transpose', 'No Transpose', M, N, N, ONE,
-     $         A, M, R, N, DNEG_ONE, As, M)
+         CALL DGEMM('No Transpose', 'No Transpose', M, N, M, ONE,
+     $         R, M, A, M, DNEG_ONE, As, M)
 *
-*        Compute ||Q*R - As||_F
+*        Compute ||R*Q - As||_F
 *
          NORM_REPRES = ZERO
          DO I = 1, M
@@ -132,7 +133,7 @@
             END DO
          END DO
 *
-*        Compute ||Q*R - As||_F / ||As||_F
+*        Compute ||R*Q - As||_F / ||As||_F
 *
          NORM_REPRES = SQRT(NORM_REPRES) / NORMA
 *

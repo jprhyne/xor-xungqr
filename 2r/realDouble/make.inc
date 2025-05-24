@@ -33,4 +33,4 @@ FFLAGS=-fimplicit-none -g -O3
 #OPTBLAS=-m64  -I"/opt/intel/oneapi/mkl/2023.2.0/include"  -L$(MKLROOT)/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl
 #OPTBLAS=-L$(AOCLROOT)/lib -lblis -lm -lpthread
 #OPTBLAS=$(AOCLROOT)/lib/libflame.so $(AOCLROOT)/lib/libblis.so
-OPTBLAS=$(CUDENVERPATH)/gitRepos/libflame/lib/x86_64-unknown-linux-gnu/libflame.a $(CUDENVERPATH)/gitRepos/blis/lib/amd64/libblis.a
+OPTBLAS=$(CUDENVERPATH)/gitRepos/libflame/lib/x86_64-unknown-linux-gnu/libflame.a $(CUDENVERPATH)/gitRepos/blis/lib/amdzen/libblis.a

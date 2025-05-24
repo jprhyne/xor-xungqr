@@ -1,795 +1,157 @@
-      SUBROUTINE TESTDTRMMOOP(M, N, LDA, LDT)
+      SUBROUTINE TESTDTRMMOOP(M, N, ALPHA, BETA)
+         ! Arguments
+         INTEGER  M, N
+         DOUBLE PRECISION  ALPHA, BETA
+
+         ! Local variables
+         INTEGER     I,J,K,L,MAXMN, II, IJ, O
+         LOGICAL   TERMINATE
+         DOUBLE PRECISION  NORM_F, TMP
+         ! Local arrays
+         DOUBLE PRECISION, ALLOCATABLE :: A(:,:), B(:,:), C(:,:),
+     $            As(:,:), Bs(:,:), Cs(:,:), WORK(:,:)
+         CHARACTER :: SIDES(2), TRANSAS(3), TRANSBS(3), DIAGS(2),
+     $            UPLOS(2)
+         ! External Subroutines
+         EXTERNAL DTRMMOOP, DLACPY
+         ! External Functions
+         ! Intrinsic functions
+         INTRINSIC MAX
          ! Parameters
-         INTEGER M,N,LDA,LDT
+         DOUBLE PRECISION ZERO
+         PARAMETER(ZERO=0.0D+0)
+         ! Beginning of executable statements
+         TERMINATE = .FALSE.
 
-         ! Scalar variables
-         INTEGER           I, J, K, INFO
-         DOUBLE PRECISION  NORM_F, TMP, ALPHA
+         SIDES(1) = 'L'
+         SIDES(2) = 'R'
 
-         ! Matrix variables
-         DOUBLE PRECISION, ALLOCATABLE :: A(:,:), T(:,:), C(:,:)
-         DOUBLE PRECISION, ALLOCATABLE :: As(:,:), ATrmm(:,:), Cs(:,:)
-         DOUBLE PRECISION, ALLOCATABLE :: Ts(:,:), B(:,:), Bs(:,:)
+         TRANSAS(1) = 'N'
+         TRANSAS(2) = 'T'
+         TRANSAS(3) = 'C'
 
-         ! External SUBROUTINES
-         EXTERNAL DLACPY, DTRMMOOP, DTRMM
+         TRANSBS(1) = 'N'
+         TRANSBS(2) = 'T'
+         TRANSBS(3) = 'C'
 
-         ! Parameters
-         DOUBLE PRECISION ONE, ZERO, NEG_ONE
-         PARAMETER(ONE=1.0D+0, ZERO=0.0D+0, NEG_ONE=-1.0D+0)
+         DIAGS(1) = 'N'
+         DIAGS(2) = 'U'
 
+         UPLOS(1) = 'U'
+         UPLOS(2) = 'L'
 
-         ! Allocate our matrices to be the proper sizes
-         ! A,As are n by m, T is m by m, C,Cs are m by n
-         ! ATrmm is m by n and ATrmm = A**T
-         ALLOCATE(A(LDA,M))
-         ALLOCATE(As(LDA,M))
-         ALLOCATE(ATrmm(M,N))
-         ALLOCATE(T(LDT,M))
-         ALLOCATE(Ts(LDT,M))
-         ALLOCATE(C(M,N))
-         ALLOCATE(Cs(M,N))
-         ! Fill A, T, C with random elements
-         CALL RANDOM_NUMBER(A)
-         CALL RANDOM_NUMBER(T)
-         CALL RANDOM_NUMBER(C)
-         WRITE(*,*) "SIDE = 'L'"
+         MAXMN = M
+         IF (N.GT.M) MAXMN = N
 
-         ! Copy A into As
-         CALL DLACPY('All', N, M, A, LDA, As, LDA)
+         ! Allocate our memory
+         ALLOCATE(A(MAXMN,MAXMN))
+         ALLOCATE(As(MAXMN,MAXMN))
+         ALLOCATE(B(MAXMN,MAXMN))
+         ALLOCATE(Bs(MAXMN,MAXMN))
+         ALLOCATE(C(MAXMN,MAXMN))
+         ALLOCATE(Cs(MAXMN,MAXMN))
+         ALLOCATE(WORK(MAXMN,MAXMN))
 
-         ! Copy C into Cs
-         CALL DLACPY('All', M, N, C, M, Cs, M)
+         DO I = 1, 2 ! For each side
+            DO J = 1, 3 ! For each transposing of A
+               DO K = 1, 3 ! For each transposing of B
+                  DO L = 1, 2 ! For each of B being unit or non-unit
+                     DO O = 1, 2 ! For each of B being upper or lower
+                        ! Fill our matrices up with random numbers
+                        CALL RANDOM_NUMBER(A)
+                        CALL RANDOM_NUMBER(B)
+                        CALL RANDOM_NUMBER(C)
+                        CALL RANDOM_NUMBER(WORK)
 
-         ! Copy T into Ts
-         CALL DLACPY('All', M, M, T, LDT, Ts, LDT)
+                        ! Store A,B,C in As,Bs,Cs respectively
+                        CALL DLACPY('All', MAXMN, MAXMN, A, MAXMN, As,
+     $                     MAXMN)
+                        CALL DLACPY('All', MAXMN, MAXMN, B, MAXMN, Bs,
+     $                     MAXMN)
+                        CALL DLACPY('All', MAXMN, MAXMN, C, MAXMN, Cs,
+     $                     MAXMN)
 
-         ! Copy A**T into ATrmm for use with DTRMM
-         DO I = 1, M
-            DO J = 1, N
-               ATrmm(I,J) = A(J,I)
+                        ! Compute our desired operation
+                        CALL DTRMMOOP(SIDES(I), UPLOS(O), TRANSAS(J),
+     $                     TRANSBS(K), DIAGS(L), M, N, ALPHA, A, MAXMN,
+     $                     B, MAXMN, BETA, C, MAXMN)
+
+                        ! Make sure that A and B were not modified
+                        DO II = 1, MAXMN
+                           DO IJ = 1, MAXMN
+                              IF (A(II,IJ).NE.As(II,IJ)) THEN
+                                 WRITE(*,*) "A was modified at index",
+     $                              "(",II,",",IJ,")"
+                                 TERMINATE = .TRUE.
+                              END IF
+                              IF (B(II,IJ).NE.Bs(II,IJ)) THEN
+                                 WRITE(*,*) "B was modified at index",
+     $                              "(",II,",",IJ,")"
+                                 TERMINATE = .TRUE.
+                              END IF
+                           END DO
+                        END DO
+                        IF (TERMINATE) THEN
+                           GOTO 10 ! Make sure we free our memory
+                        END IF
+                        ! Determine if we did the correct operations
+                        IF (TRANSBS(K).EQ.'N') THEN
+                           CALL DLACPY('ALL', MAXMN, MAXMN, Bs, MAXMN,
+     $                        WORK, MAXMN)
+                        ELSE
+                           DO II = 1, MAXMN
+                              DO IJ = 1, MAXMN
+                                 WORK(II,IJ) = Bs(IJ,II)
+                              END DO
+                           END DO
+                        END IF
+                        CALL DTRMM(SIDES(I), UPLOS(O), TRANSAS(J),
+     $                     DIAGS(L), M, N, ALPHA, A, MAXMN, WORK, MAXMN)
+                        ! Now add \beta C to WORK
+                        DO II = 1, M
+                           DO IJ = 1, N
+                              WORK(II,IJ) = WORK(II,IJ) + BETA*Cs(II,IJ)
+                           END DO
+                        END DO
+                        ! Print out the error to console for visual inspection
+                        NORM_F = 0.0
+                        DO II = 1, M
+                           DO IJ = 1, N
+                              TMP = WORK(II,IJ) - C(II,IJ)
+                              NORM_F = NORM_F + TMP * TMP
+                           END DO
+                        END DO
+                        NORM_F = SQRT(NORM_F)
+                        TMP = 0.0
+                        DO II = 1, M
+                           DO IJ = 1, N
+                              TMP = TMP + WORK(II,IJ) * WORK(II,IJ)
+                           END DO
+                        END DO
+                        TMP = SQRT(TMP)
+                        IF (TMP.NE.ZERO) THEN
+                           NORM_F = NORM_F / TMP
+                        END IF
+                        ! Print out the flags used to allow for repeatability
+                        WRITE(*,*) "Parameters to DTRMMOOP"
+                        WRITE(*,*) "Side=",SIDES(I)," UPLO=",UPLOS(O),
+     $                     " TRANSA=",TRANSAS(J)," TRANSB=", TRANSBS(K),
+     $                     " DIAG=", DIAGS(L)
+                        ! Print the error out
+                        WRITE(*,*) "Forward error: ", NORM_F
+                     END DO
+                  END DO
+               END DO
             END DO
          END DO
 
-         CALL DTRMMOOP('L', 'N', M, N, A, LDA, T, LDT, ONE, C, M, INFO)
-
-         ! Check that A was not touched
-         DO I = 1, N
-            DO J = 1, M
-               IF (A(I,J).NE.As(I,J)) THEN
-                  WRITE(*,*) "Inconsistency in A at index i=", I, 
-     $                       " j=", J
-               END IF
-            END DO
-         END DO
-
-         ! Check that T was not touched
-         DO I = 1, M
-            DO J = 1, M
-               IF (T(I,J).NE.Ts(I,J)) THEN
-                  WRITE(*,*) "Inconsistency in T at index i=", I, 
-     $                       " j=", J
-               END IF
-            END DO
-         END DO
-         CALL DTRMM('Left', 'Upper', 'No transpose', 'Non-unit', M, N,
-     $               ONE, T, LDT, ATrmm, M)
-
-         ! Compute ATrmm += Cs
-         DO I = 1,M
-            DO J = 1,N
-               ATrmm(I,J) = ATrmm(I,J) + Cs(I,J)
-            END DO
-         END DO
-
-         ! Compute ||ATrmm - C||_F
-         NORM_F = 0
-         DO I = 1, M
-            DO J = 1, N
-               TMP = ATrmm(I,J) - C(I,J)
-               NORM_F = NORM_F + TMP * TMP
-            END DO
-         END DO
-
-         WRITE(*,*) "||ATrmm - C||_F = ", NORM_F
-
-         ! Now, we will try testing when we pass in matrices that start in the
-         ! same place. The way we do this is that we are going to construct a
-         ! matrix B as a k by k matrix where k=max(m,n). Then the leading m by m
-         ! principle submatrix will be T, and the leading n by m principle
-         ! submatrix will be A. This will ensure that fortran doesn't throw a
-         ! fit when we call things this way
-         K = MAX(M,N)
-         ALLOCATE(B(K,K))
-         ALLOCATE(Bs(K,K))
-         CALL RANDOM_NUMBER(B)
-         ! regenerate C
-         CALL RANDOM_NUMBER(C)
-         ! Copy A into As
-         CALL DLACPY('All', N, M, B, K, As, LDA)
-
-         ! Copy B into Bs
-         CALL DLACPY('All', K, K , B, K, Bs, K)
-
-         ! Copy C into Cs
-         CALL DLACPY('All', M, N, C, M, Cs, M)
-
-         ! Copy T into Ts
-         CALL DLACPY('All', M, M, B, LDT, Ts, LDT)
-
-         ! Copy A**T into ATrmm for use with DTRMM
-         DO I = 1, M
-            DO J = 1, N
-               ATrmm(I,J) = As(J,I)
-            END DO
-         END DO
-
-         ! Call our function
-         CALL DTRMMOOP('l', 'N', M, N, B, K, B, K, ONE, C, M, INFO)
-
-         ! Check that all of B was not touched
-         DO I = 1, K
-            DO J = 1, K
-               IF (B(I,J).NE.Bs(I,J)) THEN
-                  WRITE(*,*) "Inconsistency in B at index i=", I, 
-     $                       " j=", J
-               END IF
-            END DO
-         END DO
-         CALL DTRMM('Left', 'Upper', 'No transpose', 'Non-unit', M, N,
-     $               ONE, Ts, LDT, ATrmm, M)
-
-         ! Compute ATrmm += Cs
-         DO I = 1,M
-            DO J = 1,N
-               ATrmm(I,J) = ATrmm(I,J) + Cs(I,J)
-            END DO
-         END DO
-
-         ! Compute ||ATrmm - C||_F
-         NORM_F = 0
-         DO I = 1, M
-            DO J = 1, N
-               TMP = ATrmm(I,J) - C(I,J)
-               NORM_F = NORM_F + TMP * TMP
-            END DO
-         END DO
-
-         WRITE(*,*) "||ATrmm - C||_F = ", NORM_F
-
-         ! Test with ALPHA = 0
-         CALL RANDOM_NUMBER(A)
-         CALL RANDOM_NUMBER(T)
-         CALL RANDOM_NUMBER(C)
-
-         ! Copy A into As
-         CALL DLACPY('All', N, M, A, LDA, As, LDA)
-
-         ! Copy C into Cs
-         CALL DLACPY('All', M, N, C, M, Cs, M)
-
-         ! Copy T into Ts
-         CALL DLACPY('All', M, M, T, LDT, Ts, LDT)
-
-         ! Copy A**T into ATrmm for use with DTRMM
-         DO I = 1, M
-            DO J = 1, N
-               ATrmm(I,J) = A(J,I)
-            END DO
-         END DO
-
-         CALL DTRMMOOP('L', 'N', M, N, A, LDA, T, LDT, ZERO, C, M, INFO)
-
-         ! Check that A was not touched
-         DO I = 1, N
-            DO J = 1, M
-               IF (A(I,J).NE.As(I,J)) THEN
-                  WRITE(*,*) "Inconsistency in A at index i=", I, 
-     $                       " j=", J
-               END IF
-            END DO
-         END DO
-
-         ! Check that T was not touched
-         DO I = 1, M
-            DO J = 1, M
-               IF (T(I,J).NE.Ts(I,J)) THEN
-                  WRITE(*,*) "Inconsistency in T at index i=", I, 
-     $                       " j=", J
-               END IF
-            END DO
-         END DO
-         CALL DTRMM('Left', 'Upper', 'No transpose', 'Non-unit', M, N,
-     $               ONE, T, LDT, ATrmm, M)
-
-         ! Compute ||ATrmm - C||_F
-         NORM_F = 0
-         DO I = 1, M
-            DO J = 1, N
-               TMP = ATrmm(I,J) - C(I,J)
-               NORM_F = NORM_F + TMP * TMP
-            END DO
-         END DO
-
-         WRITE(*,*) "||ATrmm - C||_F = ", NORM_F
-
-         ! Test with ALPHA = 7
-         ALPHA = 7
-         CALL RANDOM_NUMBER(A)
-         CALL RANDOM_NUMBER(T)
-         CALL RANDOM_NUMBER(C)
-
-         ! Copy A into As
-         CALL DLACPY('All', N, M, A, LDA, As, LDA)
-
-         ! Copy C into Cs
-         CALL DLACPY('All', M, N, C, M, Cs, M)
-
-         ! Copy T into Ts
-         CALL DLACPY('All', M, M, T, LDT, Ts, LDT)
-
-         ! Copy A**T into ATrmm for use with DTRMM
-         DO I = 1, M
-            DO J = 1, N
-               ATrmm(I,J) = A(J,I)
-            END DO
-         END DO
-
-         CALL DTRMMOOP('L', 'N', M, N, A, LDA, T, LDT, ALPHA, C, M, 
-     $                  INFO)
-
-         ! Check that A was not touched
-         DO I = 1, N
-            DO J = 1, M
-               IF (A(I,J).NE.As(I,J)) THEN
-                  WRITE(*,*) "Inconsistency in A at index i=", I, 
-     $                       " j=", J
-               END IF
-            END DO
-         END DO
-
-         ! Check that T was not touched
-         DO I = 1, M
-            DO J = 1, M
-               IF (T(I,J).NE.Ts(I,J)) THEN
-                  WRITE(*,*) "Inconsistency in T at index i=", I, 
-     $                       " j=", J
-               END IF
-            END DO
-         END DO
-         CALL DTRMM('Left', 'Upper', 'No transpose', 'Non-unit', M, N,
-     $               ONE, T, LDT, ATrmm, M)
-
-         ! Compute ATrmm += Cs
-         DO I = 1,M
-            DO J = 1,N
-               ATrmm(I,J) = ATrmm(I,J) + ALPHA * Cs(I,J)
-            END DO
-         END DO
-
-         ! Compute ||ATrmm - C||_F
-         NORM_F = 0
-         DO I = 1, M
-            DO J = 1, N
-               TMP = ATrmm(I,J) - C(I,J)
-               NORM_F = NORM_F + TMP * TMP
-            END DO
-         END DO
-
-         WRITE(*,*) "||ATrmm - C||_F = ", NORM_F
-         DEALLOCATE(T)
-         DEALLOCATE(Ts)
-         ALLOCATE(T(LDT,N))
-         ALLOCATE(Ts(LDT,N))
-
-         WRITE(*,*) "SIDE = 'R', DIAG = 'N'"
-         ! Fill A, T, C with random elements
-         CALL RANDOM_NUMBER(A)
-         CALL RANDOM_NUMBER(T)
-         CALL RANDOM_NUMBER(C)
- 
-         ! Copy A into As
-         CALL DLACPY('All', N, M, A, LDA, As, LDA)
- 
-         ! Copy C into Cs
-         CALL DLACPY('All', M, N, C, M, Cs, M)
- 
-         ! Copy T into Ts
-         CALL DLACPY('All', N, N, T, LDT, Ts, LDT)
- 
-         ! Copy A**T into ATrmm for use with DTRMM
-         DO I = 1, M
-            DO J = 1, N
-               ATrmm(I,J) = A(J,I)
-            END DO
-         END DO
- 
-         CALL DTRMMOOP('R', 'N', M, N, A, LDA, T, LDT, ONE, C, M, INFO)
- 
-         ! Check that A was not touched
-         DO I = 1, N
-            DO J = 1, M
-               IF (A(I,J).NE.As(I,J)) THEN
-                  WRITE(*,*) "Inconsistency in A at index i=", I, 
-     $                       " j=", J
-               END IF
-            END DO
-         END DO
- 
-         ! Check that T was not touched
-         DO I = 1, N
-            DO J = 1, N
-               IF (T(I,J).NE.Ts(I,J)) THEN
-                  WRITE(*,*) "Inconsistency in T at index i=", I, 
-     $                       " j=", J
-               END IF
-            END DO
-         END DO
-         CALL DTRMM('Right', 'Lower', 'No transpose', 'Non-unit', M, N,
-     $               ONE, T, LDT, ATrmm, M)
- 
-         ! Compute ATrmm += Cs
-         DO I = 1,M
-            DO J = 1,N
-               ATrmm(I,J) = ATrmm(I,J) + Cs(I,J)
-            END DO
-         END DO
- 
-         ! Compute ||ATrmm - C||_F
-         NORM_F = 0
-         DO I = 1, M
-            DO J = 1, N
-               TMP = ATrmm(I,J) - C(I,J)
-               NORM_F = NORM_F + TMP * TMP
-            END DO
-         END DO
- 
-         WRITE(*,*) "ALPHA = 1: ||ATrmm - C||_F = ", NORM_F
- 
-         ! Now, we will try testing when we pass in matrices that start in the
-         ! same place. The way we do this is that we are going to construct a
-         ! matrix B as a k by k matrix where k=max(m,n). Then the leading n by n
-         ! principle submatrix will be T, and the leading n by m principle
-         ! submatrix will be A. This will ensure that fortran doesn't throw a
-         ! fit when we call things this way
-         DEALLOCATE(B)
-         DEALLOCATE(Bs)
-         ALLOCATE(B(K,K))
-         ALLOCATE(Bs(K,K))
- 
-         CALL RANDOM_NUMBER(B)
-         ! regenerate C
-         CALL RANDOM_NUMBER(C)
-         ! Copy A into As
-         CALL DLACPY('All', N, M, B, K, As, LDA)
- 
-         ! Copy B into Bs
-         CALL DLACPY('All', K, K , B, K, Bs, K)
- 
-         ! Copy C into Cs
-         CALL DLACPY('All', M, N, C, M, Cs, M)
- 
-         ! Copy T into Ts
-         CALL DLACPY('All', N, N, B, LDT, Ts, LDT)
- 
-         ! Copy A**T into ATrmm for use with DTRMM
-         DO I = 1, M
-            DO J = 1, N
-               ATrmm(I,J) = As(J,I)
-            END DO
-         END DO
- 
-         ! Call our function
-         CALL DTRMMOOP('r', 'N', M, N, B, K, B, K, ONE, C, M, INFO)
- 
-         ! Check that all of B was not touched
-         DO I = 1, K
-            DO J = 1, K
-               IF (B(I,J).NE.Bs(I,J)) THEN
-                  WRITE(*,*) "Inconsistency in B at index i=", I, 
-     $                       " j=", J
-               END IF
-            END DO
-         END DO
-         CALL DTRMM('Right', 'Lower', 'No transpose', 'Non-unit', M, N,
-     $               ONE, Ts, LDT, ATrmm, M)
- 
-         ! Compute ATrmm += Cs
-         DO I = 1,M
-            DO J = 1,N
-               ATrmm(I,J) = ATrmm(I,J) + Cs(I,J)
-            END DO
-         END DO
- 
-         ! Compute ||ATrmm - C||_F
-         NORM_F = 0
-         DO I = 1, M
-            DO J = 1, N
-               TMP = ATrmm(I,J) - C(I,J)
-               NORM_F = NORM_F + TMP * TMP
-            END DO
-         END DO
- 
-         WRITE(*,*) "ALPHA = 1: ||ATrmm - C||_F = ", NORM_F
- 
-         ! Test with ALPHA = 0
-         CALL RANDOM_NUMBER(A)
-         CALL RANDOM_NUMBER(T)
-         CALL RANDOM_NUMBER(C)
- 
-         ! Copy A into As
-         CALL DLACPY('All', N, M, A, LDA, As, LDA)
- 
-         ! Copy C into Cs
-         CALL DLACPY('All', M, N, C, M, Cs, M)
- 
-         ! Copy T into Ts
-         CALL DLACPY('All', N, N, T, LDT, Ts, LDT)
- 
-         ! Copy A**T into ATrmm for use with DTRMM
-         DO I = 1, M
-            DO J = 1, N
-               ATrmm(I,J) = A(J,I)
-            END DO
-         END DO
- 
-         CALL DTRMMOOP('R', 'N', M, N, A, LDA, T, LDT, ZERO, C, M, INFO)
- 
-         ! Check that A was not touched
-         DO I = 1, N
-            DO J = 1, M
-               IF (A(I,J).NE.As(I,J)) THEN
-                  WRITE(*,*) "Inconsistency in A at index i=", I, 
-     $                       " j=", J
-               END IF
-            END DO
-         END DO
- 
-         ! Check that T was not touched
-         DO I = 1, N
-            DO J = 1, N
-               IF (T(I,J).NE.Ts(I,J)) THEN
-                  WRITE(*,*) "Inconsistency in T at index i=", I, 
-     $                       " j=", J
-               END IF
-            END DO
-         END DO
-         CALL DTRMM('Right', 'Lower', 'No transpose', 'Non-unit', M, N,
-     $               ONE, T, LDT, ATrmm, M)
- 
-         ! Compute ||ATrmm - C||_F
-         NORM_F = 0
-         DO I = 1, M
-            DO J = 1, N
-               TMP = ATrmm(I,J) - C(I,J)
-               NORM_F = NORM_F + TMP * TMP
-            END DO
-         END DO
- 
-         WRITE(*,*) "ALPHA = 0: ||ATrmm - C||_F = ", NORM_F
- 
-         ! Test with ALPHA = 7
-         ALPHA = 7
-         CALL RANDOM_NUMBER(A)
-         CALL RANDOM_NUMBER(T)
-         CALL RANDOM_NUMBER(C)
- 
-         ! Copy A into As
-         CALL DLACPY('All', N, M, A, LDA, As, LDA)
- 
-         ! Copy C into Cs
-         CALL DLACPY('All', M, N, C, M, Cs, M)
- 
-         ! Copy T into Ts
-         CALL DLACPY('All', N, N, T, LDT, Ts, LDT)
- 
-         ! Copy A**T into ATrmm for use with DTRMM
-         DO I = 1, M
-            DO J = 1, N
-               ATrmm(I,J) = A(J,I)
-            END DO
-         END DO
- 
-         CALL DTRMMOOP('R', 'N', M, N, A, LDA, T, LDT, ALPHA, C, M, 
-     $                  INFO)
- 
-         ! Check that A was not touched
-         DO I = 1, N
-            DO J = 1, M
-               IF (A(I,J).NE.As(I,J)) THEN
-                  WRITE(*,*) "Inconsistency in A at index i=", I, 
-     $                       " j=", J
-               END IF
-            END DO
-         END DO
- 
-         ! Check that T was not touched
-         DO I = 1, N
-            DO J = 1, N
-               IF (T(I,J).NE.Ts(I,J)) THEN
-                  WRITE(*,*) "Inconsistency in T at index i=", I, 
-     $                       " j=", J
-               END IF
-            END DO
-         END DO
-         CALL DTRMM('Right', 'Lower', 'No transpose', 'Non-unit', M, N,
-     $               ONE, T, LDT, ATrmm, M)
- 
-         ! Compute ATrmm += Cs
-         DO I = 1,M
-            DO J = 1,N
-               ATrmm(I,J) = ATrmm(I,J) + ALPHA * Cs(I,J)
-            END DO
-         END DO
- 
-         ! Compute ||ATrmm - C||_F
-         NORM_F = 0
-         DO I = 1, M
-            DO J = 1, N
-               TMP = ATrmm(I,J) - C(I,J)
-               NORM_F = NORM_F + TMP * TMP
-            END DO
-         END DO
- 
-         WRITE(*,*) "ALPHA = 7: ||ATrmm - C||_F = ", NORM_F
-
-         WRITE(*,*) "SIDE = 'R', DIAG = 'U'"
-         ! Fill A, T, C with random elements
-         CALL RANDOM_NUMBER(A)
-         CALL RANDOM_NUMBER(T)
-         CALL RANDOM_NUMBER(C)
-
-         ! Copy A into As
-         CALL DLACPY('All', N, M, A, LDA, As, LDA)
-
-         ! Copy C into Cs
-         CALL DLACPY('All', M, N, C, M, Cs, M)
-
-         ! Copy T into Ts
-         CALL DLACPY('All', N, N, T, LDT, Ts, LDT)
-
-         ! Copy A**T into ATrmm for use with DTRMM
-         DO I = 1, M
-            DO J = 1, N
-               ATrmm(I,J) = A(J,I)
-            END DO
-         END DO
-
-         CALL DTRMMOOP('R', 'U', M, N, A, LDA, T, LDT, ONE, C, M, INFO)
-
-         ! Check that A was not touched
-         DO I = 1, N
-            DO J = 1, M
-               IF (A(I,J).NE.As(I,J)) THEN
-                  WRITE(*,*) "Inconsistency in A at index i=", I, 
-     $                       " j=", J
-               END IF
-            END DO
-         END DO
-
-         ! Check that T was not touched
-         DO I = 1, N
-            DO J = 1, N
-               IF (T(I,J).NE.Ts(I,J)) THEN
-                  WRITE(*,*) "Inconsistency in T at index i=", I, 
-     $                       " j=", J
-               END IF
-            END DO
-         END DO
-         CALL DTRMM('Right', 'Lower', 'No transpose', 'Unit', M, N,
-     $               ONE, T, LDT, ATrmm, M)
-
-         ! Compute ATrmm += Cs
-         DO I = 1,M
-            DO J = 1,N
-               ATrmm(I,J) = ATrmm(I,J) + Cs(I,J)
-            END DO
-         END DO
-
-         ! Compute ||ATrmm - C||_F
-         NORM_F = 0
-         DO I = 1, M
-            DO J = 1, N
-               TMP = ATrmm(I,J) - C(I,J)
-               NORM_F = NORM_F + TMP * TMP
-            END DO
-         END DO
-
-         WRITE(*,*) "ALPHA = 1: ||ATrmm - C||_F = ", NORM_F
-
-         ! Now, we will try testing when we pass in matrices that start in the
-         ! same place. The way we do this is that we are going to construct a
-         ! matrix B as a k by k matrix where k=max(m,n). Then the leading n by n
-         ! principle submatrix will be T, and the leading n by m principle
-         ! submatrix will be A. This will ensure that fortran doesn't throw a
-         ! fit when we call things this way
-         DEALLOCATE(B)
-         DEALLOCATE(Bs)
-         ALLOCATE(B(K,K))
-         ALLOCATE(Bs(K,K))
-
-         CALL RANDOM_NUMBER(B)
-         ! regenerate C
-         CALL RANDOM_NUMBER(C)
-         ! Copy A into As
-         CALL DLACPY('All', N, M, B, K, As, LDA)
-
-         ! Copy B into Bs
-         CALL DLACPY('All', K, K , B, K, Bs, K)
-
-         ! Copy C into Cs
-         CALL DLACPY('All', M, N, C, M, Cs, M)
-
-         ! Copy T into Ts
-         CALL DLACPY('All', N, N, B, LDT, Ts, LDT)
-
-         ! Copy A**T into ATrmm for use with DTRMM
-         DO I = 1, M
-            DO J = 1, N
-               ATrmm(I,J) = As(J,I)
-            END DO
-         END DO
-
-         ! Call our function
-         CALL DTRMMOOP('r', 'U', M, N, B, K, B, K, ONE, C, M, INFO)
-
-         ! Check that all of B was not touched
-         DO I = 1, K
-            DO J = 1, K
-               IF (B(I,J).NE.Bs(I,J)) THEN
-                  WRITE(*,*) "Inconsistency in B at index i=", I, 
-     $                       " j=", J
-               END IF
-            END DO
-         END DO
-         CALL DTRMM('Right', 'Lower', 'No transpose', 'Unit', M, N,
-     $               ONE, Ts, LDT, ATrmm, M)
-
-         ! Compute ATrmm += Cs
-         DO I = 1,M
-            DO J = 1,N
-               ATrmm(I,J) = ATrmm(I,J) + Cs(I,J)
-            END DO
-         END DO
-
-         ! Compute ||ATrmm - C||_F
-         NORM_F = 0
-         DO I = 1, M
-            DO J = 1, N
-               TMP = ATrmm(I,J) - C(I,J)
-               NORM_F = NORM_F + TMP * TMP
-            END DO
-         END DO
-
-         WRITE(*,*) "ALPHA = 1: ||ATrmm - C||_F = ", NORM_F
-
-         ! Test with ALPHA = 0
-         CALL RANDOM_NUMBER(A)
-         CALL RANDOM_NUMBER(T)
-         CALL RANDOM_NUMBER(C)
-
-         ! Copy A into As
-         CALL DLACPY('All', N, M, A, LDA, As, LDA)
-
-         ! Copy C into Cs
-         CALL DLACPY('All', M, N, C, M, Cs, M)
-
-         ! Copy T into Ts
-         CALL DLACPY('All', N, N, T, LDT, Ts, LDT)
-
-         ! Copy A**T into ATrmm for use with DTRMM
-         DO I = 1, M
-            DO J = 1, N
-               ATrmm(I,J) = A(J,I)
-            END DO
-         END DO
-
-         CALL DTRMMOOP('R', 'U', M, N, A, LDA, T, LDT, ZERO, C, M, INFO)
-
-         ! Check that A was not touched
-         DO I = 1, N
-            DO J = 1, M
-               IF (A(I,J).NE.As(I,J)) THEN
-                  WRITE(*,*) "Inconsistency in A at index i=", I, 
-     $                       " j=", J
-               END IF
-            END DO
-         END DO
-
-         ! Check that T was not touched
-         DO I = 1, N
-            DO J = 1, N
-               IF (T(I,J).NE.Ts(I,J)) THEN
-                  WRITE(*,*) "Inconsistency in T at index i=", I, 
-     $                       " j=", J
-               END IF
-            END DO
-         END DO
-         CALL DTRMM('Right', 'Lower', 'No transpose', 'Unit', M, N,
-     $               ONE, T, LDT, ATrmm, M)
-
-         ! Compute ||ATrmm - C||_F
-         NORM_F = 0
-         DO I = 1, M
-            DO J = 1, N
-               TMP = ATrmm(I,J) - C(I,J)
-               NORM_F = NORM_F + TMP * TMP
-            END DO
-         END DO
-
-         WRITE(*,*) "ALPHA = 0: ||ATrmm - C||_F = ", NORM_F
-
-         ! Test with ALPHA = 7
-         ALPHA = 7
-         CALL RANDOM_NUMBER(A)
-         CALL RANDOM_NUMBER(T)
-         CALL RANDOM_NUMBER(C)
-
-         ! Copy A into As
-         CALL DLACPY('All', N, M, A, LDA, As, LDA)
-
-         ! Copy C into Cs
-         CALL DLACPY('All', M, N, C, M, Cs, M)
-
-         ! Copy T into Ts
-         CALL DLACPY('All', N, N, T, LDT, Ts, LDT)
-
-         ! Copy A**T into ATrmm for use with DTRMM
-         DO I = 1, M
-            DO J = 1, N
-               ATrmm(I,J) = A(J,I)
-            END DO
-         END DO
-
-         CALL DTRMMOOP('R', 'U', M, N, A, LDA, T, LDT, ALPHA, C, M, 
-     $                  INFO)
-
-         ! Check that A was not touched
-         DO I = 1, N
-            DO J = 1, M
-               IF (A(I,J).NE.As(I,J)) THEN
-                  WRITE(*,*) "Inconsistency in A at index i=", I, 
-     $                       " j=", J
-               END IF
-            END DO
-         END DO
-
-         ! Check that T was not touched
-         DO I = 1, N
-            DO J = 1, N
-               IF (T(I,J).NE.Ts(I,J)) THEN
-                  WRITE(*,*) "Inconsistency in T at index i=", I, 
-     $                       " j=", J
-               END IF
-            END DO
-         END DO
-         CALL DTRMM('Right', 'Lower', 'No transpose', 'Unit', M, N,
-     $               ONE, T, LDT, ATrmm, M)
-
-         ! Compute ATrmm += Cs
-         DO I = 1,M
-            DO J = 1,N
-               ATrmm(I,J) = ATrmm(I,J) + ALPHA * Cs(I,J)
-            END DO
-         END DO
-
-         ! Compute ||ATrmm - C||_F
-         NORM_F = 0
-         DO I = 1, M
-            DO J = 1, N
-               TMP = ATrmm(I,J) - C(I,J)
-               NORM_F = NORM_F + TMP * TMP
-            END DO
-         END DO
-
-         WRITE(*,*) "ALPHA = 7: ||ATrmm - C||_F = ", NORM_F
-
-         ! Deallocate memory
-         DEALLOCATE(T)
-         DEALLOCATE(Ts)
-         DEALLOCATE(A)
+         ! Free our memory
+10       DEALLOCATE(A)
          DEALLOCATE(As)
-         DEALLOCATE(ATrmm)
+         DEALLOCATE(B)
+         DEALLOCATE(Bs)
          DEALLOCATE(C)
          DEALLOCATE(Cs)
+         DEALLOCATE(WORK)
+
       END SUBROUTINE

@@ -1,4 +1,4 @@
-      SUBROUTINE TEST_DORGKR(M, N)
+      SUBROUTINE TEST_DORGKL(M, N)
 *
 *        Arguments
 *
@@ -13,7 +13,7 @@
 *
 *        Arrays
 *
-         DOUBLE PRECISION, ALLOCATABLE :: A(:,:), As(:,:), R(:,:),
+         DOUBLE PRECISION, ALLOCATABLE :: A(:,:), As(:,:), L(:,:),
      $      WORKMAT(:,:)
 
          DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: TAU, WORK
@@ -25,7 +25,7 @@
 *        External Subroutines
 *
          EXTERNAL          DGEMM, DGEQRF, DLACPY, DLARFT, DLASET,
-     $                     DORGKR
+     $                     DORGKL
 *
 *        External Functions
 *
@@ -42,14 +42,14 @@
 *
          ALLOCATE(A(M,N))
          ALLOCATE(As(M,N))
-         ALLOCATE(R(N,N))
+         ALLOCATE(L(N,N))
          ALLOCATE(TAU(N))
          ALLOCATE(WORK(1))
          ALLOCATE(WORKMAT(N,N))
 *
-*        Set R to be the 0 matrix
+*        Set L to be the 0 matrix
 *
-         CALL DLASET('All', N, N, ZERO, ZERO, R, N)
+         CALL DLASET('All', N, N, ZERO, ZERO, L, N)
 *
 *        Generate our data matrix A randomly
 *
@@ -61,26 +61,27 @@
 *
 *        Determine the size of work needed
 *
-         CALL DGEQRF(M, N, A, M, TAU, WORK, INEG_ONE, INFO)
+         CALL DGEQLF(M, N, A, M, TAU, WORK, INEG_ONE, INFO)
          LWORK = WORK(1)
          DEALLOCATE(WORK)
          ALLOCATE(WORK(LWORK))
 *
 *        Factorize A
 *
-         CALL DGEQRF(M, N, A, M, TAU, WORK, LWORK, INFO)
+         CALL DGEQLF(M, N, A, M, TAU, WORK, LWORK, INFO)
 *
-*        Copy the upper triangular part of A (R) into R
+*        Copy L from DGEQLF into L
 *
-         CALL DLACPY('Upper', M, N, A, M, R, N)
+         CALL DLACPY('Lower', N, N, A(M-N+1,1), M, L, N)
 *
 *        Compute the T matrix associated with V and Tau
 *
-         CALL DLARFT('Forward', 'Columnwise', M, N, A, M, TAU, A, M)
+         CALL DLARFT('Backward', 'Columnwise', M, N, A, M, TAU,
+     $            A(M-N+1,1), M)
 *
 *        Compute Q using our routine
 *
-         CALL DORGKR(M, N, A, M)
+         CALL DORGKL(M, N, A, M)
 *
 *        Determine if Q is orthogonal
 *
@@ -118,12 +119,12 @@
          END DO
          NORMA = SQRT(NORMA)
 *
-*        Compute As = Q*R - As
+*        Compute As = Q*L - As
 *
          CALL DGEMM('No Transpose', 'No Transpose', M, N, N, ONE,
-     $         A, M, R, N, DNEG_ONE, As, M)
+     $         A, M, L, N, DNEG_ONE, As, M)
 *
-*        Compute ||Q*R - As||_F
+*        Compute ||Q*L - As||_F
 *
          NORM_REPRES = ZERO
          DO I = 1, M
@@ -132,7 +133,7 @@
             END DO
          END DO
 *
-*        Compute ||Q*R - As||_F / ||As||_F
+*        Compute ||Q*L - As||_F / ||As||_F
 *
          NORM_REPRES = SQRT(NORM_REPRES) / NORMA
 *
@@ -145,7 +146,7 @@
 *
          DEALLOCATE(A)
          DEALLOCATE(As)
-         DEALLOCATE(R)
+         DEALLOCATE(L)
          DEALLOCATE(TAU)
          DEALLOCATE(WORK)
          DEALLOCATE(WORKMAT)

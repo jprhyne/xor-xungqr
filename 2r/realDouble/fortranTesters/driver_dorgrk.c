@@ -9,8 +9,8 @@ int main(int argc, char *argv[]) {
     int info, m, n, i;
     // double variables
 
-    m = 30;
-    n = 20;
+    m = 20;
+    n = 30;
 
     for(i = 1; i < argc; ++i){
         if( strcmp( *(argv + i), "-m") == 0) {
@@ -23,10 +23,10 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    printf("dgeqrf dlarft dorgkr: m = %4d, n = %4d\n", m, n);
+    printf("dgelqf dlarft dorglk: m = %4d, n = %4d\n", m, n);
 
     // Call the test file
-    test_dorgkr_(&m, &n);
+    test_dorgrk_(&m, &n);
 
     return 0;
 

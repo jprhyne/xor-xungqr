@@ -1,20 +1,22 @@
 include ../make.inc
 
 srcObjs := $(patsubst %.f,%.o,$(wildcard ../src/*.f))
+larftObjs :=  ../../../larft/realDouble/src/my_dlarft_rec.o
 
 # Groups
-all: objectFiles driver_dtvt.exe driver_trmm.exe driver_dorgkr.exe driver_lumm.exe driver_dlarft.exe driver_dst3rk.exe
+all: objectFiles driver_dtrtrm.exe driver_trmm.exe driver_dlumm.exe driver_dorgkr.exe driver_dorglk.exe driver_dorgkl.exe driver_dorgrk.exe
 
 clean:
 	rm *.o *.exe
 
-objectFiles: 
-	$(MAKE) -C ../src all
+objectFiles:
+	+$(MAKE) -C ../src all
+	+$(MAKE) -C ../../../larft/realDouble/src all
 
 driver_dst3rk.exe: driver_dst3rk.o test_dst3rk.o $(srcObjs)
 	$(FC) $(CFLAGS) $^ $(OPTBLAS) -o $@
 
-driver_dtvt.exe:   driver_dtvt.o test_dtvt.o  $(srcObjs)
+driver_dtrtrm.exe:   driver_dtrtrm.o test_dtrtrm.o  $(srcObjs)
 	$(FC) $(CFLAGS) $^ $(OPTBLAS) -o $@
 
 driver_trmm.exe:   driver_trmm.o testdtrmmoop.o $(srcObjs)
@@ -23,37 +25,55 @@ driver_trmm.exe:   driver_trmm.o testdtrmmoop.o $(srcObjs)
 driver_dorgkr.exe: driver_dorgkr.o test_dorgkr.o $(srcObjs)
 	$(FC) $(CFLAGS) $^ $(OPTBLAS) -o $@
 
-driver_dlarft.exe: driver_dlarft.o test_dlarft.o $(srcObjs)
+driver_dorglk.exe: driver_dorglk.o test_dorglk.o ../../../larft/realDouble/src/my_dlarft_rec.o $(srcObjs)
 	$(FC) $(CFLAGS) $^ $(OPTBLAS) -o $@
 
-driver_lumm.exe:   driver_lumm.o test_lumm.o $(srcObjs)
+driver_dorgkl.exe: driver_dorgkl.o test_dorgkl.o $(srcObjs)
 	$(FC) $(CFLAGS) $^ $(OPTBLAS) -o $@
 
-driver_dtvt.o:   driver_dtvt.c
-	$(CC) -c $(CFLAGS) $^ -o $@
+driver_dorgrk.exe: driver_dorgrk.o test_dorgrk.o ../../../larft/realDouble/src/my_dlarft_rec.o $(srcObjs)
+	$(FC) $(CFLAGS) $^ $(OPTBLAS) -o $@
 
-driver_dlarft.o: driver_dlarft.c
+driver_dlumm.exe:   driver_dlumm.o test_dlumm.o $(srcObjs)
+	$(FC) $(CFLAGS) $^ $(OPTBLAS) -o $@
+
+driver_dtrtrm.o:   driver_dtrtrm.c
 	$(CC) -c $(CFLAGS) $^ -o $@
 
 driver_trmm.o:   driver_trmm.c
 	$(CC) -c $(CFLAGS) $^ -o $@
 
-driver_lumm.o:   driver_lumm.c
+driver_dlumm.o:   driver_dlumm.c
 	$(CC) -c $(CFLAGS) $^ -o $@
 
 driver_dorgkr.o: driver_dorgkr.c
 	$(CC) -c $(CFLAGS) $^ -o $@
 
-test_dtvt.o:     test_dtvt.f
+driver_dorglk.o: driver_dorglk.c
+	$(CC) -c $(CFLAGS) $^ -o $@
+
+driver_dorgkl.o: driver_dorgkl.c
+	$(CC) -c $(CFLAGS) $^ -o $@
+
+driver_dorgrk.o: driver_dorgrk.c
+	$(CC) -c $(CFLAGS) $^ -o $@
+
+test_dtrtrm.o:     testdtrtrm.f
 	$(FC) -c $(FFLAGS) $^ -o $@
 
 test_dorgkr.o:   test_dorgkr.f
 	$(FC) -c $(FFLAGS) $^ -o $@
 
-test_dlarft.o:   test_dlarft.f
+test_dorglk.o:   test_dorglk.f
 	$(FC) -c $(FFLAGS) $^ -o $@
 
-test_lumm.o:     test_lumm.f
+test_dorgkl.o:   test_dorgkl.f
+	$(FC) -c $(FFLAGS) $^ -o $@
+
+test_dorgrk.o:   test_dorgrk.f
+	$(FC) -c $(FFLAGS) $^ -o $@
+
+test_dlumm.o:     test_dlumm.f
 	$(FC) -c $(FFLAGS) $^ -o $@
 
 testdtrmmoop.o:  testdtrmmoop.f

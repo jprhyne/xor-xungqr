@@ -1,4 +1,4 @@
-      SUBROUTINE TEST_DORGKR(M, N)
+      SUBROUTINE TEST_DORGLK(M, N)
 *
 *        Arguments
 *
@@ -13,8 +13,8 @@
 *
 *        Arrays
 *
-         DOUBLE PRECISION, ALLOCATABLE :: A(:,:), As(:,:), R(:,:),
-     $      WORKMAT(:,:)
+         DOUBLE PRECISION, ALLOCATABLE :: A(:,:), As(:,:), L(:,:),
+     $      WORKMAT(:,:), T(:,:)
 
          DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: TAU, WORK
 *
@@ -24,12 +24,8 @@
 *
 *        External Subroutines
 *
-         EXTERNAL          DGEMM, DGEQRF, DLACPY, DLARFT, DLASET,
-     $                     DORGKR
-*
-*        External Functions
-*
-         DOUBLE PRECISION, EXTERNAL :: DLANGE
+         EXTERNAL          DGEMM, DGELQF, DLACPY, DLARFT, DLASET,
+     $                     DORGLK
 *
 *        Parameters
 *
@@ -42,14 +38,15 @@
 *
          ALLOCATE(A(M,N))
          ALLOCATE(As(M,N))
-         ALLOCATE(R(N,N))
-         ALLOCATE(TAU(N))
+         ALLOCATE(L(M,M))
+         ALLOCATE(T(M,M))
+         ALLOCATE(TAU(M))
          ALLOCATE(WORK(1))
-         ALLOCATE(WORKMAT(N,N))
+         ALLOCATE(WORKMAT(M,M))
 *
-*        Set R to be the 0 matrix
+*        Set L to be the 0 matrix
 *
-         CALL DLASET('All', N, N, ZERO, ZERO, R, N)
+         CALL DLASET('All', M, M, ZERO, ZERO, L, M)
 *
 *        Generate our data matrix A randomly
 *
@@ -61,48 +58,56 @@
 *
 *        Determine the size of work needed
 *
-         CALL DGEQRF(M, N, A, M, TAU, WORK, INEG_ONE, INFO)
+         CALL DGELQF(M, N, A, M, TAU, WORK, INEG_ONE, INFO)
          LWORK = WORK(1)
          DEALLOCATE(WORK)
          ALLOCATE(WORK(LWORK))
 *
 *        Factorize A
 *
-         CALL DGEQRF(M, N, A, M, TAU, WORK, LWORK, INFO)
+         CALL DGELQF(M, N, A, M, TAU, WORK, LWORK, INFO)
 *
-*        Copy the upper triangular part of A (R) into R
+*        Copy the lower triangular part of A (L) into L
 *
-         CALL DLACPY('Upper', M, N, A, M, R, N)
+         CALL DLACPY('Lower', M, N, A, M, L, M)
 *
 *        Compute the T matrix associated with V and Tau
+*        TODO: Add below to LAPACK
 *
-         CALL DLARFT('Forward', 'Columnwise', M, N, A, M, TAU, A, M)
+!        CALL DLARFT('Forward', 'Rowwise', N, M, A, M, TAU, T, M)
+!        DO I = 1, M
+!           DO J = 1, I
+!              A(I,J) = T(J,I)
+!           END DO
+!        END DO
+         CALL MY_DLARFT_REC('Forward', 'Transpose', N, M, A, M, TAU,
+     $         A, M)
 *
 *        Compute Q using our routine
 *
-         CALL DORGKR(M, N, A, M)
+         CALL DORGLK(M, N, A, M)
 *
 *        Determine if Q is orthogonal
 *
-*        First, we must set WORKMAT to be I_n
+*        First, we must set WORKMAT to be I_m
 *
-         CALL DLASET('All', N, N, ZERO, ONE, WORKMAT, N)
+         CALL DLASET('All', M, M, ZERO, ONE, WORKMAT, M)
 *
-*        Next, we compute Q**T*Q - I
+*        Next, we compute Q*Q**T - I
 *
-         CALL DGEMM('Transpose', 'No Transpose', N, N, M, ONE, A,
-     $         M, A, M, DNEG_ONE, WORKMAT, N)
+         CALL DGEMM('No Transpose', 'Transpose', M, M, N, ONE, A,
+     $         M, A, M, DNEG_ONE, WORKMAT, M)
 *
-*        Compute ||Q**T*Q - I_n||_F
+*        Compute ||Q*Q**T - I_n||_F
 *
          NORM_ORTH = ZERO
-         DO I = 1, N
-            DO J = 1, N
+         DO I = 1, M
+            DO J = 1, M
                NORM_ORTH = NORM_ORTH + WORKMAT(I,J)*WORKMAT(I,J)
             END DO
          END DO
 *
-*        Compute ||Q**T*Q - I_n||_F / ||I_n||_F
+*        Compute ||Q*Q**T - I_n||_F / ||I_n||_F
 *
          NORM_ORTH = SQRT(NORM_ORTH) / SQRT(DBLE(N))
 *
@@ -118,12 +123,12 @@
          END DO
          NORMA = SQRT(NORMA)
 *
-*        Compute As = Q*R - As
+*        Compute As = L*Q - As
 *
-         CALL DGEMM('No Transpose', 'No Transpose', M, N, N, ONE,
-     $         A, M, R, N, DNEG_ONE, As, M)
+         CALL DGEMM('No Transpose', 'No Transpose', M, N, M, ONE,
+     $         L, M, A, M, DNEG_ONE, As, M)
 *
-*        Compute ||Q*R - As||_F
+*        Compute ||L*Q - As||_F
 *
          NORM_REPRES = ZERO
          DO I = 1, M
@@ -132,7 +137,7 @@
             END DO
          END DO
 *
-*        Compute ||Q*R - As||_F / ||As||_F
+*        Compute ||L*Q - As||_F / ||As||_F
 *
          NORM_REPRES = SQRT(NORM_REPRES) / NORMA
 *
@@ -145,7 +150,8 @@
 *
          DEALLOCATE(A)
          DEALLOCATE(As)
-         DEALLOCATE(R)
+         DEALLOCATE(L)
+         DEALLOCATE(T)
          DEALLOCATE(TAU)
          DEALLOCATE(WORK)
          DEALLOCATE(WORKMAT)
