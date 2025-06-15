@@ -3,12 +3,12 @@ include ../make.inc
 srcObjs := $(patsubst %.f,%.o,$(wildcard ../src/*.f))
 
 # Groups
-all: objectFiles driver_ztvt.exe driver_trmm.exe driver_zungkr.exe driver_lumm.exe driver_zlarft.exe driver_zst3rk.exe
+all: objectFiles driver_ztrmmoop.exe
 
 clean:
 	rm *.o *.exe
 
-objectFiles: 
+objectFiles:
 	$(MAKE) -C ../src all
 
 driver_zst3rk.exe: driver_zst3rk.o test_zst3rk.o $(srcObjs)
@@ -17,7 +17,7 @@ driver_zst3rk.exe: driver_zst3rk.o test_zst3rk.o $(srcObjs)
 driver_ztvt.exe:   driver_ztvt.o test_ztvt.o  $(srcObjs)
 	$(FC) $(CFLAGS) $^ $(OPTBLAS) -o $@
 
-driver_trmm.exe:   driver_trmm.o testztrmmoop.o $(srcObjs)
+driver_ztrmmoop.exe:   driver_ztrmmoop.o test_ztrmmoop.o $(srcObjs)
 	$(FC) $(CFLAGS) $^ $(OPTBLAS) -o $@
 
 driver_zungkr.exe: driver_zungkr.o test_zungkr.o $(srcObjs)
@@ -56,5 +56,5 @@ test_zlarft.o:   test_zlarft.f
 test_lumm.o:     test_lumm.f
 	$(FC) -c $(FFLAGS) $^ -o $@
 
-testztrmmoop.o:  testztrmmoop.f
+test_ztrmmoop.o:  test_ztrmmoop.f
 	$(FC) -c $(FFLAGS) $^ -o $@
