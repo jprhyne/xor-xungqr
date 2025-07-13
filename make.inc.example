@@ -1,23 +1,22 @@
-# This is a path to where the LAPACK release library exists. Below is mine
-# I set an environment variable that I use. You can do the same or type out the
-# whole path
+# Root directory of the lapack repository used to build the lapack repository we link against
 
-LAPACKROOT=$(CUDENVERPATH)/LAPACK/lapack-3.11.0
+LAPACKROOT=$(GIT_REPO_LOC)/lapack
 
 LAPACKEINC=$(LAPACKROOT)/LAPACKE/include
 CBLASINC=$(LAPACKROOT)/CBLAS/include
 
-LAPACKLIB=$(LAPACKROOT)/liblapack.a
-LAPACKELIB=$(LAPACKROOT)/liblapacke.a
-BLASLIB=$(LAPACKROOT)/librefblas.a
-CBLASLIB=$(LAPACKROOT)/libcblas.a
+# MY_LIBS is a path to the root directory of where I store the libraries that I build
+LAPACKLIB=$(MY_LIBS)/lapack/liblapack.a
+LAPACKELIB=$(MY_LIBS)/lapack/liblapacke.a
+BLASLIB=$(MY_LIBS)/lapack/librefblas.a
+CBLASLIB=$(MY_LIBS)/lapack/libcblas.a
 
 CC=gcc
 FC=gfortran
 # Below optimizer flags are to mirror what blis and libflame use
 # Doesn't seem to have much of an impact on what we're doing.
-CFLAGS=-g -Wno-implicit -O3
-FFLAGS=-fimplicit-none -g -O3
+CFLAGS=-g -O3 -Wno-implicit
+FFLAGS=-g -O3 -fimplicit-none
 
 # This is the compilation flags needed to compile with optimized blas
 # For intel machines, this whatever is needed for MKL.
@@ -33,4 +32,9 @@ FFLAGS=-fimplicit-none -g -O3
 # Use system libraries
 #OPTBLAS=-L$(AOCLROOT)/lib -lblis -lm -lpthread
 # Use compiled libraries. This was necessary to avoid a bug with NaNs in the bugTest directory on my linux machine
-OPTBLAS=$(AOCLROOT)/lib/libflame.so $(AOCLROOT)/lib/libblis.so
+OPTBLAS=$(MY_LIBS)/optblas/flame/lib/libflame.so \
+		$(MY_LIBS)/optblas/blis/lib/libblis.so \
+		${MY_LIBS}/optblas/aocl-utils/lib/libaoclutils.so \
+		${MY_LIBS}/optblas/aocl-utils/lib/libau_cpuid.so
+
+# vim: ft=make
