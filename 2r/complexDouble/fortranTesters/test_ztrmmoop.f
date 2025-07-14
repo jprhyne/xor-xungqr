@@ -53,7 +53,7 @@
          ALLOCATE(Cs(MAXMN,MAXMN))
          ALLOCATE(WORK(MAXMN,MAXMN))
 
-         DO I = 1, 2 ! For each side
+         DO I = 1, 1!2 ! For each side
             DO J = 1, 3 ! For each transposing of A
                DO K = 1, 3 ! For each transposing of B
                   DO L = 1, 2 ! For each of A being unit or non-unit

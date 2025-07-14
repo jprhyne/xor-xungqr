@@ -876,9 +876,313 @@
                CALL ZSCAL(M, BETA, C, 1)
             END IF
 
+            ! If alpha is 0, we are done
             IF (ALPHA.NE.ZERO) THEN
-               RETURN
+*
+*              This means we are computing 
+*              C = \alpha op(A) * op(B) + \beta C
+*                 A is also not a scalar and B is either a row
+*                 or column vector. The former if B is transposed
+*                 and the latter otherwise
+*
+               IF (TRANSG) THEN
+                  INCB = LDB
+               ELSE
+                  INCB = 1
+               END IF
+               IF (LSIDE) THEN
+*
+*                 This means A is upper triangular
+*
+                  IF (UPPER) THEN
+*
+*                    This means op(A) = A**H
+*
+                     IF (CONJA) THEN
+*
+*                       This means that we must conjugate B
+*
+                        IF (CONJB) THEN
+                           IF (UNIT) THEN
+                              DO I=1,M
+                                 C(I,1) = ALPHA*DCONJG(ZDOTU(I-1, B,
+     $                              INCB, A(1,I), 1)) + C(I,1)
+                              END DO
+                              CALL ZACXPY(M, ALPHA, B, INCB, C, 1)
+                           ELSE
+                              DO I=1,M
+                                 C(I,1) = ALPHA*DCONJG(ZDOTU(I, B,
+     $                              INCB, A(1,I), 1)) + C(I,1)
+                              END DO
+                           END IF
+*
+*                       This means that B is not conjugated
+*
+                        ELSE
+                           IF (UNIT) THEN
+                              DO I=1,M
+                                 C(I,1) = ALPHA*ZDOTC(I-1, A(1,I),
+     $                              1, B, INCB) + C(I,1)
+                              END DO
+                              CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
+                           ELSE
+                              DO I=1,M
+                                 C(I,1) = ALPHA*ZDOTC(I, A(1,I),
+     $                              1, B, INCB) + C(I,1)
+                              END DO
+                           END IF
+                        END IF
+*
+*                    This means op(A) = A**T
+*
+                     ELSE IF (TRANST) THEN
+*
+*                       This means that we must conjugate B
+*
+                        IF (CONJB) THEN
+                           IF (UNIT) THEN
+                              DO I=1,M
+                                 C(I,1) = ALPHA*ZDOTC(I-1, B, INCB,
+     $                              A(1,I), 1) + C(I,1)
+                              END DO
+                              CALL ZACXPY(M, ALPHA, B, INCB, C, 1)
+                           ELSE
+                              DO I=1,M
+                                 C(I,1) = ALPHA*ZDOTC(I, B, INCB,
+     $                              A(1,I), 1) + C(I,1)
+                              END DO
+                           END IF
+*
+*                       This means that B is not conjugated
+*
+                        ELSE
+                           IF (UNIT) THEN
+                              DO I=1,M
+                                 C(I,1) = ALPHA*ZDOTU(I-1, B, INCB,
+     $                              A(1,I), 1) + C(I,1)
+                              END DO
+                              CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
+                           ELSE
+                              DO I=1,M
+                                 C(I,1) = ALPHA*ZDOTU(I, B, INCB,
+     $                              A(1,I), 1) + C(I,1)
+                              END DO
+                           END IF
+                        END IF
+*
+*                    This means op(A) = A
+*
+                     ELSE
+*
+*                       This means that we must conjugate B
+*
+                        IF (CONJB) THEN
+                           IF (UNIT) THEN
+                              DO I=1,M-1
+                                 C(I,1) = ALPHA*ZDOTC(M-I, B(1,I+1),
+     $                              INCB, A(I,I+1), LDA) + C(I,1)
+                              END DO
+                              CALL ZACXPY(M, ALPHA, B, INCB, C, 1)
+                           ELSE
+                              DO I=1,M
+                                 C(I,1) = ALPHA*ZDOTC(M-I+1, B(1,I),
+     $                              INCB, A(I,I), LDA) + C(I,1)
+                              END DO
+                           END IF
+*
+*                       This means that B is a row vector but not conjugated
+*
+                        ELSE IF (TRANSG) THEN
+                           IF (UNIT) THEN
+                              DO I=1,M-1
+                                 C(I,1) = ALPHA*ZDOTU(M-I, B(1,I+1),
+     $                              INCB, A(I,I+1), LDA) + C(I,1)
+                              END DO
+                              CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
+                           ELSE
+                              DO I=1,M
+                                 C(I,1) = ALPHA*ZDOTU(M-I+1, B(1,I),
+     $                              INCB, A(I,I), LDA) + C(I,1)
+                              END DO
+                           END IF
+*
+*                       This means that B is a column vector and not conjugated
+*
+                        ELSE
+                           IF (UNIT) THEN
+                              DO I=1,M-1
+                                 C(I,1) = ALPHA*ZDOTU(M-I, B(I+1,1),
+     $                              INCB, A(I,I+1), LDA) + C(I,1)
+                              END DO
+                              CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
+                           ELSE
+                              DO I=1,M
+                                 C(I,1) = ALPHA*ZDOTU(M-I+1, B(I,1),
+     $                              INCB, A(I,I), LDA) + C(I,1)
+                              END DO
+                           END IF
+                        END IF
+                     END IF
+*
+*                 This means A is lower triangular
+*
+                  ELSE
+*
+*                    This means op(A) = A**H
+*
+                     IF (CONJA) THEN
+*
+*                       This means that we must conjugate B
+*
+                        IF (CONJB) THEN
+                           IF (UNIT) THEN
+                              DO I=1,M-1
+                                 C(I,1) = ALPHA*DCONJG(ZDOTU(M-I, 
+     $                              B(1,I+1), INCB, A(I+1,I), 1)) 
+     &                              + C(I,1)
+                              END DO
+                              CALL ZACXPY(M, ALPHA, B, INCB, C, 1)
+                           ELSE
+                              DO I=1,M
+                                 C(I,1) = ALPHA*DCONJG(ZDOTU(M-I+1,
+     $                              B(1,I), INCB, A(I,I), 1)) 
+     &                              + C(I,1)
+                              END DO
+                           END IF
+*
+*                       This means that B is a row vector but not conjugated
+*
+                        ELSE IF (TRANSG) THEN
+                           IF (UNIT) THEN
+                              DO I=1,M-1
+                                 C(I,1) = ALPHA*ZDOTC(M-I, A(I+1,I),
+     $                              1, B(1,I+1), INCB) + C(I,1)
+                              END DO
+                              CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
+                           ELSE
+                              DO I=1,M
+                                 C(I,1) = ALPHA*ZDOTC(M-I+1, A(I,I),
+     $                              1, B(1,I), INCB) + C(I,1)
+                              END DO
+                           END IF
+*
+*                       This means that B is a column vector and not conjugated
+*
+                        ELSE
+                           IF (UNIT) THEN
+                              DO I=1,M-1
+                                 C(I,1) = ALPHA*ZDOTC(M-I, A(I+1,I),
+     $                              1, B(I+1,1), INCB) + C(I,1)
+                              END DO
+                              CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
+                           ELSE
+                              DO I=1,M
+                                 C(I,1) = ALPHA*ZDOTC(M-I+1, A(I,I),
+     $                              1, B(I,1), INCB) + C(I,1)
+                              END DO
+                           END IF
+                        END IF
+*
+*                    This means op(A) = A**T
+*
+                     ELSE IF (TRANST) THEN
+*
+*                       This means that we must conjugate B
+*
+                        IF (CONJB) THEN
+                           IF (UNIT) THEN
+                              DO I=1,M-1
+                                 C(I,1) = ALPHA*ZDOTC(M-I, B(1,I+1),
+     $                              INCB, A(I+1,I), 1) + C(I,1)
+                              END DO
+                              CALL ZACXPY(M, ALPHA, B, INCB, C, 1)
+                           ELSE
+                              DO I=1,M
+                                 C(I,1) = ALPHA*ZDOTC(M-I+1, B(1,I),
+     $                              INCB, A(I,I), 1) + C(I,1)
+                              END DO
+                           END IF
+*
+*                       This means that B is a row vector but not conjugated
+*
+                        ELSE IF (TRANSG) THEN
+                           IF (UNIT) THEN
+                              DO I=1,M-1
+                                 C(I,1) = ALPHA*ZDOTU(M-I, B(1,I+1),
+     $                              INCB, A(I+1,I), 1) + C(I,1)
+                              END DO
+                              CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
+                           ELSE
+                              DO I=1,M
+                                 C(I,1) = ALPHA*ZDOTU(M-I+1, B(1,I),
+     $                              INCB, A(I,I), 1) + C(I,1)
+                              END DO
+                           END IF
+*
+*                       This means that B is a column vector and not conjugated
+*
+                        ELSE
+                           IF (UNIT) THEN
+                              DO I=1,M-1
+                                 C(I,1) = ALPHA*ZDOTU(M-I, B(I+1,1),
+     $                              INCB, A(I+1,I), 1) + C(I,1)
+                              END DO
+                              CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
+                           ELSE
+                              DO I=1,M
+                                 C(I,1) = ALPHA*ZDOTU(M-I+1, B(I,1),
+     $                              INCB, A(I,I), 1) + C(I,1)
+                              END DO
+                           END IF
+                        END IF
+*
+*                    This means op(A) = A
+*
+                     ELSE
+*
+*                       This means that B is conjugated and transposed
+*
+                        IF (CONJB) THEN
+                           IF (UNIT) THEN
+                              DO I=1,M
+                                 C(I,1) = ALPHA*ZDOTC(I-1, B, INCB,
+     $                              A(I,1), LDA) + C(I,1)
+                              END DO
+                              CALL ZACXPY(M, ALPHA, B, INCB, C, 1)
+                           ELSE 
+                              DO I=1,M
+                                 C(I,1) = ALPHA*ZDOTC(I, B, INCB,
+     $                              A(I,1), LDA) + C(I,1)
+                              END DO
+                           END IF
+*
+*                       This means that B is not conjugated
+*
+                        ELSE
+                           IF (UNIT) THEN
+                              DO I=1,M
+                                 C(I,1) = ALPHA*ZDOTU(I-1, B, INCB,
+     $                              A(I,1), LDA) + C(I,1)
+                              END DO
+                              CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
+                           ELSE 
+                              DO I=1,M
+                                 C(I,1) = ALPHA*ZDOTU(I, B, INCB,
+     $                              A(I,1), LDA) + C(I,1)
+                              END DO
+                           END IF
+                        END IF
+                     END IF
+                  END IF
+*
+*              This means we are computing 
+*              C = \alpha op(B) * op(A) + \beta C
+*              Note: This means A is a scalar
+*
+               ELSE
+               END IF
             END IF
+            RETURN
          END IF
 *
 *        Recursive Case
@@ -1215,7 +1519,7 @@
                      CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     L, L, ALPHA, A, LDA, B, LDB, ONE, C, LDC)
                      ! C_{12}
-                     CALL ZGEMM(TRANSB, TRANSA, L, N-L, M-L, ALPHA,
+                     CALL ZGEMM(TRANSA, TRANSB, L, N-L, M-L, ALPHA,
      $                     A(L+1, 1), LDA, B(L+1, L+1), LDB, BETA,
      $                     C(1, L+1), LDC)
                      CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
