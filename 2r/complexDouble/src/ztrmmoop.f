@@ -295,343 +295,343 @@
                CALL ZSCAL(N, BETA, C, LDC)
             END IF
             IF (ALPHA.NE.ZERO) THEN
-*
-*              We are computing C = \alpha op(A)*op(B) + \beta C
-*              Note: This means that A is a scalar
-*
                IF (LSIDE) THEN
 *
-*                 op(A) = A**H = CONJG(A)
+*                 We are computing C = \alpha op(A)*op(B) + \beta C
+*                 Note: This means that A is a scalar
 *
                   IF (CONJA) THEN
 *
-*                    op(B) = B**H
+*                    op(A) = CONJG(A)
 *
                      IF (CONJB) THEN
 *
-*                       A is assumed unit triangular
+*                       op(B) = CONJG(B)
 *
                         IF (UNIT) THEN
+*
+*                          A is assumed unit triangular
+*
                            CALL ZACXPY(N, ALPHA, B, 1, C, LDC)
-*
-*                       A is not assumed unit triangular
-*
                         ELSE
+*
+*                          A is not assumed unit triangular
+*
                            CALL ZACXPY(N, ALPHA*CONJG(A(1,1)), B, 1,
      $                           C, LDC)
                         END IF
-*
-*                    op(B) = B**T
-*
                      ELSE IF (TRANSG) THEN
 *
-*                       A is assumed unit triangular
+*                       op(B) = B**T
 *
                         IF (UNIT) THEN
+*
+*                          A is assumed unit triangular
+*
                            CALL ZAXPY(N, ALPHA, B, 1, C, LDC)
-*
-*                       A is not assumed unit triangular
-*
                         ELSE
+*
+*                          A is not assumed unit triangular
+*
                            CALL ZAXPY(N, ALPHA*CONJG(A(1,1)), B, 1,
      $                           C, LDC)
                         END IF
-*
-*                    op(B) = B
-*
                      ELSE
 *
-*                       A is assumed unit triangular
+*                       op(B) = B
 *
                         IF (UNIT) THEN
+*
+*                          A is assumed unit triangular
+*
                            CALL ZAXPY(N, ALPHA, B, LDB, C, LDC)
-*
-*                       A is not assumed unit triangular
-*
                         ELSE
+*
+*                          A is not assumed unit triangular
+*
                            CALL ZAXPY(N, ALPHA*CONJG(A(1,1)), B,
      $                           LDB, C, LDC)
                         END IF
                      END IF
-*
-*                 op(A) = A or op(A) = A**T = A
-*
                   ELSE
 *
-*                    op(B) = B**H
+*                    op(A) = A or op(A) = A**T = A
 *
                      IF (CONJB) THEN
 *
-*                       A is assumed unit triangular
+*                       op(B) = CONJG(B)
 *
                         IF (UNIT) THEN
+*
+*                          A is assumed unit triangular
+*
                            CALL ZACXPY(N, ALPHA, B, 1, C, LDC)
-*
-*                       A is not assumed unit triangular
-*
                         ELSE
+*
+*                          A is not assumed unit triangular
+*
                            CALL ZACXPY(N, ALPHA*A(1,1), B, 1,
      $                           C, LDC)
                         END IF
-*
-*                    op(B) = B**T
-*
                      ELSE IF (TRANSG) THEN
 *
-*                       A is assumed unit triangular
+*                       op(B) = B**T
 *
                         IF (UNIT) THEN
+*
+*                          A is assumed unit triangular
+*
                            CALL ZAXPY(N, ALPHA, B, 1, C, LDC)
-*
-*                       A is not assumed unit triangular
-*
                         ELSE
+*
+*                          A is not assumed unit triangular
+*
                            CALL ZAXPY(N, ALPHA*A(1,1), B, 1, C, LDC)
                         END IF
-*
-*                    op(B) = B
-*
                      ELSE
 *
-*                       A is assumed unit triangular
+*                       op(B) = B
 *
                         IF (UNIT) THEN
+*
+*                          A is assumed unit triangular
+*
                            CALL ZAXPY(N, ALPHA, B, LDB, C, LDC)
-*
-*                       A is not assumed unit triangular
-*
                         ELSE
+*
+*                          A is not assumed unit triangular
+*
                            CALL ZAXPY(N, ALPHA*A(1,1), B, LDB,
      $                           C, LDC)
                         END IF
                      END IF
                   END IF
-*
-*              We are computing C = \alpha op(B)*op(A) + \beta C
-*
                ELSE
 *
-*                 A is upper triangular
+*                 We are computing C = \alpha op(B)*op(A) + \beta C
 *
                   IF (UPPER) THEN
 *
-*                    op(A) = A**H
-*                    This is lower triangular
+*                    A is upper triangular
 *
                      IF (CONJA) THEN
 *
-*                       op(B) = B**H
+*                       op(A) = CONJG(A)
+*                       This is lower triangular
 *
                         IF (CONJB) THEN
 *
-*                          A is assumed unit triangular
+*                          op(B) = CONJG(B)
 *
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * CONJG(ZDOTU(N-J,
      $                              A(J,J+1), LDA, B(J+1,1), 1)) +
      $                              C(1,J)
                               END DO
                               CALL ZACXPY(N, ALPHA, B, 1, C, LDC)
-*
-*                          A is not assumed unit triangular
-*
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * CONJG(ZDOTU(N-J+1,
      $                              A(J,J), LDA, B(J,1), 1)) +  C(1,J)
                               END DO
                            END IF
-*
-*                       op(B) = B**T
-*
                         ELSE IF (TRANSG) THEN
 *
-*                          A is assumed unit triangular
+*                          op(B) = B**T
 *
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTC(N-J,
      $                              A(J,J+1), LDA, B(J+1,1), 1) +
      $                              C(1,J)
                               END DO
                               CALL ZAXPY(N, ALPHA, B, 1, C, LDC)
-*
-*                          A is not assumed unit triangular
-*
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTC(N-J+1,
      $                              A(J,J), LDA, B(J,1), 1) +  C(1,J)
                               END DO
                            END IF
-*
-*                       op(B) = B
-*
                         ELSE
 *
-*                          A is assumed unit triangular
+*                          op(B) = B
 *
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTC(N-J,
      $                              A(J,J+1), LDA, B(1,J+1), LDB) +
      $                              C(1,J)
                               END DO
                               CALL ZAXPY(N, ALPHA, B, LDB, C, LDC)
-*
-*                          A is not assumed unit triangular
-*
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTC(N-J+1,
      $                              A(J,J), LDA, B(1,J), LDB) +  C(1,J)
                               END DO
                            END IF
                         END IF
-*
-*                    op(A) = A**T
-*                    This is lower triangular
-*
                      ELSE IF (TRANST) THEN
 *
-*                       op(B) = B**H
+*                       op(A) = A**T
+*                       This is lower triangular
 *
                         IF (CONJB) THEN
 *
-*                          A is assumed unit triangular
+*                          op(B) = CONJG(B)
 *
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTC(N-J,
      $                              B(J+1,1), 1, A(J,J+1), LDA) +
      $                              C(1,J)
                               END DO
                               CALL ZACXPY(N, ALPHA, B, 1, C, LDC)
-*
-*                          A is not assumed unit triangular
-*
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTC(N-J+1,
      $                              B(J,1), 1, A(J,J), LDA) +  C(1,J)
                               END DO
                            END IF
-*
-*                       op(B) = B**T
-*
                         ELSE IF (TRANSG) THEN
 *
-*                          A is assumed unit triangular
+*                          op(B) = B**T
 *
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTU(N-J,
      $                              A(J,J+1), LDA, B(J+1,1), 1) +
      $                              C(1,J)
                               END DO
                               CALL ZAXPY(N, ALPHA, B, 1, C, LDC)
-*
-*                          A is not assumed unit triangular
-*
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTU(N-J+1,
      $                              A(J,J), LDA, B(J,1), 1) +  C(1,J)
                               END DO
                            END IF
-*
-*                       op(B) = B
-*
                         ELSE
 *
-*                          A is assumed unit triangular
+*                          op(B) = B
 *
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTU(N-J,
      $                              A(J,J+1), LDA, B(1,J+1), LDB) +
      $                              C(1,J)
                               END DO
                               CALL ZAXPY(N, ALPHA, B, LDB, C, LDC)
-*
-*                          A is not assumed unit triangular
-*
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTU(N-J+1,
      $                              A(J,J), LDA, B(1,J), LDB) +  C(1,J)
                               END DO
                            END IF
                         END IF
-*
-*                    op(A) = A
-*                    This is upper triangular
-*
                      ELSE
 *
-*                       op(B) = B**H
+*                       op(A) = A
+*                       This is upper triangular
 *
                         IF (CONJB) THEN
 *
-*                          A is assumed unit triangular
+*                          op(B) = CONJG(B)
 *
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTC(J-1, B, 1,
      $                              A(1,J), 1) + C(1,J)
                               END DO
                               CALL ZACXPY(N, ALPHA, B, 1, C, LDC)
-*
-*                          A is not assumed unit triangular
-*
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTC(J, B, 1,
      $                              A(1,J), 1) +  C(1,J)
                               END DO
                            END IF
-*
-*                       op(B) = B**T
-*
                         ELSE IF (TRANSG) THEN
 *
-*                          A is assumed unit triangular
+*                          op(B) = B**T
 *
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTU(J-1,
      $                              A(1,J), 1, B, 1) +
      $                              C(1,J)
                               END DO
                               CALL ZAXPY(N, ALPHA, B, 1, C, LDC)
-*
-*                          A is not assumed unit triangular
-*
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTU(J,
      $                              A(1,J), 1, B, 1) +  C(1,J)
                               END DO
                            END IF
-*
-*                       op(B) = B
-*
                         ELSE
 *
-*                          A is assumed unit triangular
+*                          op(B) = B
 *
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTU(J-1,
      $                              A(1,J), 1, B, LDB) +
      $                              C(1,J)
                               END DO
                               CALL ZAXPY(N, ALPHA, B, LDB, C, LDC)
-*
-*                          A is not assumed unit triangular
-*
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTU(J,
      $                              A(1,J), 1, B, LDB) +  C(1,J)
@@ -639,220 +639,220 @@
                            END IF
                         END IF
                      END IF
-*
-*                 A is lower triangular
-*
                   ELSE
 *
-*                    op(A) = A**H
-*                    This is upper triangular
+*                    A is lower triangular
 *
                      IF (CONJA) THEN
 *
-*                       op(B) = B**H
+*                       op(A) = CONJG(A)
+*                       This is upper triangular
 *
                         IF (CONJB) THEN
 *
-*                          A is assumed unit triangular
+*                          op(B) = CONJG(B)
 *
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * CONJG(ZDOTU(J-1,
      $                              B, 1, A(J,1), LDA)) + C(1,J)
                               END DO
                               CALL ZACXPY(N, ALPHA, B, 1, C, LDC)
-*
-*                          A is not assumed unit triangular
-*
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * CONJG(ZDOTU(J, B,
      $                              1, A(J,1), LDA)) + C(1,J)
                               END DO
                            END IF
-*
-*                       op(B) = B**T
-*
                         ELSE IF (TRANSG) THEN
 *
-*                          A is assumed unit triangular
+*                          op(B) = B**T
 *
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTC(J-1,
      $                              A(J,1), LDA, B, 1) + C(1,J)
                               END DO
                               CALL ZAXPY(N, ALPHA, B, 1, C, LDC)
-*
-*                          A is not assumed unit triangular
-*
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTC(J,
      $                              A(J,1), LDA, B, 1) + C(1,J)
                               END DO
                            END IF
-*
-*                       op(B) = B
-*
                         ELSE
 *
-*                          A is assumed unit triangular
+*                          op(B) = B
 *
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTC(J-1,
      $                              A(J,1), LDA, B, LDB) + C(1,J)
                               END DO
                               CALL ZAXPY(N, ALPHA, B, LDB, C, LDC)
-*
-*                          A is not assumed unit triangular
-*
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTC(J,
      $                              A(J,1), LDA, B, LDB) + C(1,J)
                               END DO
                            END IF
                         END IF
-*
-*                    op(A) = A**T
-*                    This is upper triangular
-*
                      ELSE IF (TRANST) THEN
 *
-*                       op(B) = B**H
+*                       op(A) = A**T
+*                       This is upper triangular
 *
                         IF (CONJB) THEN
 *
-*                          A is assumed unit triangular
+*                          op(B) = CONJG(B)
 *
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTC(J-1,
      $                              B, 1, A(J,1), LDA) + C(1,J)
                               END DO
                               CALL ZACXPY(N, ALPHA, B, 1, C, LDC)
-*
-*                          A is not assumed unit triangular
-*
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTC(J, B,
      $                              1, A(J,1), LDA) + C(1,J)
                               END DO
                            END IF
-*
-*                       op(B) = B**T
-*
                         ELSE IF (TRANSG) THEN
 *
-*                          A is assumed unit triangular
+*                          op(B) = B**T
 *
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTU(J-1,
      $                              A(J,1), LDA, B, 1) + C(1,J)
                               END DO
                               CALL ZAXPY(N, ALPHA, B, 1, C, LDC)
-*
-*                          A is not assumed unit triangular
-*
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTU(J,
      $                              A(J,1), LDA, B, 1) + C(1,J)
                               END DO
                            END IF
-*
-*                       op(B) = B
-*
                         ELSE
 *
-*                          A is assumed unit triangular
+*                          op(B) = B
 *
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTU(J-1,
      $                              A(J,1), LDA, B, LDB) + C(1,J)
                               END DO
                               CALL ZAXPY(N, ALPHA, B, LDB, C, LDC)
-*
-*                          A is not assumed unit triangular
-*
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTU(J,
      $                              A(J,1), LDA, B, LDB) + C(1,J)
                               END DO
                            END IF
                         END IF
-*
-*                    op(A) = A
-*                    This is lower triangular
-*
                      ELSE
 *
-*                       op(B) = B**H
+*                       op(A) = A
+*                       This is lower triangular
 *
                         IF (CONJB) THEN
 *
-*                          A is assumed unit triangular
+*                          op(B) = CONJG(B)
 *
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTC(N-J,
      $                              B(J+1,1), 1, A(J+1,J), 1) + C(1,J)
                               END DO
                               CALL ZACXPY(N, ALPHA, B, 1, C, LDC)
-*
-*                          A is not assumed unit triangular
-*
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTC(N-J+1,
      $                              B(J,1), 1, A(J,J), 1) + C(1,J)
                               END DO
                            END IF
-*
-*                       op(B) = B**T
-*
                         ELSE IF (TRANSG) THEN
 *
-*                          A is assumed unit triangular
+*                          op(B) = B**T
 *
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTU(N-J,
      $                              B(J+1,1), 1, A(J+1,J), 1) + C(1,J)
                               END DO
                               CALL ZAXPY(N, ALPHA, B, 1, C, LDC)
-*
-*                          A is not assumed unit triangular
-*
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTU(N-J+1,
      $                              B(J,1), 1, A(J,J), 1) + C(1,J)
                               END DO
                            END IF
-*
-*                       op(B) = B
-*
                         ELSE
 *
-*                          A is assumed unit triangular
+*                          op(B) = B
 *
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTU(N-J,
      $                              B(1,J+1), LDB, A(J+1,J), 1) + C(1,J)
                               END DO
                               CALL ZAXPY(N, ALPHA, B, LDB, C, LDC)
-*
-*                          A is not assumed unit triangular
-*
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO J = 1,N
                                  C(1,J) = ALPHA * ZDOTU(N-J+1,
      $                              B(1,J), LDB, A(J,J), 1) + C(1,J)
@@ -878,13 +878,6 @@
 
             ! If alpha is 0, we are done
             IF (ALPHA.NE.ZERO) THEN
-*
-*              This means we are computing 
-*              C = \alpha op(A) * op(B) + \beta C
-*                 A is also not a scalar and B is either a row
-*                 or column vector. The former if B is transposed
-*                 and the latter otherwise
-*
                IF (TRANSG) THEN
                   INCB = LDB
                ELSE
@@ -892,130 +885,179 @@
                END IF
                IF (LSIDE) THEN
 *
-*                 This means A is upper triangular
+*                 This means we are computing 
+*                 C = \alpha op(A) * op(B) + \beta C
 *
                   IF (UPPER) THEN
 *
-*                    This means op(A) = A**H
+*                    This means A is upper triangular
 *
                      IF (CONJA) THEN
 *
-*                       This means that we must conjugate B
+*                       This means op(A) = CONJG(A)
+*                       This is lower triangular
 *
                         IF (CONJB) THEN
+*
+*                          This means that we must conjugate B
+*
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO I=1,M
                                  C(I,1) = ALPHA*DCONJG(ZDOTU(I-1, B,
      $                              INCB, A(1,I), 1)) + C(I,1)
                               END DO
                               CALL ZACXPY(M, ALPHA, B, INCB, C, 1)
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO I=1,M
                                  C(I,1) = ALPHA*DCONJG(ZDOTU(I, B,
      $                              INCB, A(1,I), 1)) + C(I,1)
                               END DO
                            END IF
-*
-*                       This means that B is not conjugated
-*
                         ELSE
+*
+*                          This means that B is not conjugated
+*
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO I=1,M
                                  C(I,1) = ALPHA*ZDOTC(I-1, A(1,I),
      $                              1, B, INCB) + C(I,1)
                               END DO
                               CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO I=1,M
                                  C(I,1) = ALPHA*ZDOTC(I, A(1,I),
      $                              1, B, INCB) + C(I,1)
                               END DO
                            END IF
                         END IF
-*
-*                    This means op(A) = A**T
-*
                      ELSE IF (TRANST) THEN
 *
-*                       This means that we must conjugate B
+*                       This means op(A) = A**T
+*                       This is lower triangular
 *
                         IF (CONJB) THEN
+*
+*                          This means that we must conjugate B
+*
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO I=1,M
                                  C(I,1) = ALPHA*ZDOTC(I-1, B, INCB,
      $                              A(1,I), 1) + C(I,1)
                               END DO
                               CALL ZACXPY(M, ALPHA, B, INCB, C, 1)
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO I=1,M
                                  C(I,1) = ALPHA*ZDOTC(I, B, INCB,
      $                              A(1,I), 1) + C(I,1)
                               END DO
                            END IF
-*
-*                       This means that B is not conjugated
-*
                         ELSE
+*
+*                          This means that B is not conjugated
+*
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO I=1,M
                                  C(I,1) = ALPHA*ZDOTU(I-1, B, INCB,
      $                              A(1,I), 1) + C(I,1)
                               END DO
                               CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO I=1,M
                                  C(I,1) = ALPHA*ZDOTU(I, B, INCB,
      $                              A(1,I), 1) + C(I,1)
                               END DO
                            END IF
                         END IF
-*
-*                    This means op(A) = A
-*
                      ELSE
 *
-*                       This means that we must conjugate B
+*                       This means op(A) = A
+*                       This is upper triangular
 *
                         IF (CONJB) THEN
+*
+*                          This means that we must conjugate B
+*
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO I=1,M-1
                                  C(I,1) = ALPHA*ZDOTC(M-I, B(1,I+1),
      $                              INCB, A(I,I+1), LDA) + C(I,1)
                               END DO
                               CALL ZACXPY(M, ALPHA, B, INCB, C, 1)
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO I=1,M
                                  C(I,1) = ALPHA*ZDOTC(M-I+1, B(1,I),
      $                              INCB, A(I,I), LDA) + C(I,1)
                               END DO
                            END IF
-*
-*                       This means that B is a row vector but not conjugated
-*
                         ELSE IF (TRANSG) THEN
+*
+*                          This means that B is a row vector but not conjugated
+*
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO I=1,M-1
                                  C(I,1) = ALPHA*ZDOTU(M-I, B(1,I+1),
      $                              INCB, A(I,I+1), LDA) + C(I,1)
                               END DO
                               CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO I=1,M
                                  C(I,1) = ALPHA*ZDOTU(M-I+1, B(1,I),
      $                              INCB, A(I,I), LDA) + C(I,1)
                               END DO
                            END IF
-*
-*                       This means that B is a column vector and not conjugated
-*
                         ELSE
+*
+*                          This means that B is a column vector and not conjugated
+*
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO I=1,M-1
                                  C(I,1) = ALPHA*ZDOTU(M-I, B(I+1,1),
      $                              INCB, A(I,I+1), LDA) + C(I,1)
                               END DO
                               CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO I=1,M
                                  C(I,1) = ALPHA*ZDOTU(M-I+1, B(I,1),
      $                              INCB, A(I,I), LDA) + C(I,1)
@@ -1027,15 +1069,19 @@
 *                 This means A is lower triangular
 *
                   ELSE
-*
-*                    This means op(A) = A**H
-*
                      IF (CONJA) THEN
 *
-*                       This means that we must conjugate B
+*                       This means op(A) = CONJG(A)
+*                       This is upper triangular
 *
                         IF (CONJB) THEN
+*
+*                          This means that we must conjugate B
+*
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO I=1,M-1
                                  C(I,1) = ALPHA*DCONJG(ZDOTU(M-I, 
      $                              B(1,I+1), INCB, A(I+1,I), 1)) 
@@ -1043,92 +1089,126 @@
                               END DO
                               CALL ZACXPY(M, ALPHA, B, INCB, C, 1)
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO I=1,M
                                  C(I,1) = ALPHA*DCONJG(ZDOTU(M-I+1,
      $                              B(1,I), INCB, A(I,I), 1)) 
      &                              + C(I,1)
                               END DO
                            END IF
-*
-*                       This means that B is a row vector but not conjugated
-*
                         ELSE IF (TRANSG) THEN
+*
+*                          This means that B is a row vector but not conjugated
+*
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO I=1,M-1
                                  C(I,1) = ALPHA*ZDOTC(M-I, A(I+1,I),
      $                              1, B(1,I+1), INCB) + C(I,1)
                               END DO
                               CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO I=1,M
                                  C(I,1) = ALPHA*ZDOTC(M-I+1, A(I,I),
      $                              1, B(1,I), INCB) + C(I,1)
                               END DO
                            END IF
-*
-*                       This means that B is a column vector and not conjugated
-*
                         ELSE
+*
+*                          This means that B is a column vector and not conjugated
+*
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO I=1,M-1
                                  C(I,1) = ALPHA*ZDOTC(M-I, A(I+1,I),
      $                              1, B(I+1,1), INCB) + C(I,1)
                               END DO
                               CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO I=1,M
                                  C(I,1) = ALPHA*ZDOTC(M-I+1, A(I,I),
      $                              1, B(I,1), INCB) + C(I,1)
                               END DO
                            END IF
                         END IF
-*
-*                    This means op(A) = A**T
-*
                      ELSE IF (TRANST) THEN
 *
-*                       This means that we must conjugate B
+*                       This means op(A) = A**T
+*                       This is upper triangular
 *
                         IF (CONJB) THEN
+*
+*                          This means that we must conjugate B
+*
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO I=1,M-1
                                  C(I,1) = ALPHA*ZDOTC(M-I, B(1,I+1),
      $                              INCB, A(I+1,I), 1) + C(I,1)
                               END DO
                               CALL ZACXPY(M, ALPHA, B, INCB, C, 1)
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO I=1,M
                                  C(I,1) = ALPHA*ZDOTC(M-I+1, B(1,I),
      $                              INCB, A(I,I), 1) + C(I,1)
                               END DO
                            END IF
-*
-*                       This means that B is a row vector but not conjugated
-*
                         ELSE IF (TRANSG) THEN
+*
+*                          This means that B is a row vector but not conjugated
+*
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO I=1,M-1
                                  C(I,1) = ALPHA*ZDOTU(M-I, B(1,I+1),
      $                              INCB, A(I+1,I), 1) + C(I,1)
                               END DO
                               CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO I=1,M
                                  C(I,1) = ALPHA*ZDOTU(M-I+1, B(1,I),
      $                              INCB, A(I,I), 1) + C(I,1)
                               END DO
                            END IF
-*
-*                       This means that B is a column vector and not conjugated
-*
                         ELSE
+*
+*                          This means that B is a column vector and not conjugated
+*
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO I=1,M-1
                                  C(I,1) = ALPHA*ZDOTU(M-I, B(I+1,1),
      $                              INCB, A(I+1,I), 1) + C(I,1)
                               END DO
                               CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
                            ELSE
+*
+*                             A is not assumed unit triangular
+*
                               DO I=1,M
                                  C(I,1) = ALPHA*ZDOTU(M-I+1, B(I,1),
      $                              INCB, A(I,I), 1) + C(I,1)
@@ -1137,35 +1217,49 @@
                         END IF
 *
 *                    This means op(A) = A
+*                    This is lower triangular[:w
+
 *
                      ELSE
-*
-*                       This means that B is conjugated and transposed
-*
                         IF (CONJB) THEN
+*
+*                          This means that B is conjugated and transposed
+*
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO I=1,M
                                  C(I,1) = ALPHA*ZDOTC(I-1, B, INCB,
      $                              A(I,1), LDA) + C(I,1)
                               END DO
                               CALL ZACXPY(M, ALPHA, B, INCB, C, 1)
                            ELSE 
+*
+*                             A is not assumed unit triangular
+*
                               DO I=1,M
                                  C(I,1) = ALPHA*ZDOTC(I, B, INCB,
      $                              A(I,1), LDA) + C(I,1)
                               END DO
                            END IF
-*
-*                       This means that B is not conjugated
-*
                         ELSE
+*
+*                          This means that B is not conjugated
+*
                            IF (UNIT) THEN
+*
+*                             A is assumed unit triangular
+*
                               DO I=1,M
                                  C(I,1) = ALPHA*ZDOTU(I-1, B, INCB,
      $                              A(I,1), LDA) + C(I,1)
                               END DO
                               CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
                            ELSE 
+*
+*                             A is not assumed unit triangular
+*
                               DO I=1,M
                                  C(I,1) = ALPHA*ZDOTU(I, B, INCB,
      $                              A(I,1), LDA) + C(I,1)
@@ -1174,12 +1268,87 @@
                         END IF
                      END IF
                   END IF
-*
-*              This means we are computing 
-*              C = \alpha op(B) * op(A) + \beta C
-*              Note: This means A is a scalar
-*
                ELSE
+*
+*                 This means we are computing 
+*                 C = \alpha op(B) * op(A) + \beta C
+*                 Note: This means A is a scalar
+*
+                  IF (CONJA) THEN
+*
+*                    This means op(A) = CONJG(A)
+*
+                     IF (CONJB) THEN
+*
+*                       This means we must conjugate B
+*
+                        IF (UNIT) THEN
+*
+*                          A is assumed unit triangular
+*
+                           CALL ZACXPY(M, ALPHA, B, INCB, C, 1)
+                        ELSE
+*
+*                          A is not assumed unit triangular
+*
+                           CALL ZACXPY(M, ALPHA*DCONJG(A(1,1)), B,
+     $                           INCB, C, 1)
+                        END IF
+                     ELSE
+*
+*                       This means B is not conjugated
+*
+                        IF (UNIT) THEN
+*
+*                          A is assumed unit triangular
+*
+                           CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
+                        ELSE
+*
+*                          A is not assumed unit triangular
+*
+                           CALL ZAXPY(M, ALPHA*DCONJG(A(1,1)), B,
+     $                           INCB, C, 1)
+                        END IF
+                     END IF
+                  ELSE
+*
+*                    This means op(A) = A or op(A) = A**T = A
+*
+                     IF (CONJB) THEN
+*
+*                       This means B is conjugated
+*
+                        IF (UNIT) THEN
+*
+*                          A is assumed unit triangular
+*
+                           CALL ZACXPY(M, ALPHA, B, INCB, C, 1)
+                        ELSE
+*
+*                          A is not assumed unit triangular
+*
+                           CALL ZACXPY(M, ALPHA*A(1,1), B, INCB, C,
+     $                           1)
+                        END IF
+                     ELSE
+*
+*                       This means B is not conjugated
+*
+                        IF (UNIT) THEN
+*
+*                          A is assumed unit triangular
+*
+                           CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
+                        ELSE
+*
+*                          A is not assumed unit triangular
+*
+                           CALL ZAXPY(M, ALPHA*A(1,1), B, INCB, C,
+     $                           1)
+                        END IF
+                     END IF
+                  END IF
                END IF
             END IF
             RETURN
