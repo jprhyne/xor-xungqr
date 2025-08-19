@@ -183,7 +183,7 @@
          EXTERNAL          LSAME
 *        ..
 *        .. External Subroutines ..
-         EXTERNAL          DTRMM, DTRMMOOP
+         EXTERNAL          DTRMM, DTRMMOOP, DLASET
 *        ..
 *        .. Local Scalars ..
          INTEGER           K, INFO
