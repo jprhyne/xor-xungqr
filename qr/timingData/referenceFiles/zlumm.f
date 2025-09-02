@@ -135,7 +135,7 @@
       EXTERNAL          LSAME
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL          ZGEMM, ZTRMM, ZLASET
+      EXTERNAL          ZGEMM, ZTRMM, ZLASET, XERBLA
 *     ..
 *     .. Local Scalars ..
       INTEGER           K

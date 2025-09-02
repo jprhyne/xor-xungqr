@@ -7,7 +7,9 @@
          INTEGER     I,J,K,L,MAXMN, II, IJ, O
          LOGICAL   TERMINATE
          COMPLEX*16  TMP
-         DOUBLE PRECISION NORM_F, NORM_ACT
+         DOUBLE PRECISION NORM_F, NORM_ACT, MAX_NORM
+         CHARACTER MAX_SIDE, MAX_TRANSA, MAX_TRANSB, MAX_DIAG,
+     $            MAX_UPLO
          ! Local arrays
          COMPLEX*16, ALLOCATABLE :: A(:,:), B(:,:), C(:,:),
      $            As(:,:), Bs(:,:), Cs(:,:), WORK(:,:)
@@ -22,6 +24,7 @@
          COMPLEX*16 ZERO
          PARAMETER(ZERO=(0.0D+0, 0.0D+0))
          ! Beginning of executable statements
+         MAX_NORM = 0.0D+0
          TERMINATE = .FALSE.
 
          SIDES(1) = 'L'
@@ -147,6 +150,14 @@
      $                     " DIAG=", DIAGS(L)
                         ! Print the error out
                         WRITE(*,*) "Forward error: ", NORM_F
+                        IF (NORM_F .GT. MAX_NORM) THEN
+                           MAX_NORM = NORM_F
+                           MAX_SIDE = SIDES(I)
+                           MAX_UPLO = UPLOS(O)
+                           MAX_DIAG = DIAGS(L)
+                           MAX_TRANSA = TRANSAS(J)
+                           MAX_TRANSB = TRANSBS(K)
+                        END IF
                      END DO
                   END DO
                END DO
@@ -161,6 +172,13 @@
          DEALLOCATE(C)
          DEALLOCATE(Cs)
          DEALLOCATE(WORK)
+
+         ! Print out the largest norm we had for ease of inspection
+         WRITE(*,*) "Largest Relative Error is: ", MAX_NORM
+         WRITE(*,*) "Achieved with the following ZTRMMOOP PARAMETERS"
+                        WRITE(*,*) "Side=",SIDES(I)," UPLO=",UPLOS(O),
+     $                     " TRANSA=",TRANSAS(J)," TRANSB=", TRANSBS(K),
+     $                     " DIAG=", DIAGS(L)
 
       END SUBROUTINE
 

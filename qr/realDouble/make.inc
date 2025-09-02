@@ -30,4 +30,6 @@ FFLAGS=-fimplicit-none -g
 #         AOCL-libFLAME
 #OPTBLAS=-m64  -I"/opt/intel/oneapi/mkl/2023.2.0/include"  -L$(MKLROOT)/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl
 #OPTBLAS=$(AOCLROOT)/lib/libflame.so $(AOCLROOT)/lib/libblis.so
-OPTBLAS=/home/rhynej/AOCL/libflame.a /home/rhynej/AOCL/libblis.a /home/rhynej/AOCL/libaoclutils.a
+#OPTBLAS=/home/rhynej/AOCL/libflame.a /home/rhynej/AOCL/libblis.a /home/rhynej/AOCL/libaoclutils.a
+OPTBLAS=$(MY_LIBS)/optblas/flame/lib/libflame.a $(MY_LIBS)/optblas/blis/lib/libblis.a $(MY_LIBS)/optblas/aocl-utils/lib/libau_cpuid.a \
+		-I$(MY_LIBS)/optblas/aocl-utils/include/Capi/

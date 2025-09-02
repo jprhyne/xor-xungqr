@@ -135,7 +135,7 @@ c     Cost: 2/3 * (n^3 - n)
          EXTERNAL          LSAME
 *        ..
 *        .. External Subroutines ..
-         EXTERNAL          DGEMM, DTRMM, DLASET
+         EXTERNAL          DGEMM, DTRMM, DLASET, XERBLA
 *        ..
 *        .. Local Scalars ..
          INTEGER           K
@@ -269,22 +269,22 @@ c     Cost: 2/3 * (n^3 - n)
 *        A_{22} = \alpha L_{21}*U_{12} + A_{22}
 *
             CALL DGEMM('No Transpose', 'No Transpose', N-K, N-K, K,
-     $               ALPHA, A(K+1,1), LDA, A(1,K+1), LDA, ONE, 
+     $               ALPHA, A(K+1,1), LDA, A(1,K+1), LDA, ONE,
      $               A(K+1,K+1), LDA)
 *
 *        Compute A_{12}
 *
 *        A_{12} = \alpha*L_{11}*U_{12}
 *
-            CALL DTRMM('Left', 'Lower', 'No Transpose', DIAGL, K, N-K,
-     $               ALPHA, A, LDA, A(1,K+1), LDA)
+            CALL DTRMM('Left', 'Lower', 'No Transpose', DIAGL, K,
+     $               N-K, ALPHA, A, LDA, A(1,K+1), LDA)
 *
 *        Compute A_{21}
 *
 *        A_{21} = \alpha*L_{21}*U_{11}
 *
-            CALL DTRMM('Right', 'Upper', 'No Transpose', DIAGU, N-K, K,
-     $               ALPHA, A, LDA, A(K+1,1), LDA)
+            CALL DTRMM('Right', 'Upper', 'No Transpose', DIAGU, N-K,
+     $               K, ALPHA, A, LDA, A(K+1,1), LDA)
 *
 *        Compute A_{11}
 *
@@ -329,15 +329,15 @@ c     Cost: 2/3 * (n^3 - n)
 *
 *        A_{12} = \alpha*U_{12}*L_{22}
 *
-            CALL DTRMM('Right', 'Lower', 'No Transpose', DIAGL, K, N-K,
-     $               ALPHA, A(K+1,K+1), LDA, A(1,K+1), LDA)
+            CALL DTRMM('Right', 'Lower', 'No Transpose', DIAGL, K,
+     $               N-K, ALPHA, A(K+1,K+1), LDA, A(1,K+1), LDA)
 *
 *        Compute A_{21}
 *
 *        A_{21} = \alpha*U_{22}*L_{21}
 *
-            CALL DTRMM('Left', 'Upper', 'No Transpose', DIAGU, N-K, K,
-     $               ALPHA, A(K+1, K+1), LDA, A(K+1,1), LDA)
+            CALL DTRMM('Left', 'Upper', 'No Transpose', DIAGU, N-K,
+     $               K, ALPHA, A(K+1, K+1), LDA, A(K+1,1), LDA)
 *
 *        Compute A_{22}
 *

@@ -215,7 +215,8 @@
       EXTERNAL          LSAME, ZDOTC, ZDOTU
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL          ZGEMM
+      EXTERNAL          ZGEMM, ZAXPY, ZACXPY, 
+     $                  ZSCAL, ZLASET
 *     ..
 *     .. Intrinsic Functions ..
       INTRINSIC         CONJG, MIN
@@ -922,7 +923,7 @@
 *                          A is assumed unit triangular
 *
                            DO I=1,M
-                              C(I,1) = ALPHA*DCONJG(ZDOTU(I-1, B,
+                              C(I,1) = ALPHA*CONJG(ZDOTU(I-1, B,
      $                           INCB, A(1,I), 1)) + C(I,1)
                            END DO
                            CALL ZACXPY(M, ALPHA, B, INCB, C, 1)
@@ -931,7 +932,7 @@
 *                          A is not assumed unit triangular
 *
                            DO I=1,M
-                              C(I,1) = ALPHA*DCONJG(ZDOTU(I, B,
+                              C(I,1) = ALPHA*CONJG(ZDOTU(I, B,
      $                           INCB, A(1,I), 1)) + C(I,1)
                            END DO
                         END IF
@@ -1099,7 +1100,7 @@
 *                          A is assumed unit triangular
 *
                            DO I=1,M-1
-                              C(I,1) = ALPHA*DCONJG(ZDOTU(M-I, 
+                              C(I,1) = ALPHA*CONJG(ZDOTU(M-I, 
      $                           B(1,I+1), INCB, A(I+1,I), 1)) 
      &                           + C(I,1)
                            END DO
@@ -1109,7 +1110,7 @@
 *                          A is not assumed unit triangular
 *
                            DO I=1,M
-                              C(I,1) = ALPHA*DCONJG(ZDOTU(M-I+1,
+                              C(I,1) = ALPHA*CONJG(ZDOTU(M-I+1,
      $                           B(1,I), INCB, A(I,I), 1)) 
      &                           + C(I,1)
                            END DO
@@ -1307,7 +1308,7 @@
 *
 *                       A is not assumed unit triangular
 *
-                        CALL ZACXPY(M, ALPHA*DCONJG(A(1,1)), B,
+                        CALL ZACXPY(M, ALPHA*CONJG(A(1,1)), B,
      $                        INCB, C, 1)
                      END IF
                   ELSE
@@ -1323,7 +1324,7 @@
 *
 *                       A is not assumed unit triangular
 *
-                        CALL ZAXPY(M, ALPHA*DCONJG(A(1,1)), B,
+                        CALL ZAXPY(M, ALPHA*CONJG(A(1,1)), B,
      $                        INCB, C, 1)
                      END IF
                   END IF

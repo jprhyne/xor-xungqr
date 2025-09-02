@@ -1,4 +1,4 @@
-*> \brief \b ZLUMM computes an in place triangular times triangluar matrix multiplication
+*> \brief \b CLUMM computes an in place triangular times triangluar matrix multiplication
 *
 *  =========== DOCUMENTATION ===========
 *
@@ -8,16 +8,16 @@
 *  Definition:
 *  ===========
 *
-*     RECURSIVE SUBROUTINE ZLUMM(SIDEL, DIAGL, DIAGU, N, ALPHA,
+*     RECURSIVE SUBROUTINE CLUMM(SIDEL, DIAGL, DIAGU, N, ALPHA,
 *    $                        A, LDA)
 *
 *     .. Scalar Arguments ..
 *     INTEGER           N, LDA
 *     CHARACTER         SIDEL, DIAGL, DIAGU
-*     COMPLEX*16        ALPHA
+*     COMPLEX           ALPHA
 *
 *     .. Array Arguments ..
-*     COMPLEX*16        A(LDA,*)
+*     COMPLEX           A(LDA,*)
 *     ..
 *
 *> \par Purpose:
@@ -25,7 +25,7 @@
 *>
 *> \verbatim
 *>
-*> ZLUMM performs one of the matrix-matrix operations
+*> CLUMM performs one of the matrix-matrix operations
 *>
 *>                C = \alpha L * U
 *>                      or
@@ -82,7 +82,7 @@
 *>
 *> \param[in] ALPHA
 *> \verbatim
-*>          ALPHA is COMPLEX*16      .
+*>          ALPHA is COMPLEX         .
 *>           On entry, ALPHA specifies the scalar alpha. When alpha is
 *>           zero then A is not referenced, and A need not
 *>           be set before entry.
@@ -90,7 +90,7 @@
 *>
 *> \param[in] A
 *> \verbatim
-*>          A is COMPLEX*16 array, dimension ( LDA, N ) where
+*>          A is COMPLEX array, dimension ( LDA, N ) where
 *>           Before entry the leading n-by-n strictly upper triangular part of the array
 *>           A must contain the upper triangular matrix U and the strictly lower triangular part of
 *>           the leading n-by-n submatrix must contain the lower triangular matrix L.
@@ -116,16 +116,16 @@
 *
 *  =====================================================================
 *     Cost: 2/3 * (n^3 - n)
-      RECURSIVE SUBROUTINE ZLUMM(SIDEL, DIAGL, DIAGU, N, ALPHA,
+      RECURSIVE SUBROUTINE CLUMM(SIDEL, DIAGL, DIAGU, N, ALPHA,
      $                        A, LDA)
 *
 *        .. Scalar Arguments ..
          INTEGER           N, LDA
          CHARACTER         SIDEL, DIAGL, DIAGU
-         COMPLEX*16        ALPHA
+         COMPLEX           ALPHA
 *
 *        .. Array Arguments ..
-         COMPLEX*16        A(LDA,*)
+         COMPLEX           A(LDA,*)
 *        ..
 *
 *  =====================================================================
@@ -135,15 +135,16 @@
       EXTERNAL          LSAME
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL          ZGEMM, ZTRMM, ZLASET
+      EXTERNAL          CGEMM, CTRMM, CLASET,
+     $                  XERBLA
 *     ..
 *     .. Local Scalars ..
       INTEGER           K
       LOGICAL           LLEFT, LUNIT, UUNIT
 *     ..
 *     .. Local Parameters ..
-      COMPLEX*16        ONE, ZERO
-      PARAMETER(ONE=(1.0D+0,0.0D+0), ZERO=(0.0D+0,0.0D+0))
+      COMPLEX           ONE, ZERO
+      PARAMETER(ONE=(1.0E+0,0.0E+0), ZERO=(0.0E+0,0.0E+0))
 *     ..
 *
 *     Determine if our flags are valid or not. We can have at
@@ -163,7 +164,7 @@
 *     We say the error is in the last set DIAG value as we cannot know
 *     what the user actually meant.
 *
-         CALL XERBLA( 'ZLUMM', 3 )
+         CALL XERBLA( 'CLUMM', 3 )
          RETURN
       END IF
 *
@@ -177,7 +178,7 @@
          RETURN
       END IF
       IF (ALPHA.EQ.ZERO) THEN
-         CALL ZLASET('All', N, N, ZERO, ZERO, A, LDA)
+         CALL CLASET('All', N, N, ZERO, ZERO, A, LDA)
          RETURN
       END IF
 *
@@ -263,12 +264,12 @@
 *
 *     A_{22} = \alpha*L_{22}*U_{22}
 *
-         CALL ZLUMM(SIDEL, DIAGL, DIAGU, N-K, ALPHA,
+         CALL CLUMM(SIDEL, DIAGL, DIAGU, N-K, ALPHA,
      $            A(K+1, K+1), LDA)
 *
 *     A_{22} = \alpha L_{21}*U_{12} + A_{22}
 *
-         CALL ZGEMM('No Transpose', 'No Transpose', N-K, N-K, K,
+         CALL CGEMM('No Transpose', 'No Transpose', N-K, N-K, K,
      $            ALPHA, A(K+1,1), LDA, A(1,K+1), LDA, ONE, A(K+1,K+1),
      $            LDA)
 *
@@ -276,21 +277,21 @@
 *
 *     A_{12} = \alpha*L_{11}*U_{12}
 *
-         CALL ZTRMM('Left', 'Lower', 'No Transpose', DIAGL, K, N-K,
+         CALL CTRMM('Left', 'Lower', 'No Transpose', DIAGL, K, N-K,
      $            ALPHA, A, LDA, A(1,K+1), LDA)
 *
 *     Compute A_{21}
 *
 *     A_{21} = \alpha*L_{21}*U_{11}
 *
-         CALL ZTRMM('Right', 'Upper', 'No Transpose', DIAGU, N-K, K,
+         CALL CTRMM('Right', 'Upper', 'No Transpose', DIAGU, N-K, K,
      $            ALPHA, A, LDA, A(K+1,1), LDA)
 *
 *     Compute A_{11}
 *
 *     A_{11} = \alpha*L_{11}*U_{11}
 *
-         CALL ZLUMM(SIDEL, DIAGL, DIAGU, K, ALPHA, A, LDA)
+         CALL CLUMM(SIDEL, DIAGL, DIAGU, K, ALPHA, A, LDA)
       ELSE
 *
 *     This means we are computing
@@ -318,32 +319,32 @@
 *
 *     A_{11} = \alpha*U_{11}*L_{11}
 *
-         CALL ZLUMM(SIDEL, DIAGL, DIAGU, K, ALPHA, A, LDA)
+         CALL CLUMM(SIDEL, DIAGL, DIAGU, K, ALPHA, A, LDA)
 *
 *     A_{11} = \alpha*U_{12}*L_{21} + A_{11}
 *
-         CALL ZGEMM('No Transpose', 'No Transpose', K, K, N-K,
+         CALL CGEMM('No Transpose', 'No Transpose', K, K, N-K,
      $            ALPHA, A(1,K+1), LDA, A(K+1,1), LDA, ONE, A, LDA)
 *
 *     Compute A_{12}
 *
 *     A_{12} = \alpha*U_{12}*L_{22}
 *
-         CALL ZTRMM('Right', 'Lower', 'No Transpose', DIAGL, K, N-K,
+         CALL CTRMM('Right', 'Lower', 'No Transpose', DIAGL, K, N-K,
      $            ALPHA, A(K+1,K+1), LDA, A(1,K+1), LDA)
 *
 *     Compute A_{21}
 *
 *     A_{21} = \alpha*U_{22}*L_{21}
 *
-         CALL ZTRMM('Left', 'Upper', 'No Transpose', DIAGU, N-K, K,
+         CALL CTRMM('Left', 'Upper', 'No Transpose', DIAGU, N-K, K,
      $            ALPHA, A(K+1, K+1), LDA, A(K+1,1), LDA)
 *
 *     Compute A_{22}
 *
 *     A_{22} = \alpha*U_{22}*L_{22}
 *
-         CALL ZLUMM(SIDEL, DIAGL, DIAGU, N-K, ALPHA,
+         CALL CLUMM(SIDEL, DIAGL, DIAGU, N-K, ALPHA,
      $               A(K+1, K+1), LDA)
       END IF
       END SUBROUTINE

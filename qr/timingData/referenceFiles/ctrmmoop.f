@@ -1,4 +1,4 @@
-*> \brief \b ZTRMMOOP computes an out of place triangular times general matrix multiplication
+*> \brief \b CTRMMOOP computes an out of place triangular times general matrix multiplication
 *
 *  =========== DOCUMENTATION ===========
 *
@@ -8,16 +8,16 @@
 *  Definition:
 *  ===========
 *
-*     RECURSIVE SUBROUTINE ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB,
+*     RECURSIVE SUBROUTINE CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB,
 *    $         DIAG, M, N, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
 *
 *        .. Scalar Arguments ..
-*        COMPLEX*16        ALPHA, BETA
+*        COMPLEX           ALPHA, BETA
 *        INTEGER           M, N, LDA, LDB, LDC
 *        CHARACTER         SIDE, UPLO, TRANSA, TRANSB, DIAG
 *        ..
 *        .. Array Arguments ..
-*        COMPLEX*16        A(LDA,*), B(LDB,*), C(LDC,*)
+*        COMPLEX           A(LDA,*), B(LDB,*), C(LDC,*)
 *        ..
 *
 *> \par Purpose:
@@ -25,7 +25,7 @@
 *>
 *> \verbatim
 *>
-*> ZTRMMOOP performs one of the matrix-matrix operations
+*> CTRMMOOP performs one of the matrix-matrix operations
 *>
 *>       C = \alpha op(A) * op(B) + \beta C
 *>                      or
@@ -114,7 +114,7 @@
 *>
 *> \param[in] ALPHA
 *> \verbatim
-*>          ALPHA is COMPLEX*16.
+*>          ALPHA is COMPLEX   .
 *>           On entry, ALPHA specifies the scalar alpha. When alpha is
 *>           zero then A and B are not referenced, and A and B need not
 *>           be set before entry.
@@ -122,7 +122,7 @@
 *>
 *> \param[in] A
 *> \verbatim
-*>          A is COMPLEX*16 array, dimension ( LDA, K ) where
+*>          A is COMPLEX array, dimension ( LDA, K ) where
 *>           K is M when SIDE = 'L' and K is N when SIDE='R'
 *>           Before entry with UPLO = 'U' or 'u', the leading k-by-k
 *>           upper triangular part of the array A must contain the upper
@@ -147,7 +147,7 @@
 *>
 *> \param[in] B
 *> \verbatim
-*>           B is COMPLEX*16 array, dimension ( LDB, K ), where K is M
+*>           B is COMPLEX array, dimension ( LDB, K ), where K is M
 *>           If SIDE='R' and TRANSA='N', or SIDE='L' and TRANSA='T' and N
 *>           otherwise. On entry, the leading k-by-k submatrix must contain
 *>           B.
@@ -164,7 +164,7 @@
 *>
 *> \param[in] BETA
 *> \verbatim
-*>          BETA is COMPLEX*16.
+*>          BETA is COMPLEX   .
 *>           On entry, BETA specifies the scalar beta. When beta is
 *>           zero then C is not referenced on entry, and C need not
 *>           be set before entry.
@@ -172,7 +172,7 @@
 *>
 *> \param[in,out] C
 *> \verbatim
-*>          C is COMPLEX*16 array, dimension ( LDC, N )
+*>          C is COMPLEX array, dimension ( LDC, N )
 *>           Before entry, the leading m-by-n part of the array C must
 *>           contain the matrix C, and on exit is overwritten by the
 *>           transformed matrix.
@@ -195,27 +195,28 @@
 *> \author NAG Ltd.
 *
 *  =====================================================================
-      RECURSIVE SUBROUTINE ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB,
+      RECURSIVE SUBROUTINE CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB,
      $         DIAG, M, N, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
 *
 *     .. Scalar Arguments ..
-      COMPLEX*16        ALPHA, BETA
+      COMPLEX           ALPHA, BETA
       INTEGER           M, N, LDA, LDB, LDC
       CHARACTER         SIDE, UPLO, TRANSA, TRANSB, DIAG
 *     ..
 *     .. Array Arguments ..
-      COMPLEX*16        A(LDA,*), B(LDB,*), C(LDC,*)
+      COMPLEX           A(LDA,*), B(LDB,*), C(LDC,*)
 *     ..
 *
 *  =====================================================================
 *
 *     .. External Functions ..
       LOGICAL           LSAME
-      COMPLEX*16        ZDOTC, ZDOTU
-      EXTERNAL          LSAME, ZDOTC, ZDOTU
+      COMPLEX           CDOTC, CDOTU
+      EXTERNAL          LSAME, CDOTC, CDOTU
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL          ZGEMM
+      EXTERNAL          CGEMM, CAXPY, CACXPY, 
+     $                  CSCAL, CLASET
 *     ..
 *     .. Intrinsic Functions ..
       INTRINSIC         CONJG, MIN
@@ -226,8 +227,8 @@
      $                  CONJA, CONJB
 *     ..
 *     .. Local Parameters ..
-      COMPLEX*16        ONE, ZERO
-      PARAMETER(ONE=(1.0D+0,0.0D+0), ZERO=(0.0D+0,0.0D+0))
+      COMPLEX           ONE, ZERO
+      PARAMETER(ONE=(1.0E+0,0.0E+0), ZERO=(0.0E+0,0.0E+0))
 *     ..
 *
 *     Beginning of Executable Statements
@@ -302,9 +303,9 @@
 *
 *           This ensures we don't reference C unless we need to
 *
-            CALL ZLASET('All', M, N, ZERO, ZERO, C, LDC)
+            CALL CLASET('All', M, N, ZERO, ZERO, C, LDC)
          ELSE
-            CALL ZSCAL(N, BETA, C, LDC)
+            CALL CSCAL(N, BETA, C, LDC)
          END IF
          IF (ALPHA.NE.ZERO) THEN
             IF (LSIDE) THEN
@@ -324,12 +325,12 @@
 *
 *                       A is assumed unit triangular
 *
-                        CALL ZACXPY(N, ALPHA, B, 1, C, LDC)
+                        CALL CACXPY(N, ALPHA, B, 1, C, LDC)
                      ELSE
 *
 *                       A is not assumed unit triangular
 *
-                        CALL ZACXPY(N, ALPHA*CONJG(A(1,1)), B, 1,
+                        CALL CACXPY(N, ALPHA*CONJG(A(1,1)), B, 1,
      $                        C, LDC)
                      END IF
                   ELSE IF (TRANSG) THEN
@@ -340,12 +341,12 @@
 *
 *                       A is assumed unit triangular
 *
-                        CALL ZAXPY(N, ALPHA, B, 1, C, LDC)
+                        CALL CAXPY(N, ALPHA, B, 1, C, LDC)
                      ELSE
 *
 *                       A is not assumed unit triangular
 *
-                        CALL ZAXPY(N, ALPHA*CONJG(A(1,1)), B, 1,
+                        CALL CAXPY(N, ALPHA*CONJG(A(1,1)), B, 1,
      $                        C, LDC)
                      END IF
                   ELSE
@@ -356,12 +357,12 @@
 *
 *                       A is assumed unit triangular
 *
-                        CALL ZAXPY(N, ALPHA, B, LDB, C, LDC)
+                        CALL CAXPY(N, ALPHA, B, LDB, C, LDC)
                      ELSE
 *
 *                       A is not assumed unit triangular
 *
-                        CALL ZAXPY(N, ALPHA*CONJG(A(1,1)), B,
+                        CALL CAXPY(N, ALPHA*CONJG(A(1,1)), B,
      $                        LDB, C, LDC)
                      END IF
                   END IF
@@ -377,12 +378,12 @@
 *
 *                       A is assumed unit triangular
 *
-                        CALL ZACXPY(N, ALPHA, B, 1, C, LDC)
+                        CALL CACXPY(N, ALPHA, B, 1, C, LDC)
                      ELSE
 *
 *                       A is not assumed unit triangular
 *
-                        CALL ZACXPY(N, ALPHA*A(1,1), B, 1,
+                        CALL CACXPY(N, ALPHA*A(1,1), B, 1,
      $                        C, LDC)
                      END IF
                   ELSE IF (TRANSG) THEN
@@ -393,12 +394,12 @@
 *
 *                       A is assumed unit triangular
 *
-                        CALL ZAXPY(N, ALPHA, B, 1, C, LDC)
+                        CALL CAXPY(N, ALPHA, B, 1, C, LDC)
                      ELSE
 *
 *                       A is not assumed unit triangular
 *
-                        CALL ZAXPY(N, ALPHA*A(1,1), B, 1, C, LDC)
+                        CALL CAXPY(N, ALPHA*A(1,1), B, 1, C, LDC)
                      END IF
                   ELSE
 *
@@ -408,12 +409,12 @@
 *
 *                       A is assumed unit triangular
 *
-                        CALL ZAXPY(N, ALPHA, B, LDB, C, LDC)
+                        CALL CAXPY(N, ALPHA, B, LDB, C, LDC)
                      ELSE
 *
 *                       A is not assumed unit triangular
 *
-                        CALL ZAXPY(N, ALPHA*A(1,1), B, LDB,
+                        CALL CAXPY(N, ALPHA*A(1,1), B, LDB,
      $                        C, LDC)
                      END IF
                   END IF
@@ -440,17 +441,17 @@
 *                          A is assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * CONJG(ZDOTU(N-J,
+                              C(1,J) = ALPHA * CONJG(CDOTU(N-J,
      $                           A(J,J+1), LDA, B(J+1,1), 1)) +
      $                           C(1,J)
                            END DO
-                           CALL ZACXPY(N, ALPHA, B, 1, C, LDC)
+                           CALL CACXPY(N, ALPHA, B, 1, C, LDC)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * CONJG(ZDOTU(N-J+1,
+                              C(1,J) = ALPHA * CONJG(CDOTU(N-J+1,
      $                           A(J,J), LDA, B(J,1), 1)) +  C(1,J)
                            END DO
                         END IF
@@ -463,17 +464,17 @@
 *                          A is assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTC(N-J,
+                              C(1,J) = ALPHA * CDOTC(N-J,
      $                           A(J,J+1), LDA, B(J+1,1), 1) +
      $                           C(1,J)
                            END DO
-                           CALL ZAXPY(N, ALPHA, B, 1, C, LDC)
+                           CALL CAXPY(N, ALPHA, B, 1, C, LDC)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTC(N-J+1,
+                              C(1,J) = ALPHA * CDOTC(N-J+1,
      $                           A(J,J), LDA, B(J,1), 1) +  C(1,J)
                            END DO
                         END IF
@@ -486,17 +487,17 @@
 *                          A is assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTC(N-J,
+                              C(1,J) = ALPHA * CDOTC(N-J,
      $                           A(J,J+1), LDA, B(1,J+1), LDB) +
      $                           C(1,J)
                            END DO
-                           CALL ZAXPY(N, ALPHA, B, LDB, C, LDC)
+                           CALL CAXPY(N, ALPHA, B, LDB, C, LDC)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTC(N-J+1,
+                              C(1,J) = ALPHA * CDOTC(N-J+1,
      $                           A(J,J), LDA, B(1,J), LDB) +  C(1,J)
                            END DO
                         END IF
@@ -515,17 +516,17 @@
 *                          A is assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTC(N-J,
+                              C(1,J) = ALPHA * CDOTC(N-J,
      $                           B(J+1,1), 1, A(J,J+1), LDA) +
      $                           C(1,J)
                            END DO
-                           CALL ZACXPY(N, ALPHA, B, 1, C, LDC)
+                           CALL CACXPY(N, ALPHA, B, 1, C, LDC)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTC(N-J+1,
+                              C(1,J) = ALPHA * CDOTC(N-J+1,
      $                           B(J,1), 1, A(J,J), LDA) +  C(1,J)
                            END DO
                         END IF
@@ -538,17 +539,17 @@
 *                          A is assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTU(N-J,
+                              C(1,J) = ALPHA * CDOTU(N-J,
      $                           A(J,J+1), LDA, B(J+1,1), 1) +
      $                           C(1,J)
                            END DO
-                           CALL ZAXPY(N, ALPHA, B, 1, C, LDC)
+                           CALL CAXPY(N, ALPHA, B, 1, C, LDC)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTU(N-J+1,
+                              C(1,J) = ALPHA * CDOTU(N-J+1,
      $                           A(J,J), LDA, B(J,1), 1) +  C(1,J)
                            END DO
                         END IF
@@ -561,17 +562,17 @@
 *                          A is assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTU(N-J,
+                              C(1,J) = ALPHA * CDOTU(N-J,
      $                           A(J,J+1), LDA, B(1,J+1), LDB) +
      $                           C(1,J)
                            END DO
-                           CALL ZAXPY(N, ALPHA, B, LDB, C, LDC)
+                           CALL CAXPY(N, ALPHA, B, LDB, C, LDC)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTU(N-J+1,
+                              C(1,J) = ALPHA * CDOTU(N-J+1,
      $                           A(J,J), LDA, B(1,J), LDB) +  C(1,J)
                            END DO
                         END IF
@@ -590,16 +591,16 @@
 *                          A is assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTC(J-1, B, 1,
+                              C(1,J) = ALPHA * CDOTC(J-1, B, 1,
      $                           A(1,J), 1) + C(1,J)
                            END DO
-                           CALL ZACXPY(N, ALPHA, B, 1, C, LDC)
+                           CALL CACXPY(N, ALPHA, B, 1, C, LDC)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTC(J, B, 1,
+                              C(1,J) = ALPHA * CDOTC(J, B, 1,
      $                           A(1,J), 1) +  C(1,J)
                            END DO
                         END IF
@@ -612,17 +613,17 @@
 *                          A is assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTU(J-1,
+                              C(1,J) = ALPHA * CDOTU(J-1,
      $                           A(1,J), 1, B, 1) +
      $                           C(1,J)
                            END DO
-                           CALL ZAXPY(N, ALPHA, B, 1, C, LDC)
+                           CALL CAXPY(N, ALPHA, B, 1, C, LDC)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTU(J,
+                              C(1,J) = ALPHA * CDOTU(J,
      $                           A(1,J), 1, B, 1) +  C(1,J)
                            END DO
                         END IF
@@ -635,17 +636,17 @@
 *                          A is assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTU(J-1,
+                              C(1,J) = ALPHA * CDOTU(J-1,
      $                           A(1,J), 1, B, LDB) +
      $                           C(1,J)
                            END DO
-                           CALL ZAXPY(N, ALPHA, B, LDB, C, LDC)
+                           CALL CAXPY(N, ALPHA, B, LDB, C, LDC)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTU(J,
+                              C(1,J) = ALPHA * CDOTU(J,
      $                           A(1,J), 1, B, LDB) +  C(1,J)
                            END DO
                         END IF
@@ -669,16 +670,16 @@
 *                          A is assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * CONJG(ZDOTU(J-1,
+                              C(1,J) = ALPHA * CONJG(CDOTU(J-1,
      $                           B, 1, A(J,1), LDA)) + C(1,J)
                            END DO
-                           CALL ZACXPY(N, ALPHA, B, 1, C, LDC)
+                           CALL CACXPY(N, ALPHA, B, 1, C, LDC)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * CONJG(ZDOTU(J, B,
+                              C(1,J) = ALPHA * CONJG(CDOTU(J, B,
      $                           1, A(J,1), LDA)) + C(1,J)
                            END DO
                         END IF
@@ -691,16 +692,16 @@
 *                          A is assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTC(J-1,
+                              C(1,J) = ALPHA * CDOTC(J-1,
      $                           A(J,1), LDA, B, 1) + C(1,J)
                            END DO
-                           CALL ZAXPY(N, ALPHA, B, 1, C, LDC)
+                           CALL CAXPY(N, ALPHA, B, 1, C, LDC)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTC(J,
+                              C(1,J) = ALPHA * CDOTC(J,
      $                           A(J,1), LDA, B, 1) + C(1,J)
                            END DO
                         END IF
@@ -713,16 +714,16 @@
 *                          A is assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTC(J-1,
+                              C(1,J) = ALPHA * CDOTC(J-1,
      $                           A(J,1), LDA, B, LDB) + C(1,J)
                            END DO
-                           CALL ZAXPY(N, ALPHA, B, LDB, C, LDC)
+                           CALL CAXPY(N, ALPHA, B, LDB, C, LDC)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTC(J,
+                              C(1,J) = ALPHA * CDOTC(J,
      $                           A(J,1), LDA, B, LDB) + C(1,J)
                            END DO
                         END IF
@@ -741,16 +742,16 @@
 *                          A is assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTC(J-1,
+                              C(1,J) = ALPHA * CDOTC(J-1,
      $                           B, 1, A(J,1), LDA) + C(1,J)
                            END DO
-                           CALL ZACXPY(N, ALPHA, B, 1, C, LDC)
+                           CALL CACXPY(N, ALPHA, B, 1, C, LDC)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTC(J, B,
+                              C(1,J) = ALPHA * CDOTC(J, B,
      $                           1, A(J,1), LDA) + C(1,J)
                            END DO
                         END IF
@@ -763,16 +764,16 @@
 *                          A is assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTU(J-1,
+                              C(1,J) = ALPHA * CDOTU(J-1,
      $                           A(J,1), LDA, B, 1) + C(1,J)
                            END DO
-                           CALL ZAXPY(N, ALPHA, B, 1, C, LDC)
+                           CALL CAXPY(N, ALPHA, B, 1, C, LDC)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTU(J,
+                              C(1,J) = ALPHA * CDOTU(J,
      $                           A(J,1), LDA, B, 1) + C(1,J)
                            END DO
                         END IF
@@ -785,16 +786,16 @@
 *                          A is assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTU(J-1,
+                              C(1,J) = ALPHA * CDOTU(J-1,
      $                           A(J,1), LDA, B, LDB) + C(1,J)
                            END DO
-                           CALL ZAXPY(N, ALPHA, B, LDB, C, LDC)
+                           CALL CAXPY(N, ALPHA, B, LDB, C, LDC)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTU(J,
+                              C(1,J) = ALPHA * CDOTU(J,
      $                           A(J,1), LDA, B, LDB) + C(1,J)
                            END DO
                         END IF
@@ -813,16 +814,16 @@
 *                          A is assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTC(N-J,
+                              C(1,J) = ALPHA * CDOTC(N-J,
      $                           B(J+1,1), 1, A(J+1,J), 1) + C(1,J)
                            END DO
-                           CALL ZACXPY(N, ALPHA, B, 1, C, LDC)
+                           CALL CACXPY(N, ALPHA, B, 1, C, LDC)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTC(N-J+1,
+                              C(1,J) = ALPHA * CDOTC(N-J+1,
      $                           B(J,1), 1, A(J,J), 1) + C(1,J)
                            END DO
                         END IF
@@ -835,16 +836,16 @@
 *                          A is assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTU(N-J,
+                              C(1,J) = ALPHA * CDOTU(N-J,
      $                           B(J+1,1), 1, A(J+1,J), 1) + C(1,J)
                            END DO
-                           CALL ZAXPY(N, ALPHA, B, 1, C, LDC)
+                           CALL CAXPY(N, ALPHA, B, 1, C, LDC)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTU(N-J+1,
+                              C(1,J) = ALPHA * CDOTU(N-J+1,
      $                           B(J,1), 1, A(J,J), 1) + C(1,J)
                            END DO
                         END IF
@@ -857,16 +858,16 @@
 *                          A is assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTU(N-J,
+                              C(1,J) = ALPHA * CDOTU(N-J,
      $                           B(1,J+1), LDB, A(J+1,J), 1) + C(1,J)
                            END DO
-                           CALL ZAXPY(N, ALPHA, B, LDB, C, LDC)
+                           CALL CAXPY(N, ALPHA, B, LDB, C, LDC)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO J = 1,N
-                              C(1,J) = ALPHA * ZDOTU(N-J+1,
+                              C(1,J) = ALPHA * CDOTU(N-J+1,
      $                           B(1,J), LDB, A(J,J), 1) + C(1,J)
                            END DO
                         END IF
@@ -885,9 +886,9 @@
 *
 *           This ensures we don't reference C unless we need to
 *
-            CALL ZLASET('All', M, N, ZERO, ZERO, C, LDC)
+            CALL CLASET('All', M, N, ZERO, ZERO, C, LDC)
          ELSE
-            CALL ZSCAL(M, BETA, C, 1)
+            CALL CSCAL(M, BETA, C, 1)
          END IF
 
 *
@@ -922,16 +923,16 @@
 *                          A is assumed unit triangular
 *
                            DO I=1,M
-                              C(I,1) = ALPHA*DCONJG(ZDOTU(I-1, B,
+                              C(I,1) = ALPHA*CONJG(CDOTU(I-1, B,
      $                           INCB, A(1,I), 1)) + C(I,1)
                            END DO
-                           CALL ZACXPY(M, ALPHA, B, INCB, C, 1)
+                           CALL CACXPY(M, ALPHA, B, INCB, C, 1)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO I=1,M
-                              C(I,1) = ALPHA*DCONJG(ZDOTU(I, B,
+                              C(I,1) = ALPHA*CONJG(CDOTU(I, B,
      $                           INCB, A(1,I), 1)) + C(I,1)
                            END DO
                         END IF
@@ -944,16 +945,16 @@
 *                          A is assumed unit triangular
 *
                            DO I=1,M
-                              C(I,1) = ALPHA*ZDOTC(I-1, A(1,I),
+                              C(I,1) = ALPHA*CDOTC(I-1, A(1,I),
      $                           1, B, INCB) + C(I,1)
                            END DO
-                           CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
+                           CALL CAXPY(M, ALPHA, B, INCB, C, 1)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO I=1,M
-                              C(I,1) = ALPHA*ZDOTC(I, A(1,I),
+                              C(I,1) = ALPHA*CDOTC(I, A(1,I),
      $                           1, B, INCB) + C(I,1)
                            END DO
                         END IF
@@ -972,16 +973,16 @@
 *                          A is assumed unit triangular
 *
                            DO I=1,M
-                              C(I,1) = ALPHA*ZDOTC(I-1, B, INCB,
+                              C(I,1) = ALPHA*CDOTC(I-1, B, INCB,
      $                           A(1,I), 1) + C(I,1)
                            END DO
-                           CALL ZACXPY(M, ALPHA, B, INCB, C, 1)
+                           CALL CACXPY(M, ALPHA, B, INCB, C, 1)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO I=1,M
-                              C(I,1) = ALPHA*ZDOTC(I, B, INCB,
+                              C(I,1) = ALPHA*CDOTC(I, B, INCB,
      $                           A(1,I), 1) + C(I,1)
                            END DO
                         END IF
@@ -994,16 +995,16 @@
 *                          A is assumed unit triangular
 *
                            DO I=1,M
-                              C(I,1) = ALPHA*ZDOTU(I-1, B, INCB,
+                              C(I,1) = ALPHA*CDOTU(I-1, B, INCB,
      $                           A(1,I), 1) + C(I,1)
                            END DO
-                           CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
+                           CALL CAXPY(M, ALPHA, B, INCB, C, 1)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO I=1,M
-                              C(I,1) = ALPHA*ZDOTU(I, B, INCB,
+                              C(I,1) = ALPHA*CDOTU(I, B, INCB,
      $                           A(1,I), 1) + C(I,1)
                            END DO
                         END IF
@@ -1022,16 +1023,16 @@
 *                          A is assumed unit triangular
 *
                            DO I=1,M-1
-                              C(I,1) = ALPHA*ZDOTC(M-I, B(1,I+1),
+                              C(I,1) = ALPHA*CDOTC(M-I, B(1,I+1),
      $                           INCB, A(I,I+1), LDA) + C(I,1)
                            END DO
-                           CALL ZACXPY(M, ALPHA, B, INCB, C, 1)
+                           CALL CACXPY(M, ALPHA, B, INCB, C, 1)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO I=1,M
-                              C(I,1) = ALPHA*ZDOTC(M-I+1, B(1,I),
+                              C(I,1) = ALPHA*CDOTC(M-I+1, B(1,I),
      $                           INCB, A(I,I), LDA) + C(I,1)
                            END DO
                         END IF
@@ -1044,16 +1045,16 @@
 *                          A is assumed unit triangular
 *
                            DO I=1,M-1
-                              C(I,1) = ALPHA*ZDOTU(M-I, B(1,I+1),
+                              C(I,1) = ALPHA*CDOTU(M-I, B(1,I+1),
      $                           INCB, A(I,I+1), LDA) + C(I,1)
                            END DO
-                           CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
+                           CALL CAXPY(M, ALPHA, B, INCB, C, 1)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO I=1,M
-                              C(I,1) = ALPHA*ZDOTU(M-I+1, B(1,I),
+                              C(I,1) = ALPHA*CDOTU(M-I+1, B(1,I),
      $                           INCB, A(I,I), LDA) + C(I,1)
                            END DO
                         END IF
@@ -1066,16 +1067,16 @@
 *                          A is assumed unit triangular
 *
                            DO I=1,M-1
-                              C(I,1) = ALPHA*ZDOTU(M-I, B(I+1,1),
+                              C(I,1) = ALPHA*CDOTU(M-I, B(I+1,1),
      $                           INCB, A(I,I+1), LDA) + C(I,1)
                            END DO
-                           CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
+                           CALL CAXPY(M, ALPHA, B, INCB, C, 1)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO I=1,M
-                              C(I,1) = ALPHA*ZDOTU(M-I+1, B(I,1),
+                              C(I,1) = ALPHA*CDOTU(M-I+1, B(I,1),
      $                           INCB, A(I,I), LDA) + C(I,1)
                            END DO
                         END IF
@@ -1099,17 +1100,17 @@
 *                          A is assumed unit triangular
 *
                            DO I=1,M-1
-                              C(I,1) = ALPHA*DCONJG(ZDOTU(M-I, 
+                              C(I,1) = ALPHA*CONJG(CDOTU(M-I, 
      $                           B(1,I+1), INCB, A(I+1,I), 1)) 
      &                           + C(I,1)
                            END DO
-                           CALL ZACXPY(M, ALPHA, B, INCB, C, 1)
+                           CALL CACXPY(M, ALPHA, B, INCB, C, 1)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO I=1,M
-                              C(I,1) = ALPHA*DCONJG(ZDOTU(M-I+1,
+                              C(I,1) = ALPHA*CONJG(CDOTU(M-I+1,
      $                           B(1,I), INCB, A(I,I), 1)) 
      &                           + C(I,1)
                            END DO
@@ -1123,16 +1124,16 @@
 *                          A is assumed unit triangular
 *
                            DO I=1,M-1
-                              C(I,1) = ALPHA*ZDOTC(M-I, A(I+1,I),
+                              C(I,1) = ALPHA*CDOTC(M-I, A(I+1,I),
      $                           1, B(1,I+1), INCB) + C(I,1)
                            END DO
-                           CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
+                           CALL CAXPY(M, ALPHA, B, INCB, C, 1)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO I=1,M
-                              C(I,1) = ALPHA*ZDOTC(M-I+1, A(I,I),
+                              C(I,1) = ALPHA*CDOTC(M-I+1, A(I,I),
      $                           1, B(1,I), INCB) + C(I,1)
                            END DO
                         END IF
@@ -1145,16 +1146,16 @@
 *                          A is assumed unit triangular
 *
                            DO I=1,M-1
-                              C(I,1) = ALPHA*ZDOTC(M-I, A(I+1,I),
+                              C(I,1) = ALPHA*CDOTC(M-I, A(I+1,I),
      $                           1, B(I+1,1), INCB) + C(I,1)
                            END DO
-                           CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
+                           CALL CAXPY(M, ALPHA, B, INCB, C, 1)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO I=1,M
-                              C(I,1) = ALPHA*ZDOTC(M-I+1, A(I,I),
+                              C(I,1) = ALPHA*CDOTC(M-I+1, A(I,I),
      $                           1, B(I,1), INCB) + C(I,1)
                            END DO
                         END IF
@@ -1173,16 +1174,16 @@
 *                          A is assumed unit triangular
 *
                            DO I=1,M-1
-                              C(I,1) = ALPHA*ZDOTC(M-I, B(1,I+1),
+                              C(I,1) = ALPHA*CDOTC(M-I, B(1,I+1),
      $                           INCB, A(I+1,I), 1) + C(I,1)
                            END DO
-                           CALL ZACXPY(M, ALPHA, B, INCB, C, 1)
+                           CALL CACXPY(M, ALPHA, B, INCB, C, 1)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO I=1,M
-                              C(I,1) = ALPHA*ZDOTC(M-I+1, B(1,I),
+                              C(I,1) = ALPHA*CDOTC(M-I+1, B(1,I),
      $                           INCB, A(I,I), 1) + C(I,1)
                            END DO
                         END IF
@@ -1195,16 +1196,16 @@
 *                          A is assumed unit triangular
 *
                            DO I=1,M-1
-                              C(I,1) = ALPHA*ZDOTU(M-I, B(1,I+1),
+                              C(I,1) = ALPHA*CDOTU(M-I, B(1,I+1),
      $                           INCB, A(I+1,I), 1) + C(I,1)
                            END DO
-                           CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
+                           CALL CAXPY(M, ALPHA, B, INCB, C, 1)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO I=1,M
-                              C(I,1) = ALPHA*ZDOTU(M-I+1, B(1,I),
+                              C(I,1) = ALPHA*CDOTU(M-I+1, B(1,I),
      $                           INCB, A(I,I), 1) + C(I,1)
                            END DO
                         END IF
@@ -1217,16 +1218,16 @@
 *                          A is assumed unit triangular
 *
                            DO I=1,M-1
-                              C(I,1) = ALPHA*ZDOTU(M-I, B(I+1,1),
+                              C(I,1) = ALPHA*CDOTU(M-I, B(I+1,1),
      $                           INCB, A(I+1,I), 1) + C(I,1)
                            END DO
-                           CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
+                           CALL CAXPY(M, ALPHA, B, INCB, C, 1)
                         ELSE
 *
 *                          A is not assumed unit triangular
 *
                            DO I=1,M
-                              C(I,1) = ALPHA*ZDOTU(M-I+1, B(I,1),
+                              C(I,1) = ALPHA*CDOTU(M-I+1, B(I,1),
      $                           INCB, A(I,I), 1) + C(I,1)
                            END DO
                         END IF
@@ -1246,16 +1247,16 @@
 *                          A is assumed unit triangular
 *
                            DO I=1,M
-                              C(I,1) = ALPHA*ZDOTC(I-1, B, INCB,
+                              C(I,1) = ALPHA*CDOTC(I-1, B, INCB,
      $                           A(I,1), LDA) + C(I,1)
                            END DO
-                           CALL ZACXPY(M, ALPHA, B, INCB, C, 1)
+                           CALL CACXPY(M, ALPHA, B, INCB, C, 1)
                         ELSE 
 *
 *                          A is not assumed unit triangular
 *
                            DO I=1,M
-                              C(I,1) = ALPHA*ZDOTC(I, B, INCB,
+                              C(I,1) = ALPHA*CDOTC(I, B, INCB,
      $                           A(I,1), LDA) + C(I,1)
                            END DO
                         END IF
@@ -1268,16 +1269,16 @@
 *                          A is assumed unit triangular
 *
                            DO I=1,M
-                              C(I,1) = ALPHA*ZDOTU(I-1, B, INCB,
+                              C(I,1) = ALPHA*CDOTU(I-1, B, INCB,
      $                           A(I,1), LDA) + C(I,1)
                            END DO
-                           CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
+                           CALL CAXPY(M, ALPHA, B, INCB, C, 1)
                         ELSE 
 *
 *                          A is not assumed unit triangular
 *
                            DO I=1,M
-                              C(I,1) = ALPHA*ZDOTU(I, B, INCB,
+                              C(I,1) = ALPHA*CDOTU(I, B, INCB,
      $                           A(I,1), LDA) + C(I,1)
                            END DO
                         END IF
@@ -1302,12 +1303,12 @@
 *
 *                       A is assumed unit triangular
 *
-                        CALL ZACXPY(M, ALPHA, B, INCB, C, 1)
+                        CALL CACXPY(M, ALPHA, B, INCB, C, 1)
                      ELSE
 *
 *                       A is not assumed unit triangular
 *
-                        CALL ZACXPY(M, ALPHA*DCONJG(A(1,1)), B,
+                        CALL CACXPY(M, ALPHA*CONJG(A(1,1)), B,
      $                        INCB, C, 1)
                      END IF
                   ELSE
@@ -1318,12 +1319,12 @@
 *
 *                       A is assumed unit triangular
 *
-                        CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
+                        CALL CAXPY(M, ALPHA, B, INCB, C, 1)
                      ELSE
 *
 *                       A is not assumed unit triangular
 *
-                        CALL ZAXPY(M, ALPHA*DCONJG(A(1,1)), B,
+                        CALL CAXPY(M, ALPHA*CONJG(A(1,1)), B,
      $                        INCB, C, 1)
                      END IF
                   END IF
@@ -1339,12 +1340,12 @@
 *
 *                       A is assumed unit triangular
 *
-                        CALL ZACXPY(M, ALPHA, B, INCB, C, 1)
+                        CALL CACXPY(M, ALPHA, B, INCB, C, 1)
                      ELSE
 *
 *                       A is not assumed unit triangular
 *
-                        CALL ZACXPY(M, ALPHA*A(1,1), B, INCB, C,
+                        CALL CACXPY(M, ALPHA*A(1,1), B, INCB, C,
      $                        1)
                      END IF
                   ELSE
@@ -1355,12 +1356,12 @@
 *
 *                       A is assumed unit triangular
 *
-                        CALL ZAXPY(M, ALPHA, B, INCB, C, 1)
+                        CALL CAXPY(M, ALPHA, B, INCB, C, 1)
                      ELSE
 *
 *                       A is not assumed unit triangular
 *
-                        CALL ZAXPY(M, ALPHA*A(1,1), B, INCB, C,
+                        CALL CAXPY(M, ALPHA*A(1,1), B, INCB, C,
      $                        1)
                      END IF
                   END IF
@@ -1431,31 +1432,31 @@
 *
 *                 C_{11}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     L, L, ALPHA, A, LDA, B, LDB, BETA, C,
      $                     LDC)
 *
 *                 C_{12}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     L, N-L, ALPHA, A, LDA, B(L+1, 1), LDB,
      $                     BETA, C(1, L+1), LDC)
 *
 *                 C_{21}
 *
-                  CALL ZGEMM(TRANSA, TRANSB, M-L, L, L, ALPHA,
+                  CALL CGEMM(TRANSA, TRANSB, M-L, L, L, ALPHA,
      $                     A(1, L+1), LDA, B, LDB, BETA, C(L+1,1),
      $                     LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     M-L, L, ALPHA, A(L+1,L+1), LDA, B(1,L+1),
      $                     LDB, ONE, C(L+1,1), LDC)
 *
 *                 C_{22}
 *
-                  CALL ZGEMM(TRANSA, TRANSB, M-L, N-L, L, ALPHA,
+                  CALL CGEMM(TRANSA, TRANSB, M-L, N-L, L, ALPHA,
      $                     A(1, L+1), LDA, B(L+1,1), LDB, BETA,
      $                     C(L+1,L+1), LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                     M-L, N-L, ALPHA, A(L+1,L+1), LDA,
      $                     B(L+1,L+1), LDB, ONE, C(L+1,L+1), LDC)
                ELSE
@@ -1503,29 +1504,29 @@
 *
 *                 C_{11}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, L, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
 *
 *                 C_{12}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, N-L, ALPHA, A, LDA, B(1, L+1), LDB, BETA,
      $                  C(1, L+1), LDC)
 *
 *                 C_{21}
 *
-                  CALL ZGEMM(TRANSA, TRANSB, M-L, L, L, ALPHA,
+                  CALL CGEMM(TRANSA, TRANSB, M-L, L, L, ALPHA,
      $                  A(1, L+1), LDA, B, LDB, BETA, C(L+1, 1), LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, L, ALPHA, A(L+1, L+1), LDA, B(L+1, 1),
      $                  LDB, ONE, C(L+1, 1), LDC)
 *
 *                 C_{22}
 *
-                  CALL ZGEMM(TRANSA, TRANSB, M-L, N-L, L,
+                  CALL CGEMM(TRANSA, TRANSB, M-L, N-L, L,
      $                  ALPHA, A(1, L+1), LDA, B(1, L+1), LDB, BETA,
      $                  C(L+1, L+1), LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, N-L, ALPHA, A(L+1, L+1), LDA,
      $                  B(L+1,L+1), LDB, ONE, C(L+1,L+1), LDC)
                ENDIF
@@ -1578,29 +1579,29 @@
 *
 *                 C_{11}
 *
-                  CALL ZGEMM(TRANSA, TRANSB, L, L, M-L, ALPHA,
+                  CALL CGEMM(TRANSA, TRANSB, L, L, M-L, ALPHA,
      $                  A(1, L+1), LDA, B(1, L+1), LDB, BETA, C, LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, L, ALPHA, A, LDA, B, LDB, ONE, C, LDC)
 *
 *                 C_{12}
 *
-                  CALL ZGEMM(TRANSA, TRANSB, L, N-L, M-L, ALPHA,
+                  CALL CGEMM(TRANSA, TRANSB, L, N-L, M-L, ALPHA,
      $                  A(1, L+1), LDA, B(L+1, L+1), LDB, BETA,
      $                  C(1, L+1), LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, N-L, ALPHA, A, LDA, B(L+1,1), LDB, ONE,
      $                  C(1, L+1), LDC)
 *
 *                 C_{21}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, L, ALPHA, A(L+1, L+1), LDA, B(1, L+1),
      $                  LDB, BETA, C(L+1, 1), LDC)
 *
 *                 C_{22}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, N-L, ALPHA, A(L+1, L+1), LDA,
      $                  B(L+1, L+1), LDB, BETA, C(L+1, L+1), LDC)
                ELSE
@@ -1648,29 +1649,29 @@
 *
 *                 C_{11}
 *
-                  CALL ZGEMM(TRANSA, TRANSB, L, L, M-L, ALPHA,
+                  CALL CGEMM(TRANSA, TRANSB, L, L, M-L, ALPHA,
      $                  A(1, L+1), LDA, B(L+1, 1), LDB, BETA, C, LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, L, ALPHA, A, LDA, B, LDB, ONE, C, LDC)
 *
 *                 C_{12}
 *
-                  CALL ZGEMM(TRANSB, TRANSA, L, N-L, M-L, ALPHA,
+                  CALL CGEMM(TRANSB, TRANSA, L, N-L, M-L, ALPHA,
      $                  A(1, L+1), LDA, B(L+1, L+1), LDB, BETA,
      $                  C(1, L+1), LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, N-L, ALPHA, A, LDA, B(1, L+1), LDB,
      $                  ONE, C(1, L+1), LDC)
 *
 *                 C_{21}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, L, ALPHA, A(L+1, L+1), LDA, B(L+1, 1),
      $                  LDB, BETA, C(L+1, 1), LDC)
 *
 *                 C_{22}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, N-L, ALPHA, A(L+1, L+1), LDA,
      $                  B(L+1, L+1), LDB, BETA, C(L+1, L+1), LDC)
                ENDIF
@@ -1728,29 +1729,29 @@
 *
 *                 C_{11}
 *
-                  CALL ZGEMM(TRANSA, TRANSB, L, L, M-L, ALPHA,
+                  CALL CGEMM(TRANSA, TRANSB, L, L, M-L, ALPHA,
      $                  A(L+1, 1), LDA, B(1, L+1), LDB, BETA, C, LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, L, ALPHA, A, LDA, B, LDB, ONE, C, LDC)
 *
 *                 C_{12}
 *
-                  CALL ZGEMM(TRANSA, TRANSB, L, N-L, M-L, ALPHA,
+                  CALL CGEMM(TRANSA, TRANSB, L, N-L, M-L, ALPHA,
      $                  A(L+1, 1), LDA, B(L+1, L+1), LDB, BETA,
      $                  C(1, L+1), LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, N-L, ALPHA, A, LDA, B(L+1, 1), LDB, ONE,
      $                  C(1, L+1), LDC)
 *
 *                 C_{21}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, L, ALPHA, A(L+1, L+1), LDA, B(1, L+1),
      $                  LDB, BETA, C(L+1, 1), LDC)
 *
 *                 C_{22}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, N-L, ALPHA, A(L+1, L+1), LDA,
      $                  B(L+1, L+1), LDB, BETA, C(L+1, L+1), LDC)
                ELSE
@@ -1798,29 +1799,29 @@
 *
 *                 C_{11}
 *
-                  CALL ZGEMM(TRANSA, TRANSB, L, L, M-L, ALPHA,
+                  CALL CGEMM(TRANSA, TRANSB, L, L, M-L, ALPHA,
      $                  A(L+1, 1), LDA, B(L+1, 1), LDB, BETA, C, LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, L, ALPHA, A, LDA, B, LDB, ONE, C, LDC)
 *
 *                 C_{12}
 *
-                  CALL ZGEMM(TRANSA, TRANSB, L, N-L, M-L, ALPHA,
+                  CALL CGEMM(TRANSA, TRANSB, L, N-L, M-L, ALPHA,
      $                  A(L+1, 1), LDA, B(L+1, L+1), LDB, BETA,
      $                  C(1, L+1), LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, N-L, ALPHA, A, LDA, B(1, L+1), LDB, ONE,
      $                  C(1, L+1), LDC)
 *
 *                 C_{21}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, L, ALPHA, A(L+1, L+1), LDA, B(L+1, 1),
      $                  LDB, BETA, C(L+1, 1), LDC)
 *
 *                 C_{22}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, N-L, ALPHA, A(L+1, L+1), LDA,
      $                  B(L+1, L+1), LDB, BETA, C(L+1, L+1), LDC)
                ENDIF
@@ -1873,29 +1874,29 @@
 *
 *                 C_{11}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, L, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
 *
 *                 C_{12}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, N-L, ALPHA, A, LDA, B(L+1, 1), LDB,
      $                  BETA, C(1, L+1), LDC)
 *
 *                 C_{21}
 *
-                  CALL ZGEMM(TRANSA, TRANSB, M-L, L, L, ALPHA,
+                  CALL CGEMM(TRANSA, TRANSB, M-L, L, L, ALPHA,
      $                  A(L+1, 1), LDA, B, LDB, BETA, C(L+1, 1), LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, L, ALPHA, A(L+1, L+1), LDA, B(1, L+1),
      $                  LDB, ONE, C(L+1, 1), LDC)
 *
 *                 C_{22}
 *
-                  CALL ZGEMM(TRANSA, TRANSB, M-L, N-L, L,
+                  CALL CGEMM(TRANSA, TRANSB, M-L, N-L, L,
      $                  ALPHA, A(L+1, 1), LDA, B(L+1, 1), LDB, BETA,
      $                  C(L+1, L+1), LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, N-L, ALPHA, A(L+1, L+1), LDA,
      $                  B(L+1, L+1), LDB, ONE, C(L+1, L+1), LDC)
                ELSE
@@ -1943,29 +1944,29 @@
 *
 *                 C_{11}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, L, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
 *
 *                 C_{12}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, N-L, ALPHA, A, LDA, B(1, L+1), LDB,
      $                  BETA, C(1, L+1), LDC)
 *
 *                 C_{21}
 *
-                  CALL ZGEMM(TRANSA, TRANSB, M-L, L, L, ALPHA,
+                  CALL CGEMM(TRANSA, TRANSB, M-L, L, L, ALPHA,
      $                  A(L+1, 1), LDA, B, LDB, BETA, C(L+1, 1), LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, L, ALPHA, A(L+1, L+1), LDA, B(L+1, 1),
      $                  LDB, ONE, C(L+1, 1), LDC)
 *
 *                 C_{22}
 *
-                  CALL ZGEMM(TRANSB, TRANSA, M-L, N-L, L,
+                  CALL CGEMM(TRANSB, TRANSA, M-L, N-L, L,
      $                  ALPHA, A(L+1, 1), LDA, B(1, L+1), LDB, BETA,
      $                  C(L+1, L+1), LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, N-L, ALPHA, A(L+1, L+1), LDA,
      $                  B(L+1, L+1), LDB, ONE, C(L+1, L+1), LDC)
                ENDIF
@@ -2029,29 +2030,29 @@
 *
 *                 C_{11}
 *
-                  CALL ZGEMM(TRANSB, TRANSA, L, L, N-L, ALPHA,
+                  CALL CGEMM(TRANSB, TRANSA, L, L, N-L, ALPHA,
      $                  B(L+1, 1), LDB, A(1, L+1), LDA, BETA, C, LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, L, ALPHA, A, LDA, B, LDB, ONE, C, LDC)
 *
 *                 C_{12}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, N-L, ALPHA, A(L+1, L+1), LDA, B(L+1, 1),
      $                  LDB, BETA, C(1, L+1), LDC)
 *
 *                 C_{21}
 *
-                  CALL ZGEMM(TRANSB, TRANSA, M-L, L, N-L, ALPHA,
+                  CALL CGEMM(TRANSB, TRANSA, M-L, L, N-L, ALPHA,
      $                  B(L+1, L+1), LDB, A(1, L+1), LDA, BETA,
      $                  C(L+1, 1), LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, L, ALPHA, A, LDA, B(1, L+1), LDB,
      $                  ONE, C(L+1, 1), LDC)
 *
 *                 C_{22}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, N-L, ALPHA, A(L+1, L+1), LDA,
      $                  B(L+1, L+1), LDB, BETA, C(L+1, L+1), LDC)
                ELSE
@@ -2099,29 +2100,29 @@
 *
 *                 C_{11}
 *
-                  CALL ZGEMM(TRANSB, TRANSA, L, L, N-L, ALPHA,
+                  CALL CGEMM(TRANSB, TRANSA, L, L, N-L, ALPHA,
      $                  B(1,L+1), LDB, A(1,L+1), LDA, BETA, C, LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, L, ALPHA, A, LDA, B, LDB, ONE, C, LDC)
 *
 *                 C_{12}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, N-L, ALPHA, A(L+1, L+1), LDA, B(1, L+1),
      $                  LDB, BETA, C(1, L+1), LDC)
 *
 *                 C_{21}
 *
-                  CALL ZGEMM(TRANSB, TRANSA, M-L, L, N-L, ALPHA,
+                  CALL CGEMM(TRANSB, TRANSA, M-L, L, N-L, ALPHA,
      $                  B(L+1, L+1), LDB, A(1, L+1), LDA, BETA,
      $                  C(L+1, 1), LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, L, ALPHA, A, LDA, B(L+1, 1), LDB,
      $                  ONE, C(L+1, 1), LDC)
 *
 *                 C_{22}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, N-L, ALPHA, A(L+1, L+1), LDA,
      $                  B(L+1, L+1), LDB, BETA, C(L+1, L+1), LDC)
                ENDIF
@@ -2174,29 +2175,29 @@
 *
 *                 C_{11}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, L, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
 *
 *                 C_{12}
 *
-                  CALL ZGEMM(TRANSB, TRANSA, L, N-L, L, ALPHA,
+                  CALL CGEMM(TRANSB, TRANSA, L, N-L, L, ALPHA,
      $                  B, LDB, A(1, L+1), LDA, BETA, C(1, L+1), LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, N-L, ALPHA, A(L+1, L+1), LDA, B(L+1, 1),
      $                  LDB, ONE, C(1, L+1), LDC)
 *
 *                 C_{21}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, L, ALPHA, A, LDA, B(1, L+1), LDB,
      $                  BETA, C(L+1, 1), LDC)
 *
 *                 C_{22}
 *
-                  CALL ZGEMM(TRANSB, TRANSA, M-L, N-L, L,
+                  CALL CGEMM(TRANSB, TRANSA, M-L, N-L, L,
      $                  ALPHA, B(1, L+1), LDB, A(1, L+1), LDA, BETA,
      $                  C(L+1, L+1), LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, N-L, ALPHA, A(L+1, L+1), LDA,
      $                  B(L+1, L+1), LDB, ONE, C(L+1, L+1), LDC)
                ELSE
@@ -2244,29 +2245,29 @@
 *
 *                 C_{11}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, L, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
 *
 *                 C_{12}
 *
-                  CALL ZGEMM(TRANSB, TRANSA, L, N-L, L, ALPHA,
+                  CALL CGEMM(TRANSB, TRANSA, L, N-L, L, ALPHA,
      $                  B, LDB, A(1, L+1), LDA, BETA, C(1, L+1), LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, N-L, ALPHA, A(L+1, L+1), LDA, B(1, L+1),
      $                  LDB, ONE, C(1, L+1), LDC)
 *
 *                 C_{21}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, L, ALPHA, A, LDA, B(L+1, 1), LDB, BETA,
      $                  C(L+1, 1), LDC)
 *
 *                 C_{22}
 *
-                  CALL ZGEMM(TRANSB, TRANSA, M-L, N-L, L,
+                  CALL CGEMM(TRANSB, TRANSA, M-L, N-L, L,
      $                  ALPHA, B(L+1, 1), LDB, A(1, L+1), LDA,
      $                  BETA, C(L+1, L+1), LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, N-L, ALPHA, A(L+1, L+1), LDA,
      $                  B(L+1, L+1), LDB, ONE, C(L+1, L+1), LDC)
                ENDIF
@@ -2324,29 +2325,29 @@
 *
 *                 C_{11}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, L, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
 *
 *                 C_{12}
 *
-                  CALL ZGEMM(TRANSB, TRANSA, L, N-L, L, ALPHA,
+                  CALL CGEMM(TRANSB, TRANSA, L, N-L, L, ALPHA,
      $                  B, LDB, A(L+1, 1), LDA, BETA, C(1, L+1), LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, N-L, ALPHA, A(L+1, L+1), LDA, B(L+1, 1),
      $                  LDB, ONE, C(1, L+1), LDC)
 *
 *                 C_{21}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, L, ALPHA, A, LDA, B(1, L+1), LDB,
      $                  BETA, C(L+1, 1), LDC)
 *
 *                 C_{22}
 *
-                  CALL ZGEMM(TRANSB, TRANSA, M-L, N-L, L, ALPHA,
+                  CALL CGEMM(TRANSB, TRANSA, M-L, N-L, L, ALPHA,
      $                  B(1, L+1), LDB, A(L+1, 1), LDA, BETA,
      $                  C(L+1, L+1), LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, N-L, ALPHA, A(L+1, L+1), LDA,
      $                  B(L+1, L+1), LDB, ONE, C(L+1, L+1), LDC)
                ELSE
@@ -2394,29 +2395,29 @@
 *
 *                 C_{11}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, L, ALPHA, A, LDA, B, LDB, BETA, C, LDC)
 *
 *                 C_{12}
 *
-                  CALL ZGEMM(TRANSB, TRANSA, L, N-L, L, ALPHA,
+                  CALL CGEMM(TRANSB, TRANSA, L, N-L, L, ALPHA,
      $                  B, LDB, A(L+1, 1), LDA, BETA, C(1, L+1), LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, N-L, ALPHA, A(L+1, L+1), LDA, B(1, L+1),
      $                  LDB, ONE, C(1, L+1), LDC)
 *
 *                 C_{21}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, L, ALPHA, A, LDA, B(L+1, 1), LDB, BETA,
      $                  C(L+1, 1), LDC)
 *
 *                 C_{22}
 *
-                  CALL ZGEMM(TRANSB, TRANSA, M-L, N-L, L, ALPHA,
+                  CALL CGEMM(TRANSB, TRANSA, M-L, N-L, L, ALPHA,
      $                  B(L+1, 1), LDB, A(L+1, 1), LDA, BETA,
      $                  C(L+1, L+1), LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, N-L, ALPHA, A(L+1, L+1), LDA,
      $                  B(L+1, L+1), LDB, ONE, C(L+1, L+1), LDC)
                ENDIF
@@ -2469,29 +2470,29 @@
 *
 *                 C_{11}
 *
-                  CALL ZGEMM(TRANSB, TRANSA, L, L, N-L, ALPHA,
+                  CALL CGEMM(TRANSB, TRANSA, L, L, N-L, ALPHA,
      $                  B(L+1, 1), LDB, A(L+1, 1), LDA, BETA, C, LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, L, ALPHA, A, LDA, B, LDB, ONE, C, LDC)
 *
 *                 C_{12}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, N-L, ALPHA, A(L+1, L+1), LDA, B(L+1, 1),
      $                  LDB, BETA, C(1, L+1), LDC)
 *
 *                 C_{21}
 *
-                  CALL ZGEMM(TRANSB, TRANSA, M-L, L, N-L, ALPHA,
+                  CALL CGEMM(TRANSB, TRANSA, M-L, L, N-L, ALPHA,
      $                  B(L+1, L+1), LDB, A(L+1, 1), LDA, BETA,
      $                  C(L+1, 1), LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, L, ALPHA, A, LDA, B(1, L+1), LDB, ONE,
      $                  C(L+1, 1), LDC)
 *
 *                 C_{22}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, N-L, ALPHA, A(L+1, L+1), LDA,
      $                  B(L+1, L+1), LDB, BETA, C(L+1, L+1), LDC)
                ELSE
@@ -2539,29 +2540,29 @@
 *
 *                 C_{11}
 *
-                  CALL ZGEMM(TRANSB, TRANSA, L, L, N-L, ALPHA,
+                  CALL CGEMM(TRANSB, TRANSA, L, L, N-L, ALPHA,
      $                  B(1, L+1), LDB, A(L+1, 1), LDA, BETA, C, LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, L, ALPHA, A, LDA, B, LDB, ONE, C, LDC)
 *
 *                 C_{12}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  L, N-L, ALPHA, A(L+1, L+1), LDA, B(1, L+1),
      $                  LDB, BETA, C(1, L+1), LDC)
 *
 *                 C_{21}
 *
-                  CALL ZGEMM(TRANSB, TRANSA, M-L, L, N-L, ALPHA,
+                  CALL CGEMM(TRANSB, TRANSA, M-L, L, N-L, ALPHA,
      $                  B(L+1, L+1), LDB, A(L+1, 1), LDA, BETA,
      $                  C(L+1, 1), LDC)
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, L, ALPHA, A, LDA, B(L+1, 1), LDB, ONE,
      $                  C(L+1, 1), LDC)
 *
 *                 C_{22}
 *
-                  CALL ZTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
+                  CALL CTRMMOOP(SIDE, UPLO, TRANSA, TRANSB, DIAG,
      $                  M-L, N-L, ALPHA, A(L+1, L+1), LDA,
      $                  B(L+1, L+1), LDB, BETA, C(L+1, L+1), LDC)
                ENDIF

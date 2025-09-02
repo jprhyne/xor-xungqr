@@ -1,4 +1,4 @@
-*> \brief \b DORGRK computes the explicit Q factor from DGERQF and DLARFT
+*> \brief \b SORGRK computes the explicit Q factor from SGERQF and SLARFT
 *
 *  =========== DOCUMENTATION ===========
 *
@@ -8,13 +8,13 @@
 *  Definition:
 *  ===========
 *
-*     SUBROUTINE DORGRK(M, N, Q, LDQ)
+*     SUBROUTINE SORGRK(M, N, Q, LDQ)
 *
 *        .. Scalar Arguments ..
 *        INTEGER           M, N, LDQ
 *        ..
 *        .. Array Arguments ..
-*        DOUBLE PRECISION  Q(LDQ,*)
+*        REAL              Q(LDQ,*)
 *        ..
 *
 *> \par Purpose:
@@ -22,14 +22,14 @@
 *>
 *> \verbatim
 *>
-*> DORGRK generates an m by n real matrix Q with orthonormal rows,
+*> SORGRK generates an m by n real matrix Q with orthonormal rows,
 *> which is defined as the last m rows of the product of m
 *> elementary reflectors
 *>
 *>       Q  =  I - V'*T*V = H(m) . . . H(2) H(1)
 *>
 *> Where V is an m by n matrix whose columns are householder reflectors
-*> as returned by DGERQF and T is the n by n matrix returned by DLARFT
+*> as returned by SGERQF and T is the n by n matrix returned by SLARFT
 *> \endverbatim
 *
 *  Arguments:
@@ -50,11 +50,11 @@
 *>
 *> \param[in,out] Q
 *> \verbatim
-*>       Q is DOUBLE PRECISION array, dimension (LDQ,N)
+*>       Q is REAL array, dimension (LDQ,N)
 *>       On entry, Q(i,1:n-m-1+i) contains the vector which defines the
-*>       elementary reflector H(i), for i=1,...,n as returned by DGERQF.
+*>       elementary reflector H(i), for i=1,...,n as returned by SGERQF.
 *>       In addition, the upper triangular portion of the submatrix given
-*>       by Q(1:m,n-m:n) will contain the array T as returned by DLARFT.
+*>       by Q(1:m,n-m:n) will contain the array T as returned by SLARFT.
 *>       See further details for more information.
 *>       On exit, the m-by-n matrix Q.
 *> \endverbatim
@@ -85,7 +85,7 @@
 *>
 *  =====================================================================
 
-      SUBROUTINE DORGRK(M, N, Q, LDQ)
+      SUBROUTINE SORGRK(M, N, Q, LDQ)
 *
 *  -- LAPACK computational routine --
 *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -95,20 +95,23 @@
       INTEGER           M, N, LDQ
 *     ..
 *     .. Array Arguments ..
-      DOUBLE PRECISION  Q(LDQ,*)
+      REAL              Q(LDQ,*)
 *     ..
 *
 *  =====================================================================
 *
 *     .. Parameters ..
-      DOUBLE PRECISION  NEG_ONE, ONE
-      PARAMETER(NEG_ONE=-1.0D+0, ONE=1.0D+0)
+      REAL              NEG_ONE, ONE
+      PARAMETER(NEG_ONE=-1.0E+0, ONE=1.0E+0)
 *     ..
 *     .. Local Scalars ..
       INTEGER           I, J
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL          DTRMM, DTRTRM, DLUMM
+      EXTERNAL          STRMM, STRTRM, SLUMM
+*     ..
+*     .. Intrinsic Functions ..
+      INTRINSIC         MIN
 *     ..
 *     .. Executable Statements ..
 *
@@ -134,7 +137,7 @@
 *
 *     Compute T = V_1'*T
 *
-      CALL DTRTRM('Left', 'Upper', 'Transpose', 'Non-Unit', 'Unit',
+      CALL STRTRM('Left', 'Upper', 'Transpose', 'Non-Unit', 'Unit',
      $         M, ONE, Q(1,N-M+1), LDQ, Q(1,N-M+1), LDQ)
 *
 *     Compute Q = -TV. This means that we need to break apart
@@ -147,13 +150,13 @@
 *     Q_2 = -T*V_2 (TRMM) but only when necessary
 *
       IF (N.GT.M) THEN
-         CALL DTRMM('Left', 'Upper', 'No Transpose', 'Non-Unit',
+         CALL STRMM('Left', 'Upper', 'No Transpose', 'Non-Unit',
      $            M, N-M, NEG_ONE, Q(1,N-M+1), LDQ, Q, LDQ)
       END IF
 *
 *     Q_1 = -T*V_1 (Lower-Upper Matrix-Matrix multiplication)
 *
-      CALL DLUMM('Right', 'Unit', 'Non-Unit', M, NEG_ONE,
+      CALL SLUMM('Right', 'Unit', 'Non-Unit', M, NEG_ONE,
      $         Q(1,N-M+1), LDQ)
 *
 *     Q = "I" + Q
