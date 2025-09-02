@@ -1,10 +1,10 @@
 #!/bin/env bash
 
 # Fix m and n, vary k
-m=10000
+m=1000
 n=${m}
 num_repeat=10
-for (( k=1000; k<=${m}; k+=1000 ))
+for (( k=100; k<=${m}; k+=100 ))
 do
   echo "m=${m} n=${n} k=${k}"
   echo "Testing file ran ${num_repeat} times"
