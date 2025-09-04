@@ -28,6 +28,16 @@ void setAdc(int m, int n, double complex *A) {
         A[i] = real + imag * I;
     }
 }
+double qFirstPerf(double execTime, double m, double n, double k) {
+    // Taken from LAWN 41
+    double numOps = 4*m*n*k - 2*(m+n)*k*k + 4./3.*k*k*k + 3*n*k - m*k - k*k - 4./3.*k;
+    return numOps / (execTime * 1.0e+9);
+}
+double qSecondPerf(double execTime, double m, double n, double k) {
+    // Taken from LAWN 41
+    double numOps = 4*m*n*k - 2*(m+n)*k*k + 4./3.*k*k*k + 2*m*k - k*k - 1./3.*k;
+    return numOps / (execTime * 1.0e+9);
+}
 /*
  * On entry, timeVals must be a 2d double array of dimension timeVals[4][3]
  * timeVals has the following entries on exit:
@@ -836,14 +846,16 @@ void timeCDouble(int m, int n, int k, double timeVals[4][3]) {
     timeVals[3][2] = elapsed_refL;
 }
 
-void printTimeArray(double timeVals[4][3]) {
+void printTimeArray(double timeVals[4][3], int m, int n, int k) {
     const char algNames[4][3] = {"QR", "QL", "RQ", "LQ"};
     const char impNames[3][10] = {"AOCL", "Reference", "New"};
 
     for (int i = 0; i < 4; ++i) {
         //printf("---------------------------------------------\n");
         for (int j = 0; j < 3; ++j) {
-            printf("%s %s: %17.16e\n", algNames[i],impNames[j], timeVals[i][j]);
+            printf("%s %s: %17.16e:%17.16e\n", algNames[i],impNames[j], timeVals[i][j], (i<2) ?
+                    qFirstPerf(timeVals[i][j], (double) m, (double) n, (double) k) :
+                    qSecondPerf(timeVals[i][j], (double) n, (double) m, (double) k));
         }
     }
     //printf("---------------------------------------------\n");
@@ -872,17 +884,17 @@ int main(int argc, char *argv[]){
 
     timeReal(m,n,k,realTimeVals);
     printf("Single Precision\n");
-    printTimeArray(realTimeVals);
+    printTimeArray(realTimeVals, m, n, k);
 
     timeDouble(m,n,k,doubleTimeVals);
     printf("Double Precision\n");
-    printTimeArray(doubleTimeVals);
+    printTimeArray(doubleTimeVals, m, n, k);
 
     timeCReal(m,n,k,realTimeVals);
     printf("Single Complex Precision\n");
-    printTimeArray(realTimeVals);
+    printTimeArray(realTimeVals, m, n, k);
 
     timeCDouble(m,n,k,doubleTimeVals);
     printf("Double Complex Precision\n");
-    printTimeArray(doubleTimeVals);
+    printTimeArray(doubleTimeVals, m, n, k);
 }
