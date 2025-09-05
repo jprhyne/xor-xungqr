@@ -123,7 +123,7 @@ void timeReal(int m, int n, int k, double timeVals[4][3]) {
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    sorgqr_new_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
+    sorgqr_nb_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[0][2] = elapsed_refL;
@@ -164,7 +164,7 @@ void timeReal(int m, int n, int k, double timeVals[4][3]) {
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    sorgql_new_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
+    sorgql_nb_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[1][2] = elapsed_refL;
@@ -205,7 +205,7 @@ void timeReal(int m, int n, int k, double timeVals[4][3]) {
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    sorgrq_new_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
+    sorgrq_nb_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[2][2] = elapsed_refL;
@@ -246,7 +246,7 @@ void timeReal(int m, int n, int k, double timeVals[4][3]) {
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    sorglq_new_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
+    sorglq_nb_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[3][2] = elapsed_refL;
@@ -321,7 +321,7 @@ void timeDouble(int m, int n, int k, double timeVals[4][3]) {
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    dorgqr_new_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
+    dorgqr_nb_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[0][2] = elapsed_refL;
@@ -362,7 +362,7 @@ void timeDouble(int m, int n, int k, double timeVals[4][3]) {
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    dorgql_new_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
+    dorgql_nb_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[1][2] = elapsed_refL;
@@ -403,7 +403,7 @@ void timeDouble(int m, int n, int k, double timeVals[4][3]) {
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    dorgrq_new_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
+    dorgrq_nb_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[2][2] = elapsed_refL;
@@ -411,7 +411,7 @@ void timeDouble(int m, int n, int k, double timeVals[4][3]) {
     // lq
     //----------------------------------------------------------------------------------------------
     setAd(m, k, A);
-    dgelqf_(&n, &m, A, &n, tau, work, &lwork, &info);
+    dgelqf_(&k, &m, A, &k, tau, work, &lwork, &info);
     //----------------------------------------------------------------------------------------------
     // AOCL
     //----------------------------------------------------------------------------------------------
@@ -444,7 +444,7 @@ void timeDouble(int m, int n, int k, double timeVals[4][3]) {
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    dorglq_new_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
+    dorglq_nb_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[3][2] = elapsed_refL;
@@ -519,7 +519,7 @@ void timeCReal(int m, int n, int k, double timeVals[4][3]) {
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    cungqr_new_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
+    cungqr_nb_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[0][2] = elapsed_refL;
@@ -560,7 +560,7 @@ void timeCReal(int m, int n, int k, double timeVals[4][3]) {
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    cungql_new_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
+    cungql_nb_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[1][2] = elapsed_refL;
@@ -601,7 +601,7 @@ void timeCReal(int m, int n, int k, double timeVals[4][3]) {
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    cungrq_new_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
+    cungrq_nb_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[2][2] = elapsed_refL;
@@ -609,7 +609,7 @@ void timeCReal(int m, int n, int k, double timeVals[4][3]) {
     // lq
     //----------------------------------------------------------------------------------------------
     setAfc(m, k, A);
-    cgelqf_(&n, &m, A, &n, tau, work, &lwork, &info);
+    cgelqf_(&k, &m, A, &k, tau, work, &lwork, &info);
     //----------------------------------------------------------------------------------------------
     // AOCL
     //----------------------------------------------------------------------------------------------
@@ -642,7 +642,7 @@ void timeCReal(int m, int n, int k, double timeVals[4][3]) {
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    cunglq_new_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
+    cunglq_nb_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[3][2] = elapsed_refL;
@@ -717,7 +717,7 @@ void timeCDouble(int m, int n, int k, double timeVals[4][3]) {
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    zungqr_new_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
+    zungqr_nb_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[0][2] = elapsed_refL;
@@ -758,7 +758,7 @@ void timeCDouble(int m, int n, int k, double timeVals[4][3]) {
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    zungql_new_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
+    zungql_nb_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[1][2] = elapsed_refL;
@@ -799,7 +799,7 @@ void timeCDouble(int m, int n, int k, double timeVals[4][3]) {
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    zungrq_new_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
+    zungrq_nb_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[2][2] = elapsed_refL;
@@ -840,7 +840,7 @@ void timeCDouble(int m, int n, int k, double timeVals[4][3]) {
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    zunglq_new_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
+    zunglq_nb_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[3][2] = elapsed_refL;
