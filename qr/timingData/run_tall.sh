@@ -1,7 +1,7 @@
 #!/bin/env bash
 
 # Fix n and k, vary m
-n=1000
+n=100
 k=${n}
 max_m=10000
 num_repeat=10
