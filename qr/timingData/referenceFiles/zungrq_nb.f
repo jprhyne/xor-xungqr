@@ -120,7 +120,7 @@
 *> \ingroup ungrq
 *
 *  =====================================================================
-      SUBROUTINE ZUNGRQ_NB( M, N, K, A, LDA, TAU, WORK, LWORK, INFO )
+      SUBROUTINE ZUNGRQ_NB(M, N, K, NB, A, LDA, TAU, WORK, LWORK, INFO)
 *
 *  -- LAPACK computational routine --
 *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -137,7 +137,8 @@
 *
 *     .. Local Scalars ..
       LOGICAL            LQUERY
-      INTEGER            IINFO, LWKOPT, NX
+      INTEGER            I, IB, II, IINFO, IWS, KK, LDWORK,
+     $                   LWKOPT, NB, NBMIN, NX
 *     ..
 *     .. External Subroutines ..
       EXTERNAL           XERBLA, ZLARFB, ZLARFT,
@@ -188,34 +189,77 @@
          RETURN
       END IF
 *
+      NBMIN = MAX( 2, ILAENV( 2, 'ZUNGRQ', ' ', M, N, K, -1 ) )
       NX = MAX( 0, ILAENV( 3, 'ZUNGRQ', ' ', M, N, K, -1 ) )
+      IWS = M
 *
-      IF( NX.LT.K ) THEN
+      IF( NB.GE.NBMIN .AND. NB.LT.K .AND. NX.LT.K ) THEN
 *
-*        Form the triangular factor of the block reflector
-*        H = H(k) . . . H(2) H(1)
+*        Use blocked code after the first block.
+*        The last kk rows are handled by the block method.
 *
-         CALL ZLARFT('Transpose', 'Rowwise', N, K, A(M-K+1,1), LDA,
-     $         TAU, A(M-K+1, N-K+1), LDA)
-*
-*        Apply H to A(1:m-k,1:n) from the right
-*
-         CALL ZLARFB0C2(.TRUE., 'Right', 'No transpose', 'Backward',
-     $         'Rowwise', M-K, N, K, A(M-K+1,1), LDA, A(M-K+1, N-K+1),
-     $         LDA, A, LDA)
-*
-*           Apply H to A(m-k+1:m, 1:n) from the right
-*
-         CALL ZUNGRK(K, N, A(M-K+1,1), LDA)
+         KK = K
       ELSE
+         KK = 0
+      END IF
 *
-*        There are not enough reflectors for us to use the blocking
-*        method, so instead bail to the vector-based version
+*     Potentially bail to the unblocked code
 *
+      IF( KK.EQ.0 ) THEN
          CALL ZUNGR2( M, N, K, A, LDA, TAU, WORK, IINFO )
       END IF
 *
-      WORK( 1 ) = M
+      IF( KK.GT.0 ) THEN
+*
+*        Factor the first block assuming that our first application
+*        will be on the Identity matrix
+*
+         I = 1
+         IB = NB
+         II = M - K + I
+*
+*        Form the triangular factor of the block reflector
+*        H = H(i+ib-1) . . . H(i+1) H(i)
+*
+         CALL ZLARFT( 'Transpose', 'Rowwise', N-K+I+IB-1, IB,
+     $                A( II, 1 ), LDA, TAU( I ), A( II, N-K+I ), LDA )
+*
+*        Apply H to A(1:m-k+i-1,1:n-k+i+ib-1) from the right
+*
+         CALL ZLARFB0C2(.TRUE., 'Right', 'No Transpose', 'Backward', 
+     $         'Rowwise', II-1, N-K+I+IB-1, IB, A(II,1), LDA,
+     $          A( II, N-K+I ), LDA, A, LDA)
+*
+*        Apply H to columns 1:n-k+i+ib-1 of current block
+*
+         CALL ZUNGRK( IB, N-K+I+IB-1, A( II, 1 ), LDA )
+*
+         DO I = NB+1, K, NB
+*
+*           The last block may be less than size NB
+*
+            IB = MIN(NB, K-I+1)
+            II = M - K + I
+*
+*           Form the triangular factor of the block reflector
+*           H = H(i+ib-1) . . . H(i+1) H(i)
+*
+            CALL ZLARFT( 'Transpose', 'Rowwise', N-K+I+IB-1, IB,
+     $                A( II, 1 ), LDA, TAU( I ), A( II, N-K+I ), LDA )
+*
+*           Apply H to A(1:m-k+i-1,1:n-k+i+ib-1) from the right
+*
+            CALL ZLARFB0C2(.FALSE., 'Right', 'No Transpose',
+     $            'Backward', 'Rowwise', II-1, N-K+I+IB-1, IB, A(II,1),
+     $             LDA, A( II, N-K+I ), LDA, A, LDA)
+*
+*           Apply H to columns 1:n-k+i+ib-1 of current block
+*
+            CALL ZUNGRK( IB, N-K+I+IB-1, A( II, 1 ), LDA )
+         END DO
+      END IF
+*
+      WORK( 1 ) = IWS
       RETURN
 *
 *     End of ZUNGRQ

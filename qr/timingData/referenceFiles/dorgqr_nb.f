@@ -122,7 +122,7 @@
 *> \ingroup doubleOTHERcomputational
 *
 *  =====================================================================
-      SUBROUTINE DORGQR_NB( M, N, K, A, LDA, TAU, WORK, LWORK, INFO )
+      SUBROUTINE DORGQR_NB(M, N, K, NB, A, LDA, TAU, WORK, LWORK, INFO)
 *
 *  -- LAPACK computational routine --
 *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -139,11 +139,12 @@
 *
 *     .. Local Scalars ..
       LOGICAL            LQUERY
-      INTEGER            IINFO, LWKOPT, NX
+      INTEGER            I, IB, IINFO, KI, KK, LWKOPT,
+     $                   NB, NBMIN, NX
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL           DLARFB0C2, DLARFT, DORG2R,
-     $                   DORGKR, XERBLA
+      EXTERNAL             DLARFB0C2, DLARFT, DORG2R,
+     $                     DORGKR, XERBLA
 *     ..
 *     .. Intrinsic Functions ..
       INTRINSIC          MAX
@@ -188,30 +189,91 @@
          RETURN
       END IF
 *
+      NBMIN = 2
       NX = MAX(0, ILAENV(3, 'DORGQR', ' ', M, N, K, -1))
 *
-      IF( NX.LT.K ) THEN
+      IF( NB.GE.NBMIN .AND. NB.LT.K .AND. NX.LT.K ) THEN
 *
-*        Form the triangular factor of the block reflector
-*        H = H(1) H(2) . . . H(k)
+*        Handle the first block assuming we are applying to the
+*        identity, then resume regular blocking method after
 *
-         CALL DLARFT('Forward', 'Columnwise', M, K, A, LDA, TAU, 
-     $         A, LDA)
+         KI = K - 2 * NB
+         KK = K - NB
+      ELSE
+         KK = 0
+      END IF
 *
-*        Apply H to A(1:m,k+1:n) from the left
+*     Potentially bail to the unblocked code.
+*
+      IF( KK.EQ.0 ) THEN
+            CALL DORG2R( M, N, K, A, LDA, TAU, WORK, IINFO )
+      END IF
+*
+      IF( KK.GT.0 ) THEN
+         I = KK + 1
+         IB = NB
+*
+*           Form the triangular factor of the block reflector
+*           H = H(i) H(i+1) . . . H(i+ib-1)
+*
+         CALL DLARFT('Forward', 'Column', M-I+1, IB, A(I,I),
+     $                     LDA, TAU(I), A(I,I), LDA)
+*
+*           Apply H to A(i:m,i+ib:n) from the left
 *
          CALL DLARFB0C2(.TRUE., 'Left', 'No Transpose', 'Forward',
-     $         'Columnwise', M, N-K, K, A, LDA, A, LDA, A(1,K+1), LDA)
+     $      'Column', M-I+1, N-(I+IB)+1, IB, A(I,I), LDA, A(I,I),
+     $      LDA, A(I,I+IB), LDA)
 *
-*        Apply H to A(1:m,1:k) from the left
+*        Apply H to rows i:m of current block
 *
-         CALL DORGKR(M, K, A, LDA)
-      ELSE
+         CALL DORGKR(M-I+1, IB, A(I,I), LDA)
+         DO I = KI + 1, 1, -NB
+            IB = NB
 *
-*        There are not enough reflectors for us to use the blocking
-*        method, so instead bail to the vector-based version
+*           Form the triangular factor of the block reflector
+*           H = H(i) H(i+1) . . . H(i+ib-1)
 *
-         CALL DORG2R( M, N, K, A, LDA, TAU, WORK, IINFO )
+            CALL DLARFT('Forward', 'Column', M-I+1, IB, A(I,I),
+     $         LDA, TAU(I), A(I,I), LDA)
+*
+*           Apply H to A(i:m,i+ib:n) from the left
+*
+            CALL DLARFB0C2(.FALSE., 'Left', 'No Transpose',
+     $         'Forward', 'Column', M-I+1, N-(I+IB)+1, IB, A(I,I),
+     $         LDA, A(I,I), LDA, A(I,I+IB), LDA)
+
+*
+*           Apply H to rows i:m of current block
+*
+            CALL DORGKR(M-I+1, IB, A(I,I), LDA)
+         END DO
+*
+*        This checks for if K was a perfect multiple of NB
+*        so that we only have a special case for the last block when
+*        necessary
+*
+         IF(I.LT.1) THEN
+            IB = I + NB - 1
+            I = 1
+*
+*           Form the triangular factor of the block reflector
+*           H = H(i) H(i+1) . . . H(i+ib-1)
+*
+            CALL DLARFT('Forward', 'Column', M-I+1, IB, A(I,I),
+     $         LDA, TAU(I), A(I,I), LDA)
+*
+*           Apply H to A(i:m,i+ib:n) from the left
+*
+            CALL DLARFB0C2(.FALSE., 'Left', 'No Transpose',
+     $         'Forward', 'Column', M-I+1, N-(I+IB)+1, IB, A(I,I),
+     $         LDA, A(I,I), LDA, A(I,I+IB), LDA)
+
+*
+*           Apply H to rows i:m of current block
+*
+            CALL DORGKR(M-I+1, IB, A(I,I), LDA)
+         END IF
       END IF
 *
       WORK( 1 ) = N

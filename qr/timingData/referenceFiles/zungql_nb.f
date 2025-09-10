@@ -120,7 +120,7 @@
 *> \ingroup ungql
 *
 *  =====================================================================
-      SUBROUTINE ZUNGQL_NB( M, N, K, A, LDA, TAU, WORK, LWORK, INFO )
+      SUBROUTINE ZUNGQL_NB(M, N, K, NB, A, LDA, TAU, WORK, LWORK, INFO)
 *
 *  -- LAPACK computational routine --
 *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -137,7 +137,8 @@
 *     
 *     .. Local Scalars ..
       LOGICAL            LQUERY
-      INTEGER            IINFO, LWKOPT, NX
+      INTEGER            I, IB, IINFO, IWS, KK, LWKOPT, NB, NBMIN,
+     $                   NX
 *     ..
 *     .. External Subroutines ..
       EXTERNAL           XERBLA, ZLARFB0C2, ZLARFT,
@@ -167,11 +168,15 @@
       END IF
 *
       IF( INFO.EQ.0 ) THEN
+         IF( N.EQ.0 ) THEN
+            LWKOPT = 1
+         ELSE
 *
-*        Only need a workspace for zung2l in case of bailout
-*        and for the panel factorization
+*           Only need a workspace for zung2l in case of bailout
+*           and for the panel factorization
 *
-         LWKOPT = MAX(1, N)
+            LWKOPT = N
+         END IF
          WORK( 1 ) = LWKOPT
 *
          IF( LWORK.LT.MAX( 1, N ) .AND. .NOT.LQUERY ) THEN
@@ -192,33 +197,79 @@
          RETURN
       END IF
 *
+      NBMIN = 2
       NX = MAX( 0, ILAENV( 3, 'ZUNGQL', ' ', M, N, K, -1 ))
+      IWS = N
 *
-      IF( NX.LT.K ) THEN
+      IF( NB.GE.NBMIN .AND. NB.LT.K .AND. NX.LT.K ) THEN
 *
-*        Form the triangular factor of the block reflector
-*        H = H(k) . . . H(2) H(1)
+*        We use blocked code for the entire construction
 *
-         CALL ZLARFT('Backward', 'Columnwise', M, K, A(1, N-K+1),
-     $         LDA, TAU, A(M-K+1, N-K+1), LDA)
-*
-*        Apply H to A(1:m,1:n-k) from the left
-*
-         CALL ZLARFB0C2(.TRUE., 'Left', 'No Transpose', 'Backward',
-     $         'Columnwise', M, N-K, K, A(1, N-K+1), LDA, 
-     $         A(M-K+1, N-K+1), LDA, A, LDA)
-*
-*        Apply H to A(1:m, n-k+1:n) from the left
-*
-         CALL ZUNGKL(M, K, A(1, N-K+1), LDA)
+         KK = K
       ELSE
+         KK = 0
+      END IF
 *
-*        There are not enough reflectors for us to use the blocking
-*        method, so instead bail to the vector-based version
+*     Possibly bail to the unblocked code.
 *
+      IF( KK.EQ.0 ) THEN
          CALL ZUNG2L( M, N, K, A, LDA, TAU, WORK, IINFO )
       END IF
-      WORK( 1 ) = N
+*
+      IF( KK.GT.0 ) THEN
+*
+*        Factor the first block assuming that our first application
+*        will be on the Identity matrix
+*
+         I = 1
+         IB = NB
+*
+*        Form the triangular factor of the block reflector
+*        H = H(i+ib-1) . . . H(i+1) H(i)
+*
+         CALL ZLARFT( 'Backward', 'Columnwise', M-K+I+IB-1, IB,
+     $                  A( 1, N-K+I ), LDA, TAU( I ),
+     $                  A( M-K+I, N-K+I ), LDA)
+*
+*        Apply H to A(1:m-k+i+ib-1,1:n-k+i-1) from the left
+*        Exploit the fact that we are applying to an identity 
+*
+         CALL ZLARFB0C2(.TRUE., 'Left', 'No Transpose', 'Backward', 
+     $         'Columnwise', M-K+I+IB-1, N-K+I-1, IB, A(1, N-K+I), 
+     $         LDA, A( M-K+I, N-K+I ), LDA, A, LDA)
+*
+*        Apply H to rows 1:m-k+i+ib-1 of current block
+*
+         CALL ZUNGKL( M-K+I+IB-1, IB, A( 1, N-K+I ), LDA)
+
+*        Use blocked code on the remaining blocks if there are any.
+*
+         DO I = NB+1, K, NB
+*
+*           The last block may be less than size NB
+*
+            IB = MIN(NB, K-I+1)
+*
+*           Form the triangular factor of the block reflector
+*           H = H(i+ib-1) . . . H(i+1) H(i)
+*
+            CALL ZLARFT( 'Backward', 'Columnwise', M-K+I+IB-1, IB,
+     $                  A( 1, N-K+I ), LDA, TAU( I ), 
+     $                  A( M-K+I, N-K+I ), LDA )
+*
+*           Apply H to A(1:m-k+i+ib-1,1:n-k+i-1) from the left
+*
+            CALL ZLARFB0C2(.FALSE., 'Left', 'No Transpose',
+     $            'Backward', 'Columnwise', M-K+I+IB-1, N-K+I-1, IB, 
+     $            A(1, N-K+I), LDA, A( M-K+I, N-K+I ), LDA, A, LDA)
+*
+*           Apply H to rows 1:m-k+i+ib-1 of current block
+*
+            CALL ZUNGKL( M-K+I+IB-1, IB, A( 1, N-K+I ), LDA)
+         END DO
+      END IF
+*
+      WORK( 1 ) = IWS
       RETURN
 *
 *     End of ZUNGQL

@@ -94,6 +94,8 @@
 *> \verbatim
 *>          LWORK is INTEGER
 *>          The dimension of the array WORK. LWORK >= max(1,M).
+*>          For optimum performance LWORK >= M*NB, where NB is
+*>          the optimal blocksize.
 *>
 *>          If LWORK = -1, then a workspace query is assumed; the routine
 *>          only calculates the optimal size of the WORK array, returns
@@ -119,7 +121,7 @@
 *> \ingroup unglq
 *
 *  =====================================================================
-      SUBROUTINE CUNGLQ_NB( M, N, K, A, LDA, TAU, WORK, LWORK, INFO )
+      SUBROUTINE CUNGLQ_NB(M, N, K, NB, A, LDA, TAU, WORK, LWORK, INFO)
 *
 *  -- LAPACK computational routine --
 *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -136,7 +138,8 @@
 *
 *     .. Local Scalars ..
       LOGICAL            LQUERY
-      INTEGER            IINFO, LWKOPT, NX
+      INTEGER            I, IB, IINFO, IWS, KI, KK, LWKOPT, LDWORK,
+     $                   NB, NBMIN, NX
 *     ..
 *     .. External Subroutines ..
       EXTERNAL           CLARFB0C2, CLARFT, CUNGL2,
@@ -154,7 +157,7 @@
 *     Test the input arguments
 *
       INFO = 0
-      LWKOPT = MAX( 1, M )
+      LWKOPT = MAX( 1, M )*NB
       WORK( 1 ) = LWKOPT
       LQUERY = ( LWORK.EQ.-1 )
       IF( M.LT.0 ) THEN
@@ -182,33 +185,100 @@
          RETURN
       END IF
 *
+      NBMIN = MAX( 2, ILAENV( 2, 'CUNGLQ', ' ', M, N, K, -1 ) )
       NX = MAX( 0, ILAENV( 3, 'CUNGLQ', ' ', M, N, K, -1 ) )
+      IWS = M
 *
-      IF( NX.LT.K ) THEN
+      IF( NB.GE.NBMIN .AND. NB.LT.K .AND. NX.LT.K ) THEN
 *
-*        Form the triangular factor of the block reflector
-*        H = H(1) H(2) . . . H(k)
+*        Treat the last NB block starting at KK+1 specially then use our blocking
+*        method from the block starting at KI+1 to 1 
 *
-         CALL CLARFT('Forward', 'Transpose', N, K, A, LDA, TAU,
-     $         A, LDA)
-*
-*        Apply H to A(k+1:m,1:n) from the right
-*
-         CALL CLARFB0C2(.TRUE., 'Right', 'No Transpose', 'Forward',
-     $         'Rowwise', M-K, N, K, A, LDA, A, LDA, A(K+1,1), LDA)
-*
-*        Apply H to A(1:k,1:n) from the right
-*
-         CALL CUNGLK(K, N, A, LDA)
+         KI = K - 2 * NB
+         KK = K - NB
       ELSE
+         KK = 0
+      END IF
 *
-*        There are not enough reflectors for us to use the blocking
-*        method, so instead bail to the vector-based version
+*     Potentially bail to the unblocked version
 *
+      IF( KK.EQ.0 ) THEN
          CALL CUNGL2( M, N, K, A, LDA, TAU, WORK, IINFO )
       END IF
 *
-      WORK( 1 ) = M
+      IF( KK.GT.0 ) THEN
+*
+*        Factor the last block assuming that our first application
+*        will be on the Identity matrix
+*
+         I = KK + 1
+         IB = NB
+*
+*        Form the triangular factor of the block reflector
+*        H = H(i) H(i+1) . . . H(i+ib-1)
+*
+         CALL CLARFT( 'Forward', 'Transpose', N-I+1, IB, A( I, I ),
+     $               LDA, TAU( I ), A( I, I ), LDA )
+*
+*        Apply H to A(i+ib:m,i:n) from the right
+*
+         CALL CLARFB0C2(.TRUE., 'Right', 'No Transpose', 'Forward',
+     $         'Rowwise', M-I-IB+1, N-I+1, IB, A(I,I), LDA, A(I,I), 
+     $         LDA, A(I+IB,I), LDA)
+*
+*        Apply H to columns i:n of current block
+
+         CALL CUNGLK( IB, N-I+1, A( I, I ), LDA)
+*
+*        Use blocked code
+*
+         DO I = KI + 1, 1, -NB
+            IB = NB
+*
+*           Form the triangular factor of the block reflector
+*           H = H(i) H(i+1) . . . H(i+ib-1)
+*
+            CALL CLARFT( 'Forward', 'Transpose', N-I+1, IB, A(I,I),
+     $                  LDA, TAU( I ), A( I, I ), LDA )
+*
+*           Apply H to A(i+ib:m,i:n) from the right
+*
+            CALL CLARFB0C2(.FALSE., 'Right', 'No Transpose',
+     $            'Forward', 'Rowwise', M-I-IB+1, N-I+1, IB, A(I,I),
+     $            LDA, A(I,I), LDA, A(I+IB,I), LDA)
+*
+*           Apply H to columns i:n of current block
+*
+            CALL CUNGLK( IB, N-I+1, A( I, I ), LDA)
+         END DO
+*
+*        This checks for if K was a perfect multiple of NB
+*        so that we only have a special case for the last block when
+*        necessary
+*
+         IF(I.LT.1) THEN
+            IB = I + NB - 1
+            I = 1
+*
+*           Form the triangular factor of the block reflector
+*           H = H(i) H(i+1) . . . H(i+ib-1)
+*
+            CALL CLARFT( 'Forward', 'Transpose', N-I+1, IB, A(I,I),
+     $                  LDA, TAU( I ), A( I, I ), LDA )
+*
+*           Apply H to A(i+ib:m,i:n) from the right
+*
+            CALL CLARFB0C2(.FALSE., 'Right', 'No Transpose',
+     $            'Forward', 'Rowwise', M-I-IB+1, N-I+1, IB, A(I,I),
+     $            LDA, A(I,I), LDA, A(I+IB,I), LDA)
+*
+*           Apply H to columns i:n of current block
+*
+            CALL CUNGLK( IB, N-I+1, A( I, I ), LDA)
+         END IF
+      END IF
+*
+      WORK( 1 ) = IWS
       RETURN
 *
 *     End of CUNGLQ

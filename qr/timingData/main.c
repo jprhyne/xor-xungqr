@@ -39,29 +39,33 @@ double qSecondPerf(double execTime, double m, double n, double k) {
     return numOps / (execTime * 1.0e+9);
 }
 /*
- * On entry, timeVals must be a 2d double array of dimension timeVals[4][3]
+ * On entry, timeVals must be a 2d double array of dimension timeVals[4][4]
  * timeVals has the following entries on exit:
  * timeVals[0][0]: qr AOCL time
  * timeVals[0][1]: qr reference time
- * timeVals[0][2]: qr my time
+ * timeVals[0][2]: qr my version with standard block time
+ * timeVals[0][3]: qr my version with input block time
  * timeVals[1][0]: ql AOCL time
  * timeVals[1][1]: ql reference time
- * timeVals[1][2]: ql my time
+ * timeVals[1][2]: ql my version with standard block time
+ * timeVals[1][3]: ql my version with input block time
  * timeVals[2][0]: rq AOCL time
  * timeVals[2][1]: rq reference time
- * timeVals[2][2]: rq my time
+ * timeVals[2][2]: rq my version with standard block time
+ * timeVals[2][3]: rq my version with input block time
  * timeVals[3][0]: lq AOCL time
  * timeVals[3][1]: lq reference time
- * timeVals[3][2]: lq my time
+ * timeVals[3][2]: lq my version with standard block time
+ * timeVals[3][3]: lq my version with input block time
  */
-void timeReal(int m, int n, int k, double timeVals[4][3]) {
+void timeReal(int m, int n, int k, int nb, double timeVals[4][4]) {
     struct timeval tp;
 
     double elapsed_refL;
 
     float *A = (float *) malloc(sizeof(float)*m*k);
     float *Q = (float *) malloc(sizeof(float)*m*n);
-    float *tau = (float *) malloc(sizeof(float) * (m < n ? n : n)); 
+    float *tau = (float *) malloc(sizeof(float) * (m < n ? n : m)); 
     float *work = (float *) malloc(sizeof(float));
 
     int neg_one = -1;
@@ -69,7 +73,7 @@ void timeReal(int m, int n, int k, double timeVals[4][3]) {
     int info = 0;
     // set all of timeVals to -1 (to ensure everything is set on exit)
     for (int i = 0; i < 4; ++i) {
-        for (int j = 0; j < 3; ++j) {
+        for (int j = 0; j < 4; ++j) {
             timeVals[i][j] = -1;
         }
     }
@@ -116,17 +120,29 @@ void timeReal(int m, int n, int k, double timeVals[4][3]) {
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[0][1] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
-    // My version
+    // My version with standard blocking
     //----------------------------------------------------------------------------------------------
     for (size_t i = 0; i < m*k; ++i) {
         Q[i] = A[i];
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    sorgqr_nb_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
+    sorgqr_new_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[0][2] = elapsed_refL;
+    //----------------------------------------------------------------------------------------------
+    // My version with blocksize as input
+    //----------------------------------------------------------------------------------------------
+    for (size_t i = 0; i < m*k; ++i) {
+        Q[i] = A[i];
+    }
+    gettimeofday(&tp, NULL);
+    elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    sorgqr_nb_(&m, &n, &k, &nb, Q, &m, tau, work, &lwork, &info);
+    gettimeofday(&tp, NULL);
+    elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    timeVals[0][3] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
     // ql
     //----------------------------------------------------------------------------------------------
@@ -157,17 +173,29 @@ void timeReal(int m, int n, int k, double timeVals[4][3]) {
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[1][1] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
-    // My version
+    // My version with standard blocking
     //----------------------------------------------------------------------------------------------
     for (size_t i = 0; i < m*k; ++i) {
         Q[i] = A[i];
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    sorgql_nb_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
+    sorgql_new_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[1][2] = elapsed_refL;
+    //----------------------------------------------------------------------------------------------
+    // My version with blocksize as input
+    //----------------------------------------------------------------------------------------------
+    for (size_t i = 0; i < m*k; ++i) {
+        Q[i] = A[i];
+    }
+    gettimeofday(&tp, NULL);
+    elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    sorgql_nb_(&m, &n, &k, &nb, Q, &m, tau, work, &lwork, &info);
+    gettimeofday(&tp, NULL);
+    elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    timeVals[1][3] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
     // rq
     //----------------------------------------------------------------------------------------------
@@ -198,17 +226,29 @@ void timeReal(int m, int n, int k, double timeVals[4][3]) {
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[2][1] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
-    // My version
+    // My version with standard blocking
     //----------------------------------------------------------------------------------------------
     for (size_t i = 0; i < m*k; ++i) {
         Q[i] = A[i];
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    sorgrq_nb_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
+    sorgrq_new_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[2][2] = elapsed_refL;
+    //----------------------------------------------------------------------------------------------
+    // My version with blocksize as input
+    //----------------------------------------------------------------------------------------------
+    for (size_t i = 0; i < m*k; ++i) {
+        Q[i] = A[i];
+    }
+    gettimeofday(&tp, NULL);
+    elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    sorgrq_nb_(&n, &m, &k, &nb, Q, &n, tau, work, &lwork, &info);
+    gettimeofday(&tp, NULL);
+    elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    timeVals[2][3] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
     // lq
     //----------------------------------------------------------------------------------------------
@@ -239,20 +279,32 @@ void timeReal(int m, int n, int k, double timeVals[4][3]) {
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[3][1] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
-    // My version
+    // My version with standard blocking
     //----------------------------------------------------------------------------------------------
     for (size_t i = 0; i < m*k; ++i) {
         Q[i] = A[i];
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    sorglq_nb_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
+    sorglq_new_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[3][2] = elapsed_refL;
+    //----------------------------------------------------------------------------------------------
+    // My version with blocksize as input
+    //----------------------------------------------------------------------------------------------
+    for (size_t i = 0; i < m*k; ++i) {
+        Q[i] = A[i];
+    }
+    gettimeofday(&tp, NULL);
+    elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    sorglq_nb_(&n, &m, &k, &nb, Q, &n, tau, work, &lwork, &info);
+    gettimeofday(&tp, NULL);
+    elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    timeVals[3][3] = elapsed_refL;
 }
 
-void timeDouble(int m, int n, int k, double timeVals[4][3]) {
+void timeDouble(int m, int n, int k, int nb, double timeVals[4][4]) {
     struct timeval tp;
 
     double elapsed_refL;
@@ -267,7 +319,7 @@ void timeDouble(int m, int n, int k, double timeVals[4][3]) {
     int info = 0;
     // set all of timeVals to -1 (to ensure everything is set on exit)
     for (int i = 0; i < 4; ++i) {
-        for (int j = 0; j < 3; ++j) {
+        for (int j = 0; j < 4; ++j) {
             timeVals[i][j] = -1;
         }
     }
@@ -314,17 +366,29 @@ void timeDouble(int m, int n, int k, double timeVals[4][3]) {
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[0][1] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
-    // My version
+    // My version with standard blocking
     //----------------------------------------------------------------------------------------------
     for (size_t i = 0; i < m*k; ++i) {
         Q[i] = A[i];
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    dorgqr_nb_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
+    dorgqr_new_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[0][2] = elapsed_refL;
+    //----------------------------------------------------------------------------------------------
+    // My version with blocksize as a parameter
+    //----------------------------------------------------------------------------------------------
+    for (size_t i = 0; i < m*k; ++i) {
+        Q[i] = A[i];
+    }
+    gettimeofday(&tp, NULL);
+    elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    dorgqr_nb_(&m, &n, &k, &nb, Q, &m, tau, work, &lwork, &info);
+    gettimeofday(&tp, NULL);
+    elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    timeVals[0][3] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
     // ql
     //----------------------------------------------------------------------------------------------
@@ -355,17 +419,29 @@ void timeDouble(int m, int n, int k, double timeVals[4][3]) {
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[1][1] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
-    // My version
+    // My version with standard blocking
     //----------------------------------------------------------------------------------------------
     for (size_t i = 0; i < m*k; ++i) {
         Q[i] = A[i];
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    dorgql_nb_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
+    dorgql_new_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[1][2] = elapsed_refL;
+    //----------------------------------------------------------------------------------------------
+    // My version with blocksize as a parameter
+    //----------------------------------------------------------------------------------------------
+    for (size_t i = 0; i < m*k; ++i) {
+        Q[i] = A[i];
+    }
+    gettimeofday(&tp, NULL);
+    elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    dorgql_nb_(&m, &n, &k, &nb, Q, &m, tau, work, &lwork, &info);
+    gettimeofday(&tp, NULL);
+    elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    timeVals[1][3] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
     // rq
     //----------------------------------------------------------------------------------------------
@@ -396,17 +472,29 @@ void timeDouble(int m, int n, int k, double timeVals[4][3]) {
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[2][1] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
-    // My version
+    // My version with standard blocking
     //----------------------------------------------------------------------------------------------
     for (size_t i = 0; i < m*k; ++i) {
         Q[i] = A[i];
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    dorgrq_nb_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
+    dorgrq_new_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[2][2] = elapsed_refL;
+    //----------------------------------------------------------------------------------------------
+    // My version with blocksize as a parameter
+    //----------------------------------------------------------------------------------------------
+    for (size_t i = 0; i < m*k; ++i) {
+        Q[i] = A[i];
+    }
+    gettimeofday(&tp, NULL);
+    elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    dorgrq_nb_(&n, &m, &k, &nb, Q, &n, tau, work, &lwork, &info);
+    gettimeofday(&tp, NULL);
+    elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    timeVals[2][3] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
     // lq
     //----------------------------------------------------------------------------------------------
@@ -437,20 +525,32 @@ void timeDouble(int m, int n, int k, double timeVals[4][3]) {
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[3][1] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
-    // My version
+    // My version with standard blocking
     //----------------------------------------------------------------------------------------------
     for (size_t i = 0; i < m*k; ++i) {
         Q[i] = A[i];
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    dorglq_nb_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
+    dorglq_new_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[3][2] = elapsed_refL;
+    //----------------------------------------------------------------------------------------------
+    // My version with blocksize as a parameter
+    //----------------------------------------------------------------------------------------------
+    for (size_t i = 0; i < m*k; ++i) {
+        Q[i] = A[i];
+    }
+    gettimeofday(&tp, NULL);
+    elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    dorglq_nb_(&n, &m, &k, &nb, Q, &n, tau, work, &lwork, &info);
+    gettimeofday(&tp, NULL);
+    elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    timeVals[3][3] = elapsed_refL;
 }
 
-void timeCReal(int m, int n, int k, double timeVals[4][3]) {
+void timeCReal(int m, int n, int k, int nb, double timeVals[4][4]) {
     struct timeval tp;
 
     double elapsed_refL;
@@ -465,7 +565,7 @@ void timeCReal(int m, int n, int k, double timeVals[4][3]) {
     int info = 0;
     // set all of timeVals to -1 (to ensure everything is set on exit)
     for (int i = 0; i < 4; ++i) {
-        for (int j = 0; j < 3; ++j) {
+        for (int j = 0; j < 4; ++j) {
             timeVals[i][j] = -1;
         }
     }
@@ -512,17 +612,29 @@ void timeCReal(int m, int n, int k, double timeVals[4][3]) {
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[0][1] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
-    // My version
+    // My version with standard blocking
     //----------------------------------------------------------------------------------------------
     for (size_t i = 0; i < m*k; ++i) {
         Q[i] = A[i];
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    cungqr_nb_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
+    cungqr_new_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[0][2] = elapsed_refL;
+    //----------------------------------------------------------------------------------------------
+    // My version with blocksize as a parameter
+    //----------------------------------------------------------------------------------------------
+    for (size_t i = 0; i < m*k; ++i) {
+        Q[i] = A[i];
+    }
+    gettimeofday(&tp, NULL);
+    elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    cungqr_nb_(&m, &n, &k, &nb, Q, &m, tau, work, &lwork, &info);
+    gettimeofday(&tp, NULL);
+    elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    timeVals[0][3] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
     // ql
     //----------------------------------------------------------------------------------------------
@@ -553,17 +665,29 @@ void timeCReal(int m, int n, int k, double timeVals[4][3]) {
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[1][1] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
-    // My version
+    // My version with standard blocking
     //----------------------------------------------------------------------------------------------
     for (size_t i = 0; i < m*k; ++i) {
         Q[i] = A[i];
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    cungql_nb_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
+    cungql_new_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[1][2] = elapsed_refL;
+    //----------------------------------------------------------------------------------------------
+    // My version with blocksize as a parameter
+    //----------------------------------------------------------------------------------------------
+    for (size_t i = 0; i < m*k; ++i) {
+        Q[i] = A[i];
+    }
+    gettimeofday(&tp, NULL);
+    elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    cungql_nb_(&m, &n, &k, &nb, Q, &m, tau, work, &lwork, &info);
+    gettimeofday(&tp, NULL);
+    elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    timeVals[1][3] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
     // rq
     //----------------------------------------------------------------------------------------------
@@ -594,17 +718,29 @@ void timeCReal(int m, int n, int k, double timeVals[4][3]) {
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[2][1] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
-    // My version
+    // My version with standard blocking
     //----------------------------------------------------------------------------------------------
     for (size_t i = 0; i < m*k; ++i) {
         Q[i] = A[i];
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    cungrq_nb_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
+    cungrq_new_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[2][2] = elapsed_refL;
+    //----------------------------------------------------------------------------------------------
+    // My version with blocksize as a parameter
+    //----------------------------------------------------------------------------------------------
+    for (size_t i = 0; i < m*k; ++i) {
+        Q[i] = A[i];
+    }
+    gettimeofday(&tp, NULL);
+    elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    cungrq_nb_(&n, &m, &k, &nb, Q, &n, tau, work, &lwork, &info);
+    gettimeofday(&tp, NULL);
+    elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    timeVals[2][3] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
     // lq
     //----------------------------------------------------------------------------------------------
@@ -635,20 +771,32 @@ void timeCReal(int m, int n, int k, double timeVals[4][3]) {
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[3][1] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
-    // My version
+    // My version with standard blocking
     //----------------------------------------------------------------------------------------------
     for (size_t i = 0; i < m*k; ++i) {
         Q[i] = A[i];
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    cunglq_nb_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
+    cunglq_new_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[3][2] = elapsed_refL;
+    //----------------------------------------------------------------------------------------------
+    // My version with blocksize as a parameter
+    //----------------------------------------------------------------------------------------------
+    for (size_t i = 0; i < m*k; ++i) {
+        Q[i] = A[i];
+    }
+    gettimeofday(&tp, NULL);
+    elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    cunglq_nb_(&n, &m, &k, &nb, Q, &n, tau, work, &lwork, &info);
+    gettimeofday(&tp, NULL);
+    elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    timeVals[3][3] = elapsed_refL;
 }
 
-void timeCDouble(int m, int n, int k, double timeVals[4][3]) {
+void timeCDouble(int m, int n, int k, int nb, double timeVals[4][4]) {
     struct timeval tp;
 
     double elapsed_refL;
@@ -710,17 +858,29 @@ void timeCDouble(int m, int n, int k, double timeVals[4][3]) {
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[0][1] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
-    // My version
+    // My version with standard blocking
     //----------------------------------------------------------------------------------------------
     for (size_t i = 0; i < m*k; ++i) {
         Q[i] = A[i];
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    zungqr_nb_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
+    zungqr_new_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[0][2] = elapsed_refL;
+    //----------------------------------------------------------------------------------------------
+    // My version with blocksize as a parameter
+    //----------------------------------------------------------------------------------------------
+    for (size_t i = 0; i < m*k; ++i) {
+        Q[i] = A[i];
+    }
+    gettimeofday(&tp, NULL);
+    elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    zungqr_nb_(&m, &n, &k, &nb, Q, &m, tau, work, &lwork, &info);
+    gettimeofday(&tp, NULL);
+    elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    timeVals[0][3] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
     // ql
     //----------------------------------------------------------------------------------------------
@@ -751,17 +911,29 @@ void timeCDouble(int m, int n, int k, double timeVals[4][3]) {
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[1][1] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
-    // My version
+    // My version with standard blocking
     //----------------------------------------------------------------------------------------------
     for (size_t i = 0; i < m*k; ++i) {
         Q[i] = A[i];
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    zungql_nb_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
+    zungql_new_(&m, &n, &k, Q, &m, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[1][2] = elapsed_refL;
+    //----------------------------------------------------------------------------------------------
+    // My version with blocksize as a parameter
+    //----------------------------------------------------------------------------------------------
+    for (size_t i = 0; i < m*k; ++i) {
+        Q[i] = A[i];
+    }
+    gettimeofday(&tp, NULL);
+    elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    zungql_nb_(&m, &n, &k, &nb, Q, &m, tau, work, &lwork, &info);
+    gettimeofday(&tp, NULL);
+    elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    timeVals[1][3] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
     // rq
     //----------------------------------------------------------------------------------------------
@@ -792,17 +964,29 @@ void timeCDouble(int m, int n, int k, double timeVals[4][3]) {
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[2][1] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
-    // My version
+    // My version with standard blocking
     //----------------------------------------------------------------------------------------------
     for (size_t i = 0; i < m*k; ++i) {
         Q[i] = A[i];
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    zungrq_nb_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
+    zungrq_new_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[2][2] = elapsed_refL;
+    //----------------------------------------------------------------------------------------------
+    // My version with blocksize as a parameter
+    //----------------------------------------------------------------------------------------------
+    for (size_t i = 0; i < m*k; ++i) {
+        Q[i] = A[i];
+    }
+    gettimeofday(&tp, NULL);
+    elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    zungrq_nb_(&n, &m, &k, &nb, Q, &n, tau, work, &lwork, &info);
+    gettimeofday(&tp, NULL);
+    elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    timeVals[2][3] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
     // lq
     //----------------------------------------------------------------------------------------------
@@ -833,27 +1017,39 @@ void timeCDouble(int m, int n, int k, double timeVals[4][3]) {
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[3][1] = elapsed_refL;
     //----------------------------------------------------------------------------------------------
-    // My version
+    // My version with standard blocking
     //----------------------------------------------------------------------------------------------
     for (size_t i = 0; i < m*k; ++i) {
         Q[i] = A[i];
     }
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    zunglq_nb_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
+    zunglq_new_(&n, &m, &k, Q, &n, tau, work, &lwork, &info);
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
     timeVals[3][2] = elapsed_refL;
+    //----------------------------------------------------------------------------------------------
+    // My version with blocksize as a parameter
+    //----------------------------------------------------------------------------------------------
+    for (size_t i = 0; i < m*k; ++i) {
+        Q[i] = A[i];
+    }
+    gettimeofday(&tp, NULL);
+    elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    zunglq_nb_(&n, &m, &k, &nb, Q, &n, tau, work, &lwork, &info);
+    gettimeofday(&tp, NULL);
+    elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+    timeVals[3][3] = elapsed_refL;
 }
 
-void printTimeArray(double timeVals[4][3], int m, int n, int k) {
+void printTimeArray(double timeVals[4][4], int m, int n, int k) {
     const char algNames[4][3] = {"QR", "QL", "RQ", "LQ"};
-    const char impNames[3][10] = {"AOCL", "Reference", "New"};
+    const char impNames[4][13] = {"AOCL", "Reference", "New", "New NB Param"};
 
     for (int i = 0; i < 4; ++i) {
         //printf("---------------------------------------------\n");
-        for (int j = 0; j < 3; ++j) {
-            printf("%s %s: %17.16e:%17.16e\n", algNames[i],impNames[j], timeVals[i][j], (i<2) ?
+        for (int j = 0; j < 4; ++j) {
+            printf("%s %s: %17.16e:%17.16e\n", algNames[i], impNames[j], timeVals[i][j], (i<2) ?
                     qFirstPerf(timeVals[i][j], (double) m, (double) n, (double) k) :
                     qSecondPerf(timeVals[i][j], (double) n, (double) m, (double) k));
         }
@@ -861,7 +1057,7 @@ void printTimeArray(double timeVals[4][3], int m, int n, int k) {
     //printf("---------------------------------------------\n");
 }
 
-void parseInputs(int *m, int *n, int *k, int argc, char *argv[]) {
+void parseInputs(int *m, int *n, int *k, int *nb, int argc, char *argv[]) {
     for(int i = 1; i < argc; ++i) {
         if (strcmp(argv[i], "-m") == 0) {
             *m = atoi(argv[i+1]);
@@ -869,32 +1065,35 @@ void parseInputs(int *m, int *n, int *k, int argc, char *argv[]) {
             *n = atoi(argv[i+1]);
         } else if (strcmp(argv[i], "-k") == 0) {
             *k = atoi(argv[i+1]);
+        } else if (strcmp(argv[i], "-nb") == 0) {
+            *nb = atoi(argv[i+i]);
         }
     }
 }
 
 int main(int argc, char *argv[]){
-    int m,n,k;
+    int m,n,k,nb;
     m = 30;
     n = 30;
     k = 30;
-    parseInputs(&m, &n, &k, argc, argv);
-    double realTimeVals[4][3];
-    double doubleTimeVals[4][3];
+    nb=k;
+    parseInputs(&m, &n, &k, &nb, argc, argv);
+    double realTimeVals[4][4];
+    double doubleTimeVals[4][4];
 
-    timeReal(m,n,k,realTimeVals);
+    timeReal(m,n,k,nb,realTimeVals);
     printf("Single Precision\n");
     printTimeArray(realTimeVals, m, n, k);
 
-    timeDouble(m,n,k,doubleTimeVals);
+    timeDouble(m,n,k,nb,doubleTimeVals);
     printf("Double Precision\n");
     printTimeArray(doubleTimeVals, m, n, k);
-
-    timeCReal(m,n,k,realTimeVals);
+    
+    timeCReal(m,n,k,nb,realTimeVals);
     printf("Single Complex Precision\n");
     printTimeArray(realTimeVals, m, n, k);
 
-    timeCDouble(m,n,k,doubleTimeVals);
+    timeCDouble(m,n,k,nb,doubleTimeVals);
     printf("Double Complex Precision\n");
     printTimeArray(doubleTimeVals, m, n, k);
 }

@@ -120,7 +120,7 @@
 *> \ingroup ungqr
 *
 *  =====================================================================
-      SUBROUTINE ZUNGQR_NB( M, N, K, A, LDA, TAU, WORK, LWORK, INFO )
+      SUBROUTINE ZUNGQR_NB(M, N, K, NB, A, LDA, TAU, WORK, LWORK, INFO)
 *
 *  -- LAPACK computational routine --
 *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
@@ -137,7 +137,8 @@
 *
 *     .. Local Scalars ..
       LOGICAL            LQUERY
-      INTEGER            IINFO, LWKOPT, NX
+      INTEGER            I, IB, IINFO, IWS, KI, KK, LWKOPT, NB,
+     $                   NBMIN, NX
 *     ..
 *     .. External Subroutines ..
       EXTERNAL           XERBLA, ZLARFB0C2, ZLARFT,
@@ -186,34 +187,105 @@
          WORK( 1 ) = 1
          RETURN
       END IF
+*
+      NBMIN = 2
 *     Determine when to cross over from unblocked to blocked
       NX = MAX( 0, ILAENV( 3, 'ZUNGQR', ' ', M, N, K, -1 ) )
+      IWS = N
 *
-      IF( NX.LT.K ) THEN
+      IF( NB.GE.NBMIN .AND. NB.LT.K .AND. NX.LT.K ) THEN
 *
-*        Form the triangular factor of the block reflector
-*        H = H(1) H(2) . . . H(k)
+*        Treat the last NB block starting at KK+1 specially then use our blocking
+*        method from the block starting at KI+1 to 1 
 *
-         CALL ZLARFT('Forward', 'Columnwise', M, K, A, LDA, TAU, 
-     $         A, LDA)
-*
-*        Apply H to A(1:m,k+1:n) from the left
-*
-         CALL ZLARFB0C2(.TRUE., 'Left', 'No Transpose', 'Forward',
-     $         'Columnwise', M, N-K, K, A, LDA, A, LDA, A(1,K+1), LDA)
-*
-*        Apply H to A(1:m,1:k) from the left
-*
-         CALL ZUNGKR(M, K, A, LDA)
+         KI = K - 2 * NB
+         KK = K - NB
       ELSE
+         KK = 0
+      END IF
 *
-*        There are not enough reflectors for us to use the blocking
-*        method, so instead bail to the vector-based version
+*     Potentially bail to the unblocked code.
 *
+      IF( KK.EQ.0 ) THEN
          CALL ZUNG2R( M, N, K, A, LDA, TAU, WORK, IINFO )
       END IF
 *
-      WORK( 1 ) = N
+      IF( KK.GT.0 ) THEN
+*
+*        Factor the last block assuming that our first application
+*        will be on the Identity matrix
+*
+         I = KK + 1
+         IB = NB
+*
+*        Form the triangular factor of the block reflector
+*        H = H(i) H(i+1) . . . H(i+ib-1)
+*
+         CALL ZLARFT('Forward', 'Column', M-I+1, IB, A(I,I),
+     $                     LDA, TAU(I), A(I,I), LDA)
+*
+*        Apply H to A(i:m,i+ib:n) from the left
+*        Exploit the fact that we are applying to an identity 
+*
+         CALL ZLARFB0C2(.TRUE., 'Left', 'No Transpose', 'Forward',
+     $      'Column', M-I+1, N-(I+IB)+1, IB, A(I,I), LDA, A(I,I),
+     $      LDA, A(I,I+IB), LDA)
+*
+*        Apply H to rows i:m of current block
+*
+         CALL ZUNGKR(M-I+1, IB, A(I,I), LDA)
+*
+*        Use our standard blocking method after the last block
+*
+         DO I = KI + 1, 1, -NB
+            IB = NB
+*
+*           Form the triangular factor of the block reflector
+*           H = H(i) H(i+1) . . . H(i+ib-1)
+*
+            CALL ZLARFT('Forward', 'Column', M-I+1, IB, A(I,I),
+     $         LDA, TAU(I), A(I,I), LDA)
+*
+*           Apply H to A(i:m,i+ib:n) from the left
+*
+            CALL ZLARFB0C2(.FALSE., 'Left', 'No Transpose',
+     $         'Forward', 'Column', M-I+1, N-(I+IB)+1, IB, A(I,I),
+     $         LDA, A(I,I), LDA, A(I,I+IB), LDA)
+
+*
+*           Apply H to rows i:m of current block
+*
+            CALL ZUNGKR(M-I+1, IB, A(I,I), LDA)
+         END DO
+*
+*        This checks for if K was a perfect multiple of NB
+*        so that we only have a special case for the last block when
+*        necessary
+*
+         IF(I.LT.1) THEN
+            IB = I + NB - 1
+            I = 1
+*
+*           Form the triangular factor of the block reflector
+*           H = H(i) H(i+1) . . . H(i+ib-1)
+*
+            CALL ZLARFT('Forward', 'Column', M-I+1, IB, A(I,I),
+     $         LDA, TAU(I), A(I,I), LDA)
+*
+*           Apply H to A(i:m,i+ib:n) from the left
+*
+            CALL ZLARFB0C2(.FALSE., 'Left', 'No Transpose',
+     $         'Forward', 'Column', M-I+1, N-(I+IB)+1, IB, A(I,I),
+     $         LDA, A(I,I), LDA, A(I,I+IB), LDA)
+
+*
+*           Apply H to rows i:m of current block
+*
+            CALL ZUNGKR(M-I+1, IB, A(I,I), LDA)
+         END IF
+      END IF
+*
+      WORK( 1 ) = IWS
       RETURN
 *
 *     End of ZUNGQR
