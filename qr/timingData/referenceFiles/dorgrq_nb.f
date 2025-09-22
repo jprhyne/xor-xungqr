@@ -145,7 +145,7 @@
      $                   LWKOPT, NB, NBMIN, NX
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL           DLARFB0C2, DLARFT, DORGR2,
+      EXTERNAL           DLARFB0C2, DLARFT_REC, DORGR2,
      $                   DORGRK, XERBLA
 *     ..
 *     .. Intrinsic Functions ..
@@ -236,7 +236,7 @@
 *        Form the triangular factor of the block reflector
 *        H = H(i+ib-1) . . . H(i+1) H(i)
 *
-         CALL DLARFT( 'Transpose', 'Rowwise', N-K+I+IB-1, IB,
+         CALL DLARFT_REC( 'Transpose', 'Rowwise', N-K+I+IB-1, IB,
      $                A( II, 1 ), LDA, TAU( I ), A( II, N-K+I ), LDA )
 *
 *        Apply H to A(1:m-k+i-1,1:n-k+i+ib-1) from the right
@@ -259,7 +259,7 @@
 *           Form the triangular factor of the block reflector
 *           H = H(i+ib-1) . . . H(i+1) H(i)
 *
-            CALL DLARFT( 'Transpose', 'Rowwise', N-K+I+IB-1, IB,
+            CALL DLARFT_REC( 'Transpose', 'Rowwise', N-K+I+IB-1, IB,
      $                A( II, 1 ), LDA, TAU( I ), A( II, N-K+I ), LDA )
 *
 *           Apply H to A(1:m-k+i-1,1:n-k+i+ib-1) from the right

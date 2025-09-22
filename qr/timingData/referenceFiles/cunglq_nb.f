@@ -142,7 +142,7 @@
      $                   NB, NBMIN, NX
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL           CLARFB0C2, CLARFT, CUNGL2,
+      EXTERNAL           CLARFB0C2, CLARFT_REC, CUNGL2,
      $                   CUNGLK, XERBLA
 *     ..
 *     .. Intrinsic Functions ..
@@ -217,7 +217,7 @@
 *        Form the triangular factor of the block reflector
 *        H = H(i) H(i+1) . . . H(i+ib-1)
 *
-         CALL CLARFT( 'Forward', 'Transpose', N-I+1, IB, A( I, I ),
+         CALL CLARFT_REC( 'Forward', 'Transpose', N-I+1, IB, A( I, I ),
      $               LDA, TAU( I ), A( I, I ), LDA )
 *
 *        Apply H to A(i+ib:m,i:n) from the right
@@ -238,7 +238,7 @@
 *           Form the triangular factor of the block reflector
 *           H = H(i) H(i+1) . . . H(i+ib-1)
 *
-            CALL CLARFT( 'Forward', 'Transpose', N-I+1, IB, A(I,I),
+            CALL CLARFT_REC( 'Forward', 'Transpose', N-I+1, IB, A(I,I),
      $                  LDA, TAU( I ), A( I, I ), LDA )
 *
 *           Apply H to A(i+ib:m,i:n) from the right
@@ -263,7 +263,7 @@
 *           Form the triangular factor of the block reflector
 *           H = H(i) H(i+1) . . . H(i+ib-1)
 *
-            CALL CLARFT( 'Forward', 'Transpose', N-I+1, IB, A(I,I),
+            CALL CLARFT_REC( 'Forward', 'Transpose', N-I+1, IB, A(I,I),
      $                  LDA, TAU( I ), A( I, I ), LDA )
 *
 *           Apply H to A(i+ib:m,i:n) from the right

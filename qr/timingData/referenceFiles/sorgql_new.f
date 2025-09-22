@@ -145,7 +145,7 @@
      $                   NBMIN, NX
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL           SLARFB0C2, SLARFT, SORG2L,
+      EXTERNAL           SLARFB0C2, SLARFT_REC, SORG2L,
      $                   SORGKL, XERBLA
 *     ..
 *     .. Intrinsic Functions ..
@@ -229,7 +229,7 @@
 *        Form the triangular factor of the block reflector
 *        H = H(i+ib-1) . . . H(i+1) H(i)
 *
-         CALL SLARFT( 'Backward', 'Columnwise', M-K+I+IB-1, IB,
+         CALL SLARFT_REC( 'Backward', 'Columnwise', M-K+I+IB-1, IB,
      $                  A( 1, N-K+I ), LDA, TAU( I ),
      $                  A( M-K+I, N-K+I ), LDA)
 *
@@ -254,7 +254,7 @@
 *           Form the triangular factor of the block reflector
 *           H = H(i+ib-1) . . . H(i+1) H(i)
 *
-            CALL SLARFT( 'Backward', 'Columnwise', M-K+I+IB-1, IB,
+            CALL SLARFT_REC( 'Backward', 'Columnwise', M-K+I+IB-1, IB,
      $                  A( 1, N-K+I ), LDA, TAU( I ), 
      $                  A( M-K+I, N-K+I ), LDA )
 *

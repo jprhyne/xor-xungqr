@@ -143,7 +143,7 @@
      $                   NB, NBMIN, NX
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL             DLARFB0C2, DLARFT, DORG2R,
+      EXTERNAL             DLARFB0C2, DLARFT_REC, DORG2R,
      $                     DORGKR, XERBLA
 *     ..
 *     .. Intrinsic Functions ..
@@ -217,7 +217,7 @@
 *           Form the triangular factor of the block reflector
 *           H = H(i) H(i+1) . . . H(i+ib-1)
 *
-         CALL DLARFT('Forward', 'Column', M-I+1, IB, A(I,I),
+         CALL DLARFT_REC('Forward', 'Column', M-I+1, IB, A(I,I),
      $                     LDA, TAU(I), A(I,I), LDA)
 *
 *           Apply H to A(i:m,i+ib:n) from the left
@@ -235,7 +235,7 @@
 *           Form the triangular factor of the block reflector
 *           H = H(i) H(i+1) . . . H(i+ib-1)
 *
-            CALL DLARFT('Forward', 'Column', M-I+1, IB, A(I,I),
+            CALL DLARFT_REC('Forward', 'Column', M-I+1, IB, A(I,I),
      $         LDA, TAU(I), A(I,I), LDA)
 *
 *           Apply H to A(i:m,i+ib:n) from the left
@@ -261,7 +261,7 @@
 *           Form the triangular factor of the block reflector
 *           H = H(i) H(i+1) . . . H(i+ib-1)
 *
-            CALL DLARFT('Forward', 'Column', M-I+1, IB, A(I,I),
+            CALL DLARFT_REC('Forward', 'Column', M-I+1, IB, A(I,I),
      $         LDA, TAU(I), A(I,I), LDA)
 *
 *           Apply H to A(i:m,i+ib:n) from the left

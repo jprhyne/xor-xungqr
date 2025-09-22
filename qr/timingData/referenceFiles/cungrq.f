@@ -147,7 +147,7 @@
      $                   LWKOPT, NB, NBMIN, NX
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL           CLARFB, CLARFT, CUNGR2, XERBLA
+      EXTERNAL           CLARFB, CLARFT_REC, CUNGR2, XERBLA
 *     ..
 *     .. Intrinsic Functions ..
       INTRINSIC          MAX, MIN
@@ -259,7 +259,7 @@
 *              Form the triangular factor of the block reflector
 *              H = H(i+ib-1) . . . H(i+1) H(i)
 *
-               CALL CLARFT( 'Backward', 'Rowwise', N-K+I+IB-1, IB,
+               CALL CLARFT_REC( 'Backward', 'Rowwise', N-K+I+IB-1, IB,
      $                      A( II, 1 ), LDA, TAU( I ), WORK, LDWORK )
 *
 *              Apply H**H to A(1:m-k+i-1,1:n-k+i+ib-1) from the right

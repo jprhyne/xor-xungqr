@@ -141,7 +141,7 @@
      $                   NX
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL           XERBLA, ZLARFB0C2, ZLARFT,
+      EXTERNAL           XERBLA, ZLARFB0C2, ZLARFT_REC,
      $                   ZUNG2L, ZUNGKL
 *     ..
 *     .. Intrinsic Functions ..
@@ -227,7 +227,7 @@
 *        Form the triangular factor of the block reflector
 *        H = H(i+ib-1) . . . H(i+1) H(i)
 *
-         CALL ZLARFT( 'Backward', 'Columnwise', M-K+I+IB-1, IB,
+         CALL ZLARFT_REC( 'Backward', 'Columnwise', M-K+I+IB-1, IB,
      $                  A( 1, N-K+I ), LDA, TAU( I ),
      $                  A( M-K+I, N-K+I ), LDA)
 *
@@ -253,7 +253,7 @@
 *           Form the triangular factor of the block reflector
 *           H = H(i+ib-1) . . . H(i+1) H(i)
 *
-            CALL ZLARFT( 'Backward', 'Columnwise', M-K+I+IB-1, IB,
+            CALL ZLARFT_REC( 'Backward', 'Columnwise', M-K+I+IB-1, IB,
      $                  A( 1, N-K+I ), LDA, TAU( I ), 
      $                  A( M-K+I, N-K+I ), LDA )
 *

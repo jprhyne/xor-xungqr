@@ -146,7 +146,7 @@
      $                   LWKOPT, NBMIN, NX
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL           SLARFB0C2, SLARFT, SORGL2,
+      EXTERNAL           SLARFB0C2, SLARFT_REC, SORGL2,
      $                   SORGLK, XERBLA
 *     ..
 *     .. Intrinsic Functions ..
@@ -217,7 +217,7 @@
 *        Form the triangular factor of the block reflector
 *        H = H(i) H(i+1) . . . H(i+ib-1)
 *
-         CALL SLARFT( 'Forward', 'Transpose', N-I+1, IB, A( I, I ),
+         CALL SLARFT_REC( 'Forward', 'Transpose', N-I+1, IB, A( I, I ),
      $               LDA, TAU( I ), A( I, I ), LDA )
 *
 *        Apply H to A(i+ib:m,i:n) from the right
@@ -238,7 +238,7 @@
 *           Form the triangular factor of the block reflector
 *           H = H(i) H(i+1) . . . H(i+ib-1)
 *
-            CALL SLARFT( 'Forward', 'Transpose', N-I+1, IB, A(I,I),
+            CALL SLARFT_REC( 'Forward', 'Transpose', N-I+1, IB, A(I,I),
      $                  LDA, TAU( I ), A( I, I ), LDA )
 *
 *           Apply H to A(i+ib:m,i:n) from the right
@@ -263,7 +263,7 @@
 *           Form the triangular factor of the block reflector
 *           H = H(i) H(i+1) . . . H(i+ib-1)
 *
-            CALL SLARFT( 'Forward', 'Transpose', N-I+1, IB, A(I,I),
+            CALL SLARFT_REC( 'Forward', 'Transpose', N-I+1, IB, A(I,I),
      $                  LDA, TAU( I ), A( I, I ), LDA )
 *
 *           Apply H to A(i+ib:m,i:n) from the right

@@ -142,7 +142,7 @@
       INTEGER            I, IB, IINFO, IWS, KK, LWKOPT, NB, NBMIN
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL           DLARFB0C2, DLARFT, DORG2L,
+      EXTERNAL           DLARFB0C2, DLARFT_REC, DORG2L,
      $                   DORGKL, XERBLA
 *     ..
 *     .. Intrinsic Functions ..
@@ -227,7 +227,7 @@
 *        Form the triangular factor of the block reflector
 *        H = H(i+ib-1) . . . H(i+1) H(i)
 *
-         CALL DLARFT( 'Backward', 'Columnwise', M-K+I+IB-1, IB,
+         CALL DLARFT_REC( 'Backward', 'Columnwise', M-K+I+IB-1, IB,
      $                  A( 1, N-K+I ), LDA, TAU( I ),
      $                  A( M-K+I, N-K+I ), LDA)
 *
@@ -252,7 +252,7 @@
 *           Form the triangular factor of the block reflector
 *           H = H(i+ib-1) . . . H(i+1) H(i)
 *
-            CALL DLARFT( 'Backward', 'Columnwise', M-K+I+IB-1, IB,
+            CALL DLARFT_REC( 'Backward', 'Columnwise', M-K+I+IB-1, IB,
      $                  A( 1, N-K+I ), LDA, TAU( I ), 
      $                  A( M-K+I, N-K+I ), LDA )
 *

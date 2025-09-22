@@ -141,7 +141,7 @@
      $                   NX
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL           CLARFB0C2, CLARFT, CUNG2L,
+      EXTERNAL           CLARFB0C2, CLARFT_REC, CUNG2L,
      $                   CUNGKL, XERBLA
 *     ..
 *     .. Intrinsic Functions ..
@@ -227,7 +227,7 @@
 *        Form the triangular factor of the block reflector
 *        H = H(i+ib-1) . . . H(i+1) H(i)
 *
-         CALL CLARFT( 'Backward', 'Columnwise', M-K+I+IB-1, IB,
+         CALL CLARFT_REC( 'Backward', 'Columnwise', M-K+I+IB-1, IB,
      $                  A( 1, N-K+I ), LDA, TAU( I ),
      $                  A( M-K+I, N-K+I ), LDA)
 *
@@ -253,7 +253,7 @@
 *           Form the triangular factor of the block reflector
 *           H = H(i+ib-1) . . . H(i+1) H(i)
 *
-            CALL CLARFT( 'Backward', 'Columnwise', M-K+I+IB-1, IB,
+            CALL CLARFT_REC( 'Backward', 'Columnwise', M-K+I+IB-1, IB,
      $                  A( 1, N-K+I ), LDA, TAU( I ), 
      $                  A( M-K+I, N-K+I ), LDA )
 *

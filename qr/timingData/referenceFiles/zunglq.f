@@ -146,7 +146,7 @@
      $                   LWKOPT, NB, NBMIN, NX
 *     ..
 *     .. External Subroutines ..
-      EXTERNAL           XERBLA, ZLARFB, ZLARFT, ZUNGL2
+      EXTERNAL           XERBLA, ZLARFB, ZLARFT_REC, ZUNGL2
 *     ..
 *     .. Intrinsic Functions ..
       INTRINSIC          MAX, MIN
@@ -251,7 +251,7 @@
 *              Form the triangular factor of the block reflector
 *              H = H(i) H(i+1) . . . H(i+ib-1)
 *
-               CALL ZLARFT( 'Forward', 'Rowwise', N-I+1, IB, A( I,
+               CALL ZLARFT_REC( 'Forward', 'Rowwise', N-I+1, IB, A( I,
      $                      I ),
      $                      LDA, TAU( I ), WORK, LDWORK )
 *
