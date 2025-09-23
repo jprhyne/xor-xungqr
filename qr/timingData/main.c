@@ -1066,17 +1066,19 @@ void parseInputs(int *m, int *n, int *k, int *nb, int argc, char *argv[]) {
         } else if (strcmp(argv[i], "-k") == 0) {
             *k = atoi(argv[i+1]);
         } else if (strcmp(argv[i], "-nb") == 0) {
-            *nb = atoi(argv[i+i]);
+            *nb = atoi(argv[i+1]);
         }
     }
 }
 
 int main(int argc, char *argv[]){
     int m,n,k,nb;
+    // defaults
     m = 30;
     n = 30;
     k = 30;
     nb=k;
+    // Read in user input
     parseInputs(&m, &n, &k, &nb, argc, argv);
     double realTimeVals[4][4];
     double doubleTimeVals[4][4];
