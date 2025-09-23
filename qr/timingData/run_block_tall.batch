@@ -1,0 +1,12 @@
+#!/bin/env bash
+# time_all.batch
+# Batch job that runs tests of my new Q computation algorithms for varying precisions
+# Johnathan Rhyne
+#SBATCH --job-name=run_all.sh
+#SBATCH --partition=math-alderaan
+#SBATCH --time=24:00:00
+#SBATCH --ntasks=1
+#SBATCH --mem=16384MB
+
+dateString=$(date "+%d.%B.%Y")
+./run_block_tall.sh > "tallNBTiming.$dateString.txt"
