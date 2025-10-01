@@ -6,7 +6,7 @@
 #include <math.h>
 double computeRecPerf(double time, double m, double n)
 {
-    double rec = ((double) n * (double) n - 1.0) * (2.0 * (double) m + (double) n);
+    double rec = 6*m*n*n - 6*m*n - 2*n*n*n + 3*n*n - n;
     rec /= 6.0;
     return rec / (time*1.0e+9);
 }
@@ -72,8 +72,8 @@ double computeRepresNorm(int m, int n, double *Q, double *R, int ldr, double *As
     return ref / normA;
 }
 // In order to ensure accuracy, we will throw the computed T factor into 
-// my_dorgkr, and checking the relative error in computing Q and R.
-// This does implicitly rely on my_dorgkr working properly. So if the call
+// dorgkr, and checking the relative error in computing Q and R.
+// This does implicitly rely on dorgkr working properly. So if the call
 // to either reference or optimized dlartf fails, first ensure that routine
 // is behaving properly.
 int main(int argc, char *argv[]) {
@@ -106,7 +106,9 @@ int main(int argc, char *argv[]) {
     // functions that take characters from C
     size_t dummy = 0;
 
-    bool timesOnly = false;
+    bool verbose = false;
+    bool computeErrs = false; // True if we want to compute the relative errors
+    bool runUT = false; // Since the UT version doesn't have the same functionality (yet) we only run it if requested
 
     m = 30;
     n = -1;
@@ -130,9 +132,15 @@ int main(int argc, char *argv[]) {
             n  = atoi( *(argv + i + 1) );
             i++;
         }
-        if( strcmp( *(argv + i), "-t") == 0) {
-            timesOnly = true;
+        if( strcmp( argv[i], "-v" ) == 0 ) {
+            verbose = true;
         }
+        if( strcmp( argv[i], "-e" ) == 0 ) {
+            computeErrs = true;
+        }
+        if( strcmp( argv[i], "-ut" ) == 0 ) {
+            runUT = true;
+        } 
     }
     //ILAENV( 1, 'DORGQR', ' ', M, N, K, -1 )
     char *dorgqr = "dorgqr";
@@ -158,7 +166,7 @@ int main(int argc, char *argv[]) {
     T = (double *) malloc( n * n * sizeof(double));
 
     // Print to the user what we are doing along with any arguments that are used
-    if(!timesOnly) {
+    if (verbose) {
         printf("dgeqrf dlarft | m = %4d, n = %d, lda = %4d, ldq = %4d\n", m, n, lda, ldq);
     }
 
@@ -189,7 +197,7 @@ int main(int argc, char *argv[]) {
     // At this point, we now have that A = [R \\ V]
     // Copy the 'lower triangular' part of A into V
     dlacpy_(&lChar, &m, &n, A, &lda, V, &m, dummy);
-    // Set the diagonal of V to be exactly 1.
+    // Set the diagonal of V to be exactly 1. This is used when we call syrk and other testing methods
     for( i = 0; i < n; i++)
         V[i+i*m] = one;
     // Now, V is the exact matrix of our householder vectors
@@ -210,15 +218,20 @@ int main(int argc, char *argv[]) {
     // Compute the number of flops
     double refFlop = computeRecPerf(refTime, (double) m, (double) n);
 
-    // testing if T is valid
-    // Copy T into the upper triangular part of V
-    dlacpy_(&uChar, &m, &n, T, &n, V, &m, dummy);
-    // Call my_dorgkr with the above V matrix
-    my_dorgkr_(&m, &n, V, &m);
-    // Compute \|Q**T *Q - I\|/\|As\|
-    norm_orth_ref = computeOrthNorm(m, n, V);
-    // Compute ||A - Q*R||_F / ||A||_F
-    norm_repres_ref = computeRepresNorm(m, n, V, A, lda, As, lda, normA);
+    // Testing if T is valid if the user requests it
+    if( computeErrs ) {
+        // Copy T into the upper triangular part of V
+        dlacpy_(&uChar, &m, &n, T, &n, V, &m, dummy);
+        // Call dorgkr with the above V matrix
+        dorgkr_(&m, &n, V, &m);
+        // Compute \|Q**T *Q - I\|/\|As\|
+        norm_orth_ref = computeOrthNorm(m, n, V);
+        // Compute ||A - Q*R||_F / ||A||_F
+        norm_repres_ref = computeRepresNorm(m, n, V, A, lda, As, lda, normA);
+    } else {
+        norm_orth_ref = -1;
+        norm_repres_ref = -1;
+    }
 
     // copy Vs back into V in the event V was changed
     dlacpy_(&aChar, &m, &n, Vs, &m, V, &m, dummy);
@@ -227,7 +240,7 @@ int main(int argc, char *argv[]) {
     // Start the timer
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    // Call reference dlarft using optimized blas as the backend
+    // Call optimized dlarft using optimized blas as the backend
     dlarft_(&fChar, &cChar, &m, &n, V, &m, tau, T, &n, dummy, dummy);
     // grab the execution time
     gettimeofday(&tp, NULL);
@@ -237,15 +250,20 @@ int main(int argc, char *argv[]) {
     // Compute the number of flops
     double optFlop = computeRecPerf(optTime, (double) m, (double) n);
 
-    // testing if T is valid
-    // Copy T into the upper triangular part of V
-    dlacpy_(&uChar, &m, &n, T, &n, V, &m, dummy);
-    // Call my_dorgkr with the above V matrix
-    my_dorgkr_(&m, &n, V, &m);
-    // Compute \|Q**T *Q - I\|/\|As\|
-    norm_orth_opt = computeOrthNorm(m, n, V);
-    // Compute ||A - Q*R||_F / ||A||_F
-    norm_repres_opt = computeRepresNorm(m, n, V, A, lda, As, lda, normA);
+    // Testing if T is valid if the user requests it
+    if( computeErrs ) {
+        // Copy T into the upper triangular part of V
+        dlacpy_(&uChar, &m, &n, T, &n, V, &m, dummy);
+        // Call dorgkr with the above V matrix
+        dorgkr_(&m, &n, V, &m);
+        // Compute \|Q**T *Q - I\|/\|As\|
+        norm_orth_opt = computeOrthNorm(m, n, V);
+        // Compute ||A - Q*R||_F / ||A||_F
+        norm_repres_opt = computeRepresNorm(m, n, V, A, lda, As, lda, normA);
+    } else {
+        norm_orth_opt = -1;
+        norm_repres_opt = -1;
+    }
 
     // copy Vs back into V in the event V was changed
     dlacpy_(&aChar, &m, &n, Vs, &m, V, &m, dummy);
@@ -254,8 +272,8 @@ int main(int argc, char *argv[]) {
     // Start the timer
     gettimeofday(&tp, NULL);
     elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    // Call reference dlarft using optimized blas as the backend
-    my_dlarft_rec_(&fChar, &cChar,&m, &n, V, &m, tau, T, &n);
+    // Call recursive dlarft using optimized blas as the backend
+    dlarft_rec_(&fChar, &cChar,&m, &n, V, &m, tau, T, &n);
     // grab the execution time
     gettimeofday(&tp, NULL);
     elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
@@ -264,51 +282,76 @@ int main(int argc, char *argv[]) {
     // Compute the number of flops
     double recFlop = computeRecPerf(recTime, (double) m, (double) n);
 
-    // testing if T is valid
-    // Copy T into the upper triangular part of V
-    dlacpy_(&uChar, &m, &n, T, &n, V, &m, dummy);
-    // Call my_dorgkr with the above V matrix
-    my_dorgkr_(&m, &n, V, &m);
-    // Compute \|Q**T *Q - I\|/\|As\|
-    norm_orth_rec = computeOrthNorm(m, n, V);
-    // Compute ||A - Q*R||_F / ||A||_F
-    norm_repres_rec = computeRepresNorm(m, n, V, A, lda, As, lda, normA);
+    // Testing if T is valid if the user requests it
+    if( computeErrs ) {
+        // Copy T into the upper triangular part of V
+        dlacpy_(&uChar, &m, &n, T, &n, V, &m, dummy);
+        // Call dorgkr with the above V matrix
+        dorgkr_(&m, &n, V, &m);
+        // Compute \|Q**T *Q - I\|/\|As\|
+        norm_orth_rec = computeOrthNorm(m, n, V);
+        // Compute ||A - Q*R||_F / ||A||_F
+        norm_repres_rec = computeRepresNorm(m, n, V, A, lda, As, lda, normA);
+    } else {
+        norm_orth_rec = -1;
+        norm_repres_rec = -1;
+    }
 
     // copy Vs back into V in the event V was changed
     dlacpy_(&aChar, &m, &n, Vs, &m, V, &m, dummy);
 
 
-    // Start the timer
-    gettimeofday(&tp, NULL);
-    elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    // Call reference dlarft using optimized blas as the backend
-    my_dlarft_ut_(&m, &n, V, &m, tau, T, &n);
-    // grab the execution time
-    gettimeofday(&tp, NULL);
-    elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
-    // Store this value 
-    double utTime = elapsed_refL;
-    // Compute the number of flops
-    double utFlop = computeUTPerf(utTime, (double) m, (double) n);
+    // Since the UT version doesn't have the exact same functionality as the recursive (4 cases instead of 6)
+    //  we only call this routine if the user requests it
+    double utTime, utFlop;
+    if( runUT ) {
+        // Start the timer
+        gettimeofday(&tp, NULL);
+        elapsed_refL=-((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+        // Call reference dlarft using optimized blas as the backend
+        my_dlarft_ut_(&m, &n, V, &m, tau, T, &n);
+        // grab the execution time
+        gettimeofday(&tp, NULL);
+        elapsed_refL+=((double)tp.tv_sec+(1.e-6)*tp.tv_usec);
+        // Store this value 
+        double utTime = elapsed_refL;
+        // Compute the number of flops
+        double utFlop = computeUTPerf(utTime, (double) m, (double) n);
 
-    // testing if T is valid
-    // Copy T into the upper triangular part of V
-    dlacpy_(&uChar, &m, &n, T, &n, V, &m, dummy);
-    // Call my_dorgkr with the above V matrix
-    my_dorgkr_(&m, &n, V, &m);
-    // Compute \|Q**T *Q - I\|/\|As\|
-    norm_orth_ut = computeOrthNorm(m, n, V);
-    // Compute ||A - Q*R||_F / ||A||_F
-    norm_repres_ut = computeRepresNorm(m, n, V, A, lda, As, lda, normA);
+        // Testing if T is valid if the user requests it
+        if( computeErrs ) {
+            // Copy T into the upper triangular part of V
+            dlacpy_(&uChar, &m, &n, T, &n, V, &m, dummy);
+            // Call dorgkr with the above V matrix
+            dorgkr_(&m, &n, V, &m);
+            // Compute \|Q**T *Q - I\|/\|As\|
+            norm_orth_ut = computeOrthNorm(m, n, V);
+            // Compute ||A - Q*R||_F / ||A||_F
+            norm_repres_ut = computeRepresNorm(m, n, V, A, lda, As, lda, normA);
+        } else {
+            norm_orth_ut = -1;
+            norm_repres_ut = -1;
+        }
+    }
 
+    if( verbose ) {
+        printf("sourceUsed:executionTime|performance\n");
+    }
     printf("ref:%6.4e|%6.4e\n", refTime,refFlop);
     printf("opt:%6.4e|%6.4e\n", optTime,optFlop);
     printf("rec:%6.4e|%6.4e\n", recTime,recFlop);
-    // Now, we print out the testing information
+    if( runUT ) {
+        printf("ut:%6.4e|%6.4e\n", recTime,recFlop);
+    }
+    // Now, we print out the testing information if it was requested
+    if( computeErrs ) {
+        printf("reference DLARFT\ntime: %10.10e\nperf: %10.10e\north: %10.10e\nrepres: %10.10e\n", refTime, refFlop, norm_orth_ref, norm_repres_ref);
+        printf("optimized DLARFT\ntime: %10.10e\nperf: %10.10e\north: %10.10e\nrepres: %10.10e\n", optTime, optFlop, norm_orth_opt, norm_repres_opt);
+        printf("MY_DLARFT_REC\ntime: %10.10e\nperf: %10.10e\north: %10.10e\nrepres: %10.10e\n", recTime, recFlop, norm_orth_rec, norm_repres_rec);
+        if( runUT ) {
+            printf("MY_DLARFT_UT\ntime: %10.10e\nperf: %10.10e\north: %10.10e\nrepres: %10.10e\n", utTime, utFlop, norm_orth_ut, norm_repres_ut);
+        }
+    }
     /*
-    printf("reference DLARFT\ntime: %10.10e\nperf: %10.10e\north: %10.10e\nrepres: %10.10e\n", refTime, refFlop, norm_orth_ref, norm_repres_ref);
-    printf("optimized DLARFT\ntime: %10.10e\nperf: %10.10e\north: %10.10e\nrepres: %10.10e\n", optTime, optFlop, norm_orth_opt, norm_repres_opt);
-    printf("MY_DLARFT_REC\ntime: %10.10e\nperf: %10.10e\north: %10.10e\nrepres: %10.10e\n", recTime, recFlop, norm_orth_rec, norm_repres_rec);
-    printf("MY_DLARFT_UT\ntime: %10.10e\nperf: %10.10e\north: %10.10e\nrepres: %10.10e\n", utTime, utFlop, norm_orth_ut, norm_repres_ut);
     */
 }
