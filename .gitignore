@@ -75,6 +75,10 @@ tex/*thm
 *.snm
 *.nav
 
+__pycache__/
+obj/
+bin/
+
 # Exclude temp file
 ParseTimeFileW.ipynb
 *pdf
