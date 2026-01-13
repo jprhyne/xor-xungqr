@@ -1,31 +1,28 @@
 include ../make.inc
+OBJDIR=obj
+SRCDIR=src
+BINDIR=bin
+
+SRCFILES=$(wildcard $(SRCDIR)/*.f)
+OBJFILES=$(patsubst $(SRCDIR)/%.f,$(OBJDIR)/%.o,$(SRCFILES))
+EXEFILES=$(patsubst $(SRCDIR)/%.f,$(BINDIR)/%.exe,$(SRCFILES))
 
 .PHONY: all clean
-all: test_dstrk.exe test_dst3rk.exe test_dtrmvoop.exe test_dtrmmoop_lvl2.exe
+#all: $(BINDIR)/test_dstrk.exe $(BINDIR)/test_dst3rk.exe $(BINDIR)/test_dtrmvoop.exe $(BINDIR)/test_dtrmmoop_lvl2.exe $(BINDIR)/test_dorgkr.exe
+all: $(EXEFILES)
 
 clean:
-	rm *.o *.exe
+	rm $(OBJDIR)/*.o $(BINDIR)/*.exe
 
-test_dtrmmoop_lvl2.exe: test_dtrmmoop_lvl2.o
-	$(CPP) $(CFLAGS) $(ALL_OPT_INC) -lgfortran $^ $(MY_LIBS)/myLapack.a $(ALL_OPT_LIB) -o $@
+cleanlib:
+	rm myLapack.a
 
-test_dtrmmoop_lvl2.o: test_dtrmmoop_lvl2.f
+myLapack.a: $(MY_LIBS)/myLapack.a
+	cp $(MY_LIBS)/myLapack.a ./
+
+$(BINDIR)/%.exe: $(OBJDIR)/%.o myLapack.a
+	$(CPP) $(CFLAGS) $(ALL_OPT_INC) -lgfortran $^ $(ALL_OPT_LIB) -o $@
+
+$(OBJDIR)/%.o: $(SRCDIR)/%.f
 	$(FC) -c $(FFLAGS) -O0 $< -o $@
 
-test_dtrmvoop.exe: test_dtrmvoop.o
-	$(CPP) $(CFLAGS) $(ALL_OPT_INC) -lgfortran $^ $(MY_LIBS)/myLapack.a $(ALL_OPT_LIB) -o $@
-
-test_dtrmvoop.o: test_dtrmvoop.f
-	$(FC) -c $(FFLAGS) -O0 $< -o $@
-
-test_dstrk.exe: test_dstrk.o
-	$(CPP) $(CFLAGS) $(ALL_OPT_INC) -lgfortran $^ $(MY_LIBS)/myLapack.a $(ALL_OPT_LIB) -o $@
-
-test_dstrk.o: test_dstrk.f
-	$(FC) -c $(FFLAGS) -O0 $< -o $@
-
-test_dst3rk.exe: test_dst3rk.o
-	$(CPP) $(CFLAGS) $(ALL_OPT_INC) -lgfortran $^ $(MY_LIBS)/myLapack.a $(ALL_OPT_LIB) -o $@
-
-test_dst3rk.o: test_dst3rk.f
-	$(FC) -c $(FFLAGS) -O0 $< -o $@

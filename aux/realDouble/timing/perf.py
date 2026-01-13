@@ -30,5 +30,7 @@ def orgkrPerf(timeVecs, mVec, nVec):
     retVecs = np.zeros(timeVecs.shape)
     for i in range(numVecs):
         for j in range(len(mVec)):
-            retVecs[i,j] = 4*mVec[j] * nVec[j] * nVec[j] / (10**9 * timeVecs[i,j])
+            m = mVec[j]
+            n = nVec[j]
+            retVecs[i,j] = (2*m*n**2 + n**2 - n) / (2*10**9 * timeVecs[i,j])
     return retVecs

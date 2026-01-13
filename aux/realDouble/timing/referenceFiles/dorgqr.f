@@ -267,7 +267,7 @@
 *
 *        Apply H to rows i:m of current block
 *
-         CALL DORGKR(M-I+1, IB, A(I,I), LDA)
+         CALL DORGKR('1',M-I+1, IB, A(I,I), LDA)
          DO I = KI + 1, 1, -NB
             IB = NB
 *
@@ -286,7 +286,7 @@
 *
 *           Apply H to rows i:m of current block
 *
-            CALL DORGKR(M-I+1, IB, A(I,I), LDA)
+            CALL DORGKR('1', M-I+1, IB, A(I,I), LDA)
          END DO
 *
 *        This checks for if K was a perfect multiple of NB
@@ -312,7 +312,7 @@
 *
 *           Apply H to rows i:m of current block
 *
-            CALL DORGKR(M-I+1, IB, A(I,I), LDA)
+            CALL DORGKR('1', M-I+1, IB, A(I,I), LDA)
          END IF
       END IF
 *
@@ -429,7 +429,7 @@
 *
 *        Apply H to rows i:m of current block
 *
-         CALL DORGKR(M-I+1, IB, A(I,I), LDA)
+         CALL DORGKR('1',M-I+1, IB, A(I,I), LDA)
          DO I = KI + 1, 1, -NB
             IB = NB
 *
@@ -448,7 +448,7 @@
 *
 *           Apply H to rows i:m of current block
 *
-            CALL DORGKR(M-I+1, IB, A(I,I), LDA)
+            CALL DORGKR('1',M-I+1, IB, A(I,I), LDA)
          END DO
 *
 *        This checks for if K was a perfect multiple of NB
@@ -474,7 +474,7 @@
 *
 *           Apply H to rows i:m of current block
 *
-            CALL DORGKR(M-I+1, IB, A(I,I), LDA)
+            CALL DORGKR('1',M-I+1, IB, A(I,I), LDA)
          END IF
       END IF
 *
@@ -591,7 +591,7 @@
 *
 *        Apply H to rows i:m of current block
 *
-         CALL DORGKR(M-I+1, IB, A(I,I), LDA)
+         CALL DORGKR('1',M-I+1, IB, A(I,I), LDA)
          DO I = KI + 1, 1, -NB
             IB = NB
 *
@@ -610,7 +610,7 @@
 *
 *           Apply H to rows i:m of current block
 *
-            CALL DORGKR(M-I+1, IB, A(I,I), LDA)
+            CALL DORGKR('1',M-I+1, IB, A(I,I), LDA)
          END DO
 *
 *        This checks for if K was a perfect multiple of NB
@@ -636,7 +636,7 @@
 *
 *           Apply H to rows i:m of current block
 *
-            CALL DORGKR(M-I+1, IB, A(I,I), LDA)
+            CALL DORGKR('1',M-I+1, IB, A(I,I), LDA)
          END IF
       END IF
 *
@@ -752,7 +752,7 @@
 *
 *        Apply H to rows i:m of current block
 *
-         CALL DORGKR(M-I+1, IB, A(I,I), LDA)
+         CALL DORGKR('1',M-I+1, IB, A(I,I), LDA)
          DO I = KI + 1, 1, -NB
             IB = NB
 *
@@ -771,7 +771,7 @@
 *
 *           Apply H to rows i:m of current block
 *
-            CALL DORGKR(M-I+1, IB, A(I,I), LDA)
+            CALL DORGKR('1',M-I+1, IB, A(I,I), LDA)
          END DO
 *
 *        This checks for if K was a perfect multiple of NB
@@ -797,7 +797,7 @@
 *
 *           Apply H to rows i:m of current block
 *
-            CALL DORGKR(M-I+1, IB, A(I,I), LDA)
+            CALL DORGKR('1',M-I+1, IB, A(I,I), LDA)
          END IF
       END IF
 *

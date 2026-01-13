@@ -98,7 +98,7 @@
 *
       END SUBROUTINE
 *
-      SUBROUTINE DORGQR_REC_K(M,N,K,A,LDA,TAU,WORK,LWORK,INFO)
+      SUBROUTINE DORGQR_OPT_K(M,N,K,A,LDA,TAU,WORK,LWORK,INFO)
       IMPLICIT NONE
 *
 *  -- LAPACK computational routine --
@@ -179,7 +179,96 @@
 *
 *     Apply H to rows i:m of current block
 *
-      CALL DORGKR(M, K, A, LDA)
+      CALL DORGKR('1',M, K, A, LDA)
+*
+      WORK( 1 ) = N
+      RETURN
+*
+*     End of DORGQR_REC
+*
+      END SUBROUTINE
+      SUBROUTINE DORGQR_REC_K(M,N,K,A,LDA,TAU,WORK,LWORK,INFO)
+      IMPLICIT NONE
+*
+*  -- LAPACK computational routine --
+*  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+*  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+*
+*     .. Scalar Arguments ..
+      INTEGER            INFO, K, LDA, LWORK, M, N
+*     ..
+*     .. Array Arguments ..
+      DOUBLE PRECISION   A( LDA, * ), TAU( * ), WORK( * )
+*     ..
+*
+*  =====================================================================
+*
+*     .. Local Scalars ..
+      LOGICAL            LQUERY
+      INTEGER            I, IB, IINFO, KI, KK, LWKOPT,
+     $                   NB, NBMIN, NX
+*     ..
+*     .. External Subroutines ..
+      EXTERNAL             DLARFB0C2, DLARFT_REC, DORG2R,
+     $                     DORGKR, XERBLA
+*     ..
+*     .. Intrinsic Functions ..
+      INTRINSIC          MAX
+*     ..
+*     .. External Functions ..
+      INTEGER            ILAENV
+      EXTERNAL           ILAENV
+*     ..
+*     .. Executable Statements ..
+*
+*     Test the input arguments
+*
+      INFO = 0
+*
+*     Only need a workspace for dorg2r in case of bail out
+*
+      LWKOPT = MAX( 1, N )
+      WORK( 1 ) = LWKOPT
+      LQUERY = ( LWORK.EQ.-1 )
+      IF( M.LT.0 ) THEN
+         INFO = -1
+      ELSE IF( N.LT.0 .OR. N.GT.M ) THEN
+         INFO = -2
+      ELSE IF( K.LT.0 .OR. K.GT.N ) THEN
+         INFO = -3
+      ELSE IF( LDA.LT.MAX( 1, M ) ) THEN
+         INFO = -5
+      ELSE IF( LWORK.LT.MAX( 1, N ) .AND. .NOT.LQUERY ) THEN
+         INFO = -8
+      END IF
+      IF( INFO.NE.0 ) THEN
+         CALL XERBLA( 'DORGQR_REC', -INFO )
+         RETURN
+      ELSE IF( LQUERY ) THEN
+         RETURN
+      END IF
+*
+*     Quick return if possible
+*
+      IF( N.LE.0 ) THEN
+         WORK( 1 ) = 1
+         RETURN
+      END IF
+*
+*
+*     Form the triangular factor of the block reflector
+*     H = H(1) H(2) . . . H(i+ib-1)
+*
+      CALL DLARFT_REC('Forward', 'Column', M, K, A, LDA, TAU, A, LDA)
+*
+*     Apply H to A(i:m,i+ib:n) from the left
+*
+      CALL DLARFB0C2('Identity', 'B', 'Left', 'No Transpose',
+     $   'Forward', 'Column', M, N-K, K, A, LDA, A, LDA, A(1,K+1), LDA)
+*
+*     Apply H to rows i:m of current block
+*
+      CALL DORGKR('1',M, K, A, LDA)
 *
       WORK( 1 ) = N
       RETURN
@@ -269,7 +358,7 @@
 *
 *     Apply H to rows i:m of current block
 *
-      CALL DORGKR(M, K, A, LDA)
+      CALL DORGKR('1',M, K, A, LDA)
 *
       WORK( 1 ) = N
       RETURN
@@ -359,7 +448,7 @@
 *
 *     Apply H to rows i:m of current block
 *
-      CALL DORGKR(M, K, A, LDA)
+      CALL DORGKR('1',M, K, A, LDA)
 *
       WORK( 1 ) = N
       RETURN
@@ -448,7 +537,7 @@
 *
 *     Apply H to rows i:m of current block
 *
-      CALL DORGKR(M, K, A, LDA)
+      CALL DORGKR('1',M, K, A, LDA)
 *
       WORK( 1 ) = N
       RETURN
